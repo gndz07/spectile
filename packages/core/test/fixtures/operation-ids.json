@@ -1,0 +1,9 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Operation ids", "version": "1.0.0" },
+  "paths": {
+    "/a": { "get": { "operationId": "fetch", "responses": {} } },
+    "/b": { "get": { "operationId": "fetch", "responses": {} } },
+    "/c/{id}": { "delete": { "responses": {} } }
+  }
+}

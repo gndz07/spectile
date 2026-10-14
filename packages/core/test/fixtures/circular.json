@@ -1,0 +1,36 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Circular", "version": "1.0.0" },
+  "paths": {
+    "/users/{id}": {
+      "get": {
+        "operationId": "getUser",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "A user",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/User" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "friends": { "type": "array", "items": { "$ref": "#/components/schemas/User" } },
+          "profile": { "$ref": "#/components/schemas/Profile" }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": { "bio": { "type": "string" } }
+      }
+    }
+  }
+}

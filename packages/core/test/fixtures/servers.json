@@ -1,0 +1,22 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Servers", "version": "1.0.0" },
+  "servers": [{ "url": "https://api.example.com" }],
+  "paths": {
+    "/a": {
+      "servers": [{ "url": "https://a.example.com" }],
+      "get": { "operationId": "pathLevel", "responses": {} },
+      "post": {
+        "operationId": "operationLevel",
+        "servers": [
+          {
+            "url": "https://{region}.example.com",
+            "variables": { "region": { "default": "eu", "enum": ["eu", "us"] } }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/b": { "get": { "operationId": "documentLevel", "responses": {} } }
+  }
+}
