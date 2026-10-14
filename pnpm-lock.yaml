@@ -30,6 +30,12 @@ importers:
         specifier: ^0.29.13
         version: 0.29.13
 
+  packages/headless:
+    dependencies:
+      '@spectile/core':
+        specifier: workspace:*
+        version: link:../core
+
 packages:
 
   '@esbuild/aix-ppc64@0.27.7':
