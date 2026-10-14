@@ -1,19 +1,37 @@
-import { type MediaType, type OpenAPIDocument, type SpecModel, normalize } from "@spectile/core";
+import {
+  type MediaType,
+  type NormalizedOperation,
+  type OpenAPIDocument,
+  type SecurityScheme,
+  type SpecModel,
+  normalize,
+  resolveServerUrl,
+} from "@spectile/core";
 import { schemaTypeLabel } from "@spectile/headless";
 import {
   Operation,
   Schema,
   SpectileProvider,
+  TryIt,
   useNavigation,
   useOperation,
   useSchema,
+  useSpectile,
 } from "@spectile/react";
 import { type FormEvent, useState } from "react";
 import example from "./example.json";
 
-const loadModel = async (url: string) => {
+type Loaded = { model: SpecModel; specUrl?: string };
+
+const loadModel = async (specUrl: string): Promise<Loaded> => {
   const { loadSpec } = await import("@spectile/core/loader");
-  return normalize((await loadSpec(url)).document);
+  return { model: normalize((await loadSpec(specUrl)).document), specUrl };
+};
+
+/** Servers like "/api/v3" are relative to where the spec was loaded from. */
+const serverUrlFor = ({ model, specUrl }: Loaded) => {
+  const [server] = model.servers;
+  return server && specUrl ? new URL(resolveServerUrl(server), specUrl).href : undefined;
 };
 
 const SpecForm = ({ onLoad }: { onLoad: (url: string) => void }) => {
@@ -87,6 +105,71 @@ const SchemaView = ({ media }: { media: MediaType }) =>
     </Schema.Root>
   ) : null;
 
+const isBasic = (scheme: SecurityScheme) =>
+  scheme.type === "http" && scheme.scheme.toLowerCase() === "basic";
+
+const CredentialFields = ({ scheme }: { scheme: SecurityScheme }) => {
+  if (scheme.type === "mutualTLS") return null;
+  if (isBasic(scheme)) {
+    return (
+      <>
+        <label>
+          {scheme.name} username
+          <TryIt.Credential scheme={scheme.name} field="username" autoComplete="off" />
+        </label>
+        <label>
+          {scheme.name} password
+          <TryIt.Credential scheme={scheme.name} field="password" type="password" />
+        </label>
+      </>
+    );
+  }
+  return (
+    <label>
+      {scheme.name} <span className="muted">{scheme.type === "apiKey" ? "API key" : "token"}</span>
+      <TryIt.Credential scheme={scheme.name} type="password" autoComplete="off" />
+    </label>
+  );
+};
+
+const TryItPanel = ({ operation }: { operation: NormalizedOperation }) => {
+  const { model } = useSpectile();
+  return (
+    <section className="try-it">
+      <h2>Try it</h2>
+      <div className="fields">
+        <label>
+          Server
+          <TryIt.Server />
+        </label>
+        {model.securitySchemes.map((scheme) => (
+          <CredentialFields key={scheme.name} scheme={scheme} />
+        ))}
+      </div>
+      <TryIt.Root className="try-it-form">
+        <div className="fields">
+          {operation.parameters.map((parameter) => (
+            <label key={`${parameter.in}.${parameter.name}`}>
+              {parameter.name} <span className="muted">{parameter.in}</span>
+              <TryIt.Parameter parameter={parameter} />
+            </label>
+          ))}
+        </div>
+        <TryIt.Body className="body-input" rows={10} spellCheck={false} aria-label="Request body" />
+        <TryIt.Send className="send">Send</TryIt.Send>
+        <TryIt.Curl asChild>
+          <pre className="code" />
+        </TryIt.Curl>
+        <TryIt.Error className="error" />
+        <TryIt.Status className="status" />
+        <TryIt.ResponseBody asChild>
+          <pre className="code" />
+        </TryIt.ResponseBody>
+      </TryIt.Root>
+    </section>
+  );
+};
+
 const OperationView = () => {
   const operation = useOperation();
   if (!operation) return <p className="muted">Select an operation</p>;
@@ -138,18 +221,23 @@ const OperationView = () => {
           </div>
         ))}
       </section>
+
+      <TryItPanel operation={operation} />
     </Operation.Root>
   );
 };
 
 export const App = () => {
-  const [model, setModel] = useState<SpecModel>(() => normalize(example as OpenAPIDocument));
+  const [loaded, setLoaded] = useState<Loaded>(() => ({
+    model: normalize(example as OpenAPIDocument),
+  }));
   const [error, setError] = useState<string>();
+  const { model } = loaded;
 
   const load = (url: string) =>
     loadModel(url).then(
-      (loaded) => {
-        setModel(loaded);
+      (next) => {
+        setLoaded(next);
         setError(undefined);
       },
       (reason: unknown) => setError(String(reason)),
@@ -158,20 +246,22 @@ export const App = () => {
   return (
     <div className="app">
       <header className="topbar">
-        <strong>{model?.info.title ?? "Spectile"}</strong>
+        <strong>{model.info.title}</strong>
         <SpecForm onLoad={(url) => void load(url)} />
       </header>
       {error && <p role="alert">{error}</p>}
-      {model && (
-        <SpectileProvider model={model} defaultActiveId={model.operations[0]?.id}>
-          <div className="layout">
-            <Sidebar />
-            <main>
-              <OperationView />
-            </main>
-          </div>
-        </SpectileProvider>
-      )}
+      <SpectileProvider
+        model={model}
+        defaultActiveId={model.operations[0]?.id}
+        tryIt={{ serverUrl: serverUrlFor(loaded) }}
+      >
+        <div className="layout">
+          <Sidebar />
+          <main>
+            <OperationView />
+          </main>
+        </div>
+      </SpectileProvider>
     </div>
   );
 };

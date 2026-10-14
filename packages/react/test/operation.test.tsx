@@ -62,6 +62,24 @@ describe("Operation primitives", () => {
     );
     expect(screen.getByText("/users")).toBeDefined();
   });
+
+  it("keeps the default text when a text part renders its child", () => {
+    const [operation] = model.operations;
+    render(
+      <SpectileProvider model={model}>
+        <Operation.Root operation={operation}>
+          <Operation.Path asChild>
+            <a href="#users" />
+          </Operation.Path>
+          <Operation.Summary asChild>
+            <h1>Custom</h1>
+          </Operation.Summary>
+        </Operation.Root>
+      </SpectileProvider>,
+    );
+    expect(screen.getByRole("link").textContent).toBe("/users");
+    expect(screen.getByRole("heading").textContent).toBe("Custom");
+  });
 });
 
 describe("useNavigation", () => {

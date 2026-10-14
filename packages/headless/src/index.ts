@@ -6,7 +6,25 @@ export {
   memoizeLast,
   select,
 } from "./store";
-export type { InputEventLike, KeyboardEventLike } from "./events";
+export type { EventLike, InputEventLike, KeyboardEventLike } from "./events";
+export {
+  type FetchLike,
+  type HttpResponse,
+  type OperationTryIt,
+  type OperationTryItSnapshot,
+  type RequestDraft,
+  type ResponseLike,
+  type TryIt,
+  type TryItOptions,
+  type TryItResult,
+  type TryItSettings,
+  bodyExample,
+  createTryIt,
+  formatResponseBody,
+  initialDraft,
+  parameterExample,
+  parseParameterInput,
+} from "./try-it";
 export {
   type SchemaChild,
   type SchemaRow,

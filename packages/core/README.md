@@ -91,6 +91,31 @@ Along the way it also:
 - Turns 3.0 `nullable: true` into `types: [..., "null"]`.
 - Collects limits like `minLength` and `pattern` under `constraints`.
 
+## Building requests
+
+Pure helpers for a "try it" feature or code samples. They build requests but never send them.
+
+```ts
+import { buildRequest, missingParameters, resolveServerUrl, toCurl } from "@spectile/core";
+
+const request = buildRequest(model, operation, {
+  serverUrl: resolveServerUrl(model.servers[0]),   // fills in {variables} with their defaults
+  parameters: { "path.petId": "7", "query.tags": ["a", "b"] },
+  body: '{"name":"Rex"}',
+  mediaType: "application/json",
+  credentials: { apiKey: "secret" },
+});
+// { method: "POST", url: "https://…/pets/7?tags=a&tags=b", headers: {…}, body: "…" }
+
+toCurl(request); // curl -X POST 'https://…' -H '…' --data '…'
+```
+
+- **Parameters** are keyed by `parameterKey(parameter)`, which is `"<in>.<name>"`. Arrays and objects follow the parameter's `style` and `explode`, as the OpenAPI spec says. Empty values are left out.
+- **Credentials** are keyed by security scheme name. A token or API key is a string; HTTP Basic is `{ username, password }`. The first security requirement with every credential filled in is used.
+- `missingParameters(operation, values)` lists required parameters that have no value.
+
+`exampleFromSchema(model, schemaRef)` creates a sample value, e.g. to pre-fill a request body. It uses the schema's own examples and defaults first, then makes one up from the types and formats. It stops at circular references, and leaves out `readOnly` properties (or `writeOnly` ones with `{ usage: "response" }`).
+
 ## Warnings instead of errors
 
 Broken references, duplicate operation ids and invalid parameters don't stop rendering. Each one becomes an `Issue`:

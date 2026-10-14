@@ -79,9 +79,17 @@ export const Primitive = <T extends keyof JSX.IntrinsicElements>({
   return <Tag {...props} />;
 };
 
-export const Text = ({ value, children, ...props }: TextProps & { value: ReactNode }) =>
-  value === undefined || value === null || value === false ? null : (
-    <Primitive as="span" {...props}>
-      {children ?? value}
+const withDefaultChildren = (child: ReactNode, value: ReactNode) =>
+  isValidElement<{ children?: ReactNode }>(child)
+    ? cloneElement(child, undefined, child.props.children ?? value)
+    : child;
+
+export const Text = ({ value, children, asChild, ...props }: TextProps & { value: ReactNode }) => {
+  if (value === undefined || value === null || value === false) return null;
+  const content = asChild ? withDefaultChildren(children, value) : (children ?? value);
+  return (
+    <Primitive as="span" asChild={asChild} {...props}>
+      {content}
     </Primitive>
   );
+};

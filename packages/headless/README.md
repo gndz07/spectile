@@ -1,6 +1,6 @@
 # @spectile/headless
 
-The behavior behind an API reference (search, navigation, expandable schema trees, keyboard support), without any rendering. Works with any framework or none.
+The behavior behind an API reference (search, navigation, expandable schema trees, keyboard support, trying requests), without any rendering. Works with any framework or none.
 
 ```sh
 npm install @spectile/core @spectile/headless
@@ -87,6 +87,47 @@ tree.getRowProps(row);   // role, aria-level, aria-expanded, tabIndex, data-stat
 | Enter / Space | toggle |
 
 Only one row is in the tab order (`tabStopId`). The snapshot's `focusedId` tells you which row should have DOM focus. Moving that focus is up to you.
+
+## Try it
+
+Fill in a request, send it and show the response, like Swagger's "Try it out".
+
+```ts
+import { createTryIt } from "@spectile/headless";
+
+const tryIt = createTryIt(model);           // one per spec
+tryIt.setCredential("apiKey", "secret");    // shared by every operation
+tryIt.setServerUrl("http://localhost:3000");
+
+const getPet = tryIt.forOperation("getPet");
+getPet.setParameter("path.petId", "7");
+await getPet.send();
+
+const { draft, request, missing, result } = getPet.getSnapshot();
+```
+
+- **`draft`**: what the user typed. It starts with the spec's examples; the body starts as an example built from the schema. Each operation keeps its own draft, so switching between operations doesn't lose input. `reset()` restores the starting values.
+- **`request`**: the request that will be sent, rebuilt on every change. Pass it to `toCurl` for a code sample.
+- **`missing`**: required parameters still empty. `send()` refuses to send while this isn't empty.
+- **`result`**: `idle`, `pending`, `done` (with `response`: `status`, `headers`, `body`, `duration`) or `error` (with `error`). A 404 or 500 is still `done`: a response arrived.
+- `cancel()` stops a request in flight. Sending again replaces the previous request.
+
+Parameter inputs are text: list values are separated by commas, and object values are JSON. They're converted to what the schema expects before the request is built.
+
+**Options:** `createTryIt(model, { fetch, serverUrl })`. Pass your own `fetch` to route requests through a proxy, add logging, or test without a network.
+
+**Prop getters:**
+
+```ts
+getPet.getFormProps();              // onSubmit sends; data-state: idle | pending | done | error
+getPet.getParameterProps(parameter); // name, value, required, onChange
+getPet.getBodyProps();               // name, value, onChange
+getPet.getSendProps();               // type: "submit", disabled and aria-busy while pending
+tryIt.getServerProps();              // type: "url", value, onChange
+tryIt.getCredentialProps("apiKey");  // or ("basic", "username" | "password")
+```
+
+> Browsers only let a page call another site's API if that API allows it (CORS). When a request fails for this reason, the error says so. Browsers also refuse to set the `Cookie` header, so cookie parameters and cookie API keys only work through a proxy.
 
 ## Labels
 

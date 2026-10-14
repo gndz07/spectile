@@ -37,6 +37,7 @@ Wrap your reference in it once. Everything below reads from it.
 | --- | --- |
 | `model` | the `SpecModel` from `normalize` |
 | `defaultActiveId` | the operation selected at first |
+| `tryIt` | `{ fetch, serverUrl }` for try-it; see `createTryIt` in `@spectile/headless` |
 
 ## Hooks
 
@@ -45,7 +46,9 @@ Wrap your reference in it once. Everything below reads from it.
 | `useNavigation()` | search, tag groups, the active operation, and prop getters for a sidebar |
 | `useOperation(id?)` | the operation with that id, or the active one |
 | `useSchemaTree(schemaRef, { defaultExpandedDepth })` | the rows and actions of a schema tree |
-| `useSpectile()` | `{ model, navigation }` |
+| `useTryIt(operationId)` | the draft, request, result and actions for trying an operation |
+| `useTryItSettings()` | the server URL and credentials shared by every operation |
+| `useSpectile()` | `{ model, navigation, tryIt }` |
 
 They return the headless state plus its methods, and re-render when that state changes. See `@spectile/headless` for every field.
 
@@ -124,6 +127,49 @@ An accessible, keyboard-navigable tree of a schema.
 
 Inside a row, `useSchemaRow()` gives you the row (with its full `node`) for anything custom, such as constraints or enums. Inside a root, `useSchema()` gives you the whole tree state, including `expandAll()` and `collapseAll()`.
 
+### `TryIt`
+
+Send real requests from the docs, like Swagger's "Try it out". Place it inside `Operation.Root`.
+
+```tsx
+<Operation.Root>
+  <TryIt.Server />
+  <TryIt.Credential scheme="apiKey" type="password" />
+
+  <TryIt.Root>
+    {operation.parameters.map((parameter) => (
+      <label key={`${parameter.in}.${parameter.name}`}>
+        {parameter.name} <TryIt.Parameter parameter={parameter} />
+      </label>
+    ))}
+    <TryIt.Body />
+    <TryIt.Send>Send</TryIt.Send>
+
+    <TryIt.Curl asChild><pre /></TryIt.Curl>
+    <TryIt.Error />
+    <TryIt.Status />
+    <TryIt.ResponseBody asChild><pre /></TryIt.ResponseBody>
+  </TryIt.Root>
+</Operation.Root>
+```
+
+| Part | Renders |
+| --- | --- |
+| `TryIt.Root` | a `<form>`; submitting it sends the request |
+| `TryIt.Parameter` | an `<input>` for one parameter (prop `parameter`), pre-filled from examples |
+| `TryIt.Body` | a `<textarea>` with an example body. Nothing when the operation takes no body. |
+| `TryIt.Send` | a submit `<button>`, disabled while sending |
+| `TryIt.Status` | `200 OK`, once a response arrives |
+| `TryIt.ResponseBody` | the response body, pretty-printed when it's JSON |
+| `TryIt.Error` | why the request failed (`role="alert"`) |
+| `TryIt.Curl` | the request as a curl command, updated as you type |
+| `TryIt.Server` | an `<input>` for the base URL. Works anywhere in the provider. |
+| `TryIt.Credential` | an `<input>` for a security scheme's token or key (prop `scheme`). For HTTP Basic, use two, with `field="username"` and `field="password"`. Works anywhere in the provider. |
+
+The server and credentials are shared by every operation. What's typed into an operation's form is kept when you switch to another one and back. Required parameters get the `required` attribute, so the browser asks for them before sending.
+
+Calls to another site's API only work if that API allows browser requests (CORS). If it doesn't, pass a `fetch` that goes through your own proxy: `<SpectileProvider tryIt={{ fetch: proxyFetch }}>`.
+
 ## Styling
 
 Components render no styles. They describe their state with attributes you can target in CSS:
@@ -135,6 +181,8 @@ Components render no styles. They describe their state with attributes you can t
 | `data-method` | operation parts, navigation items | `get`, `post`… |
 | `data-kind` | `Schema.Row` | `property`, `items`, `oneOf`… |
 | `data-required`, `data-deprecated`, `data-recursive` | rows, operations | present when true |
+| `data-state` | `TryIt.Root` | `idle`, `pending`, `done`, `error` |
+| `data-status`, `data-ok` | `TryIt.Status` | the HTTP status; `data-ok` for 2xx |
 | `--spectile-depth` | `Schema.Row` | nesting level, `0` at the top |
 
 ```css
@@ -164,6 +212,14 @@ Components render no styles. They describe their state with attributes you can t
 <Operation.Root asChild>
   <article className="card">…</article>
 </Operation.Root>
+```
+
+On a text part, an empty child gets the default text. This renders `<a href="#listPets">/pets</a>`:
+
+```tsx
+<Operation.Path asChild>
+  <a href={`#${operation.id}`} />
+</Operation.Path>
 ```
 
 ## Server rendering

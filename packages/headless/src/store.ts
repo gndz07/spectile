@@ -38,12 +38,13 @@ export const createStore = <T extends object>(initial: T): Store<T> => {
   return { getSnapshot: () => state, setState, subscribe };
 };
 
-export const memoizeLast = <A, R>(compute: (argument: A) => R) => {
-  let cached: { argument: A; result: R } | undefined;
-  return (argument: A) => {
-    if (!cached || !Object.is(cached.argument, argument)) {
-      cached = { argument, result: compute(argument) };
-    }
+const sameArguments = (previous: readonly unknown[], next: readonly unknown[]) =>
+  previous.length === next.length && previous.every((value, index) => Object.is(value, next[index]));
+
+export const memoizeLast = <A extends unknown[], R>(compute: (...args: A) => R) => {
+  let cached: { args: A; result: R } | undefined;
+  return (...args: A) => {
+    if (!cached || !sameArguments(cached.args, args)) cached = { args, result: compute(...args) };
     return cached.result;
   };
 };

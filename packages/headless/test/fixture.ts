@@ -6,6 +6,8 @@ export const model = normalize({
   openapi: "3.1.0",
   info: { title: "Fixture", version: "1.0.0" },
   tags: [{ name: "users" }, { name: "pets" }, { name: "admin" }],
+  servers: [{ url: "https://api.example.com/v1" }],
+  security: [{ apiKey: [] }],
   paths: {
     "/users": {
       get: {
@@ -19,6 +21,7 @@ export const model = normalize({
         summary: "Create a user",
         tags: ["users", "admin"],
         deprecated: true,
+        requestBody: { content: json },
         responses: { "201": { description: "Created" } },
       },
     },
@@ -27,14 +30,28 @@ export const model = normalize({
         operationId: "getPet",
         summary: "Fetch a pet",
         tags: ["pets"],
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "string" } },
+          {
+            name: "fields",
+            in: "query",
+            schema: { type: "array", items: { type: "string" } },
+            example: ["name", "age"],
+          },
+        ],
         responses: { "200": { description: "A pet" } },
       },
     },
     "/health": {
-      get: { operationId: "health", responses: { "204": { description: "Healthy" } } },
+      get: {
+        operationId: "health",
+        security: [],
+        responses: { "204": { description: "Healthy" } },
+      },
     },
   },
   components: {
+    securitySchemes: { apiKey: { type: "apiKey", in: "header", name: "X-API-Key" } },
     schemas: {
       User: {
         type: "object",

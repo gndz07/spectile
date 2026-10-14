@@ -36,12 +36,14 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
   color: inherit;
 }
 
-input {
+input,
+textarea {
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -246,4 +248,76 @@ main {
 
 .response h3 {
   font-size: 14px;
+}
+
+.try-it {
+  margin-top: 32px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.try-it h2 {
+  margin-top: 0;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fields label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.body-input {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  font: 12px/1.5 ui-monospace, monospace;
+  resize: vertical;
+}
+
+.send {
+  padding: 6px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.send:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.code {
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--hover);
+  font: 12px/1.5 ui-monospace, monospace;
+}
+
+.error {
+  display: block;
+  margin-top: 12px;
+  color: var(--delete);
+}
+
+.status {
+  display: inline-block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: var(--put);
+}
+
+.status[data-ok] {
+  color: var(--get);
 }

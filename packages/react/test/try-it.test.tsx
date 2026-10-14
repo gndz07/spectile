@@ -1,0 +1,78 @@
+import type { FetchLike } from "@spectile/headless";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { model } from "../../headless/test/fixture";
+import { Operation, SpectileProvider, TryIt } from "../src";
+
+const fetch = vi.fn<FetchLike>(async () => ({
+  status: 200,
+  statusText: "OK",
+  headers: { forEach: (callback) => callback("application/json", "content-type") },
+  text: async () => '{"name":"Rex"}',
+}));
+
+const renderTryIt = (operationId: string) => {
+  const operation = model.operations.find((candidate) => candidate.id === operationId)!;
+  return render(
+    <SpectileProvider model={model} tryIt={{ fetch }}>
+      <TryIt.Credential scheme="apiKey" aria-label="API key" />
+      <Operation.Root operation={operation}>
+        <TryIt.Root data-testid="form">
+          {operation.parameters.map((parameter) => (
+            <TryIt.Parameter key={parameter.name} parameter={parameter} aria-label={parameter.name} />
+          ))}
+          <TryIt.Body aria-label="Body" />
+          <TryIt.Send>Send</TryIt.Send>
+          <TryIt.Status data-testid="status" />
+          <TryIt.ResponseBody data-testid="body" />
+          <TryIt.Error />
+          <TryIt.Curl data-testid="curl" />
+        </TryIt.Root>
+      </Operation.Root>
+    </SpectileProvider>,
+  );
+};
+
+describe("TryIt primitives", () => {
+  it("sends the request and shows the response", async () => {
+    renderTryIt("getPet");
+    fireEvent.change(screen.getByLabelText("API key"), { target: { value: "k1" } });
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "7" } });
+    expect(screen.getByLabelText("fields")).toHaveProperty("value", "name,age");
+    expect(screen.getByTestId("curl").textContent).toContain("-H 'X-API-Key: k1'");
+    expect(screen.queryByLabelText("Body")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    const status = await screen.findByTestId("status");
+    expect(status.textContent).toBe("200 OK");
+    expect(status.dataset).toMatchObject({ status: "200", ok: "" });
+    expect(screen.getByTestId("body").textContent).toBe('{\n  "name": "Rex"\n}');
+    expect(screen.getByTestId("form").dataset.state).toBe("done");
+    expect(fetch).toHaveBeenCalledWith(
+      "https://api.example.com/v1/pets/7?fields=name&fields=age",
+      expect.objectContaining({ headers: { "X-API-Key": "k1" } }),
+    );
+  });
+
+  it("leaves required parameters to form validation", () => {
+    fetch.mockClear();
+    renderTryIt("getPet");
+    expect(screen.getByLabelText("id")).toHaveProperty("required", true);
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reports missing required parameters when the form skips validation", () => {
+    renderTryIt("getPet");
+    fireEvent.submit(screen.getByTestId("form"));
+    expect(screen.getByRole("alert").textContent).toBe("Missing required parameters: id");
+  });
+
+  it("edits the request body", () => {
+    renderTryIt("createUser");
+    const body = screen.getByLabelText("Body");
+    expect(JSON.parse((body as HTMLTextAreaElement).value)).toMatchObject({ name: "string" });
+    fireEvent.change(body, { target: { value: '{"name":"Ada"}' } });
+    expect(screen.getByTestId("curl").textContent).toContain(`--data '{"name":"Ada"}'`);
+  });
+});
