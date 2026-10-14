@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getSchema, loadSpec, normalize } from "../src";
+import { getSchema, normalize } from "../src";
+import { loadSpec } from "../src/loader";
 import { loadFixture } from "./load-fixture";
 
 const loadModel = async (name: string) => {

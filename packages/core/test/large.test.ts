@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { loadSpec, normalize } from "../src";
+import { normalize } from "../src";
+import { loadSpec } from "../src/loader";
 
 const directory = new URL("./fixtures/large/", import.meta.url);
 const files = existsSync(directory) ? readdirSync(directory) : [];

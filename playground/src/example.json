@@ -1,0 +1,135 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Playground API", "version": "1.0.0" },
+  "servers": [{ "url": "https://api.example.com" }],
+  "tags": [
+    { "name": "users", "description": "People using the service" },
+    { "name": "pets", "description": "Their pets" }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "summary": "List users",
+        "tags": ["users"],
+        "parameters": [
+          { "name": "limit", "in": "query", "description": "How many users to return", "schema": { "type": "integer", "maximum": 100 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of users",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createUser",
+        "summary": "Create a user",
+        "tags": ["users"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
+          },
+          "default": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "getUser",
+        "summary": "Fetch a user",
+        "description": "Returns one user, including their friends and pets.",
+        "tags": ["users"],
+        "responses": {
+          "200": {
+            "description": "The user",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
+          },
+          "default": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/pets/{id}": {
+      "get": {
+        "operationId": "getPet",
+        "summary": "Fetch a pet",
+        "tags": ["pets"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": {
+            "description": "A cat or a dog",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Pet" } } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Health check",
+        "responses": { "204": { "description": "Healthy" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "readOnly": true },
+          "name": { "type": "string", "description": "Display name" },
+          "email": { "type": ["string", "null"], "format": "email" },
+          "friends": {
+            "type": "array",
+            "description": "Other users this user follows",
+            "items": { "$ref": "#/components/schemas/User" }
+          },
+          "pets": { "type": "array", "items": { "$ref": "#/components/schemas/Pet" } },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "theme": { "type": "string", "enum": ["light", "dark"] },
+              "notifications": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "Pet": {
+        "oneOf": [{ "$ref": "#/components/schemas/Cat" }, { "$ref": "#/components/schemas/Dog" }],
+        "discriminator": { "propertyName": "kind" }
+      },
+      "Cat": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": { "kind": { "const": "cat" }, "indoor": { "type": "boolean" } }
+      },
+      "Dog": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": { "kind": { "const": "dog" }, "goodBoy": { "type": "boolean", "default": true } }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["message"],
+        "properties": { "message": { "type": "string" } }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Something went wrong",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}

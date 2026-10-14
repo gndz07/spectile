@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type SchemaTree, createSchemaTree } from "../src";
+import { type SchemaTree, createSchemaTree, schemaRowLabel, schemaTypeLabel } from "../src";
 import { model, schemaRef } from "./fixture";
 
 const userTree = (options?: { defaultExpandedDepth?: number }) =>
@@ -90,6 +90,25 @@ describe("createSchemaTree", () => {
     tree.expand(FRIENDS);
     tree.expand(FRIENDS);
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("labels row types with schema names where it can", () => {
+    const tree = userTree();
+    expect(tree.getSnapshot().rows.map(({ node }) => schemaTypeLabel(node))).toEqual([
+      "string",
+      "User[]",
+      "Profile",
+    ]);
+    const pet = createSchemaTree(model, schemaRef("Pet")).getSnapshot().root;
+    expect(schemaTypeLabel({ ...pet, refName: undefined })).toBe("oneOf");
+  });
+
+  it("labels rows by property name, then schema name, then position", () => {
+    const tree = userTree();
+    tree.expand(FRIENDS);
+    expect(tree.getSnapshot().rows.map(schemaRowLabel)).toEqual(["name", "friends", "User", "profile"]);
+    const pet = createSchemaTree(model, schemaRef("Pet"));
+    expect(pet.getSnapshot().rows.map(schemaRowLabel)).toEqual(["Cat", "Dog"]);
   });
 
   it("produces serializable snapshots", () => {

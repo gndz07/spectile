@@ -82,6 +82,19 @@ export const schemaChildren = (node: SchemaNode): SchemaChild[] => [
   ...single("not", node.not),
 ];
 
+export const schemaTypeLabel = ({ refName, types, items, ...node }: SchemaNode): string => {
+  if (refName) return refName;
+  if (types.includes("array") && items) {
+    const itemLabel = items.refName ?? "unknown";
+    return types.map((type) => (type === "array" ? `${itemLabel}[]` : type)).join(" | ");
+  }
+  if (types.length > 0) return types.join(" | ");
+  return COMPOSITIONS.find((kind) => node[kind].length > 0) ?? "any";
+};
+
+export const schemaRowLabel = ({ name, kind, index, node }: SchemaRow) =>
+  name ?? node.title ?? node.refName ?? (index === undefined ? kind : `${kind}[${index}]`);
+
 const childEntries = (getNode: GetNode, parent: SchemaNode, parentId: string) =>
   schemaChildren(parent).map((child) => ({
     child,
@@ -247,6 +260,10 @@ export const createSchemaTree = (
     tabIndex: row.id === view.getSnapshot().tabStopId ? 0 : -1,
     "data-state": row.expandable ? (row.expanded ? "open" : "closed") : undefined,
     "data-depth": row.depth,
+    "data-kind": row.kind,
+    "data-required": row.required ? "" : undefined,
+    "data-recursive": row.recursive ? "" : undefined,
+    "data-deprecated": row.node.deprecated ? "" : undefined,
     onKeyDown: (event: KeyboardEventLike) => {
       const action = treeKeyAction(view.getSnapshot().rows, row.id, event.key);
       if (!action) return;

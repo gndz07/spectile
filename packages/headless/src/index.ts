@@ -17,6 +17,8 @@ export {
   type TreeAction,
   createSchemaTree,
   schemaChildren,
+  schemaRowLabel,
+  schemaTypeLabel,
   treeKeyAction,
 } from "./schema-tree";
 export {
