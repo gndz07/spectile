@@ -70,8 +70,9 @@ const OperationView = () => {
         </section>
       ))}
 
-      <TryIt.Server />
       <TryIt.Root>
+        <TryIt.ServerSelect />
+        <TryIt.Server />
         {operation.parameters.map((parameter) => (
           <label key={`${parameter.in}.${parameter.name}`}>
             {parameter.name} <TryIt.Parameter parameter={parameter} />

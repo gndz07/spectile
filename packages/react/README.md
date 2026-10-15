@@ -37,7 +37,7 @@ Wrap your reference in it once. Everything below reads from it.
 | --- | --- |
 | `model` | the `SpecModel` from `normalize` |
 | `defaultActiveId` | the operation selected at first |
-| `tryIt` | `{ fetch, serverUrl }` for try-it; see `createTryIt` in `@spectile/headless` |
+| `tryIt` | `{ fetch, baseUrl }` for try-it; see `createTryIt` in `@spectile/headless` |
 
 ## Hooks
 
@@ -47,7 +47,7 @@ Wrap your reference in it once. Everything below reads from it.
 | `useOperation(id?)` | the operation with that id, or the active one |
 | `useSchemaTree(schemaRef, { defaultExpandedDepth })` | the rows and actions of a schema tree |
 | `useTryIt(operationId)` | the draft, request, result and actions for trying an operation |
-| `useTryItSettings()` | the server URL and credentials shared by every operation |
+| `useTryItSettings()` | the credentials shared by every operation |
 | `useSpectile()` | `{ model, navigation, tryIt }` |
 
 They return the headless state plus its methods, and re-render when that state changes. See `@spectile/headless` for every field.
@@ -133,10 +133,13 @@ Send real requests from the docs, like Swagger's "Try it out". Place it inside `
 
 ```tsx
 <Operation.Root>
-  <TryIt.Server />
   <TryIt.Credential scheme="apiKey" type="password" />
 
   <TryIt.Root>
+    <TryIt.ServerSelect />
+    <TryIt.ServerVariable name="region" />
+    <TryIt.Server />
+
     {operation.parameters.map((parameter) => (
       <label key={`${parameter.in}.${parameter.name}`}>
         {parameter.name} <TryIt.Parameter parameter={parameter} />
@@ -163,10 +166,20 @@ Send real requests from the docs, like Swagger's "Try it out". Place it inside `
 | `TryIt.ResponseBody` | the response body, pretty-printed when it's JSON |
 | `TryIt.Error` | why the request failed (`role="alert"`) |
 | `TryIt.Curl` | the request as a curl command, updated as you type |
-| `TryIt.Server` | an `<input>` for the base URL. Works anywhere in the provider. |
+| `TryIt.ServerSelect` | a `<select>` with one `<option>` per server (its description, else its URL). Nothing when the operation has one server. |
+| `TryIt.ServerVariable` | for one server variable (prop `name`): a `<select>` when it lists its values, else an `<input>`. Nothing when the chosen server has no such variable. |
+| `TryIt.Server` | an `<input>` with the resulting base URL. Typing in it overrides the server. |
 | `TryIt.Credential` | an `<input>` for a security scheme's token or key (prop `scheme`). For HTTP Basic, use two, with `field="username"` and `field="password"`. Works anywhere in the provider. |
 
-The server and credentials are shared by every operation. What's typed into an operation's form is kept when you switch to another one and back. Required parameters get the `required` attribute, so the browser asks for them before sending.
+To show every variable of the chosen server, map over `useTryItContext().serverVariables`:
+
+```tsx
+{Object.keys(useTryItContext().serverVariables).map((name) => (
+  <label key={name}>{name} <TryIt.ServerVariable name={name} /></label>
+))}
+```
+
+Credentials are shared by every operation. The chosen server is shared by operations with the same server list, so an endpoint with its own servers keeps its own choice. What's typed into an operation's form is kept when you switch to another one and back. Required parameters get the `required` attribute, so the browser asks for them before sending.
 
 Calls to another site's API only work if that API allows browser requests (CORS). If it doesn't, pass a `fetch` that goes through your own proxy: `<SpectileProvider tryIt={{ fetch: proxyFetch }}>`.
 

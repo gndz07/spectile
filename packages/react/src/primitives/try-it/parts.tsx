@@ -68,10 +68,54 @@ export const Curl = (props: TextProps) => (
 
 export type ServerProps = PrimitiveProps<"input">;
 
-/** The base URL for every request. Works anywhere inside `SpectileProvider`. */
+/** The base URL of the request. Typing here wins over `ServerSelect` and `ServerVariable`. */
 export const Server = (props: ServerProps) => (
-  <Primitive as="input" {...mergeProps(useTryItSettings().getServerProps(), props)} />
+  <Primitive as="input" {...mergeProps(useTryItContext().getServerProps(), props)} />
 );
+
+export type ServerSelectProps = PrimitiveProps<"select">;
+
+/** Renders nothing when the operation has a single server. Defaults to one option per server. */
+export const ServerSelect = ({ children, ...props }: ServerSelectProps) => {
+  const { servers } = useOperationContext();
+  const tryIt = useTryItContext();
+  if (servers.length < 2) return null;
+  return (
+    <Primitive as="select" {...mergeProps(tryIt.getServerSelectProps(), props)}>
+      {children ??
+        servers.map((server, index) => (
+          <option key={index} value={index}>
+            {server.description ?? server.url}
+          </option>
+        ))}
+    </Primitive>
+  );
+};
+
+export type ServerVariableProps = Omit<PrimitiveProps<"input">, "name"> & { name: string };
+
+/**
+ * A `<select>` when the variable lists its values, otherwise an `<input>`.
+ * Renders nothing when the chosen server has no such variable.
+ */
+export const ServerVariable = ({ name, ...props }: ServerVariableProps) => {
+  const { servers } = useOperationContext();
+  const tryIt = useTryItContext();
+  const variable = servers[tryIt.serverIndex]?.variables[name];
+  if (!variable) return null;
+  const merged = mergeProps(tryIt.getServerVariableProps(name), props);
+  if (!variable.enum) return <Primitive as="input" {...merged} />;
+  return (
+    <Primitive as="select" {...(merged as PrimitiveProps<"select">)}>
+      {props.children ??
+        variable.enum.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+    </Primitive>
+  );
+};
 
 export type CredentialProps = PrimitiveProps<"input"> & {
   /** The security scheme's name. */

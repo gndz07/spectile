@@ -5,7 +5,6 @@ import {
   type SecurityScheme,
   type SpecModel,
   normalize,
-  resolveServerUrl,
 } from "@spectile/core";
 import { schemaTypeLabel } from "@spectile/headless";
 import {
@@ -15,8 +14,10 @@ import {
   TryIt,
   useNavigation,
   useOperation,
+  useOperationContext,
   useSchema,
   useSpectile,
+  useTryItContext,
 } from "@spectile/react";
 import { type FormEvent, useState } from "react";
 import example from "./example.json";
@@ -26,12 +27,6 @@ type Loaded = { model: SpecModel; specUrl?: string };
 const loadModel = async (specUrl: string): Promise<Loaded> => {
   const { loadSpec } = await import("@spectile/core/loader");
   return { model: normalize((await loadSpec(specUrl)).document), specUrl };
-};
-
-/** Servers like "/api/v3" are relative to where the spec was loaded from. */
-const serverUrlFor = ({ model, specUrl }: Loaded) => {
-  const [server] = model.servers;
-  return server && specUrl ? new URL(resolveServerUrl(server), specUrl).href : undefined;
 };
 
 const SpecForm = ({ onLoad }: { onLoad: (url: string) => void }) => {
@@ -132,21 +127,43 @@ const CredentialFields = ({ scheme }: { scheme: SecurityScheme }) => {
   );
 };
 
-const TryItPanel = ({ operation }: { operation: NormalizedOperation }) => {
+const ServerFields = () => {
+  const { servers } = useOperationContext();
+  const { serverVariables } = useTryItContext();
+  return (
+    <div className="fields">
+      {servers.length > 1 && (
+        <label>
+          Server
+          <TryIt.ServerSelect />
+        </label>
+      )}
+      {Object.keys(serverVariables).map((name) => (
+        <label key={name}>
+          {name} <span className="muted">server variable</span>
+          <TryIt.ServerVariable name={name} />
+        </label>
+      ))}
+      <label>
+        Server URL
+        <TryIt.Server />
+      </label>
+    </div>
+  );
+};
+
+const TryItPanel =({ operation }: { operation: NormalizedOperation }) => {
   const { model } = useSpectile();
   return (
     <section className="try-it">
       <h2>Try it</h2>
       <div className="fields">
-        <label>
-          Server
-          <TryIt.Server />
-        </label>
         {model.securitySchemes.map((scheme) => (
           <CredentialFields key={scheme.name} scheme={scheme} />
         ))}
       </div>
       <TryIt.Root className="try-it-form">
+        <ServerFields />
         <div className="fields">
           {operation.parameters.map((parameter) => (
             <label key={`${parameter.in}.${parameter.name}`}>
@@ -254,7 +271,7 @@ export const App = () => {
       <SpectileProvider
         model={model}
         defaultActiveId={model.operations[0]?.id}
-        tryIt={{ serverUrl: serverUrlFor(loaded) }}
+        tryIt={{ baseUrl: loaded.specUrl }}
       >
         <div className="layout">
           <Sidebar />

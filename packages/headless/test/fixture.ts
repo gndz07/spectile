@@ -71,7 +71,28 @@ export const model = normalize({
   },
 });
 
-export const schemaRef = (name: string): SchemaRef => ({
+export const serversModel = normalize({
+  openapi: "3.1.0",
+  info: { title: "Servers", version: "1.0.0" },
+  servers: [
+    { url: "https://api.example.com" },
+    {
+      url: "https://{region}.example.com/{version}",
+      description: "Regional",
+      variables: { region: { default: "eu", enum: ["eu", "us"] }, version: { default: "v1" } },
+    },
+  ],
+  paths: {
+    "/pets": { get: { operationId: "listPets", responses: {} } },
+    "/users": { get: { operationId: "listUsers", responses: {} } },
+    "/files": {
+      servers: [{ url: "/uploads" }],
+      post: { operationId: "upload", responses: {} },
+    },
+  },
+});
+
+export const schemaRef =(name: string): SchemaRef => ({
   pointer: `#/components/schemas/${name}`,
   circular: false,
 });

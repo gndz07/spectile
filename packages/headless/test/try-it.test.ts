@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { type FetchLike, type ResponseLike, createTryIt, formatResponseBody } from "../src";
-import { model } from "./fixture";
+import {
+  type FetchLike,
+  type OperationTryIt,
+  type ResponseLike,
+  createTryIt,
+  formatResponseBody,
+} from "../src";
+import { model, serversModel } from "./fixture";
 
 const response = (body: string, status = 200): ResponseLike => {
   const headers = { "content-type": "application/json" };
@@ -28,7 +34,7 @@ const setup = (fetch: FetchLike = vi.fn<FetchLike>(async () => response('{"name"
 describe("createTryIt", () => {
   it("starts from examples and the first server", () => {
     const { tryIt, getPet } = setup();
-    expect(tryIt.getSnapshot().serverUrl).toBe("https://api.example.com/v1");
+    expect(getPet.getSnapshot().serverUrl).toBe("https://api.example.com/v1");
     expect(getPet.getSnapshot().draft.parameters).toEqual({ "path.id": "", "query.fields": "name,age" });
     const { draft } = tryIt.forOperation("createUser").getSnapshot();
     expect(draft.mediaType).toBe("application/json");
@@ -44,8 +50,9 @@ describe("createTryIt", () => {
       url: "https://api.example.com/v1/pets/7?fields=name&fields=age",
       headers: { "X-API-Key": "secret" },
     });
-    tryIt.setServerUrl("http://localhost:3000");
-    expect(tryIt.forOperation("health").getSnapshot().request).toMatchObject({
+    const health = tryIt.forOperation("health");
+    health.setServerUrl("http://localhost:3000");
+    expect(health.getSnapshot().request).toMatchObject({
       url: "http://localhost:3000/health",
       headers: {},
     });
@@ -133,6 +140,56 @@ describe("createTryIt", () => {
 
   it("rejects unknown operations", () => {
     expect(() => setup().tryIt.forOperation("nope")).toThrow("Unknown operation nope");
+  });
+});
+
+describe("servers", () => {
+  const setup = (baseUrl?: string) => {
+    const tryIt = createTryIt(serversModel, { baseUrl });
+    return {
+      pets: tryIt.forOperation("listPets"),
+      users: tryIt.forOperation("listUsers"),
+      upload: tryIt.forOperation("upload"),
+    };
+  };
+  const urlOf = (session: OperationTryIt) => session.getSnapshot().request.url;
+
+  it("uses each operation's own servers", () => {
+    const { pets, upload } = setup("https://docs.example.com/spec.json");
+    expect(urlOf(pets)).toBe("https://api.example.com/pets");
+    expect(urlOf(upload)).toBe("https://docs.example.com/uploads/files");
+  });
+
+  it("shares the chosen server between operations with the same servers", () => {
+    const { pets, users, upload } = setup();
+    pets.getServerSelectProps().onChange({ currentTarget: { value: "1" } });
+    expect(users.getSnapshot()).toMatchObject({
+      serverIndex: 1,
+      serverVariables: { region: "eu", version: "v1" },
+      serverUrl: "https://eu.example.com/v1",
+    });
+    expect(urlOf(upload)).toBe("/uploads/files");
+    expect(pets.getServerSelectProps().value).toBe("1");
+  });
+
+  it("fills in server variables", () => {
+    const { pets } = setup();
+    pets.selectServer(1);
+    pets.getServerVariableProps("region").onChange({ currentTarget: { value: "us" } });
+    expect(pets.getServerVariableProps("region")).toMatchObject({ name: "server.region", value: "us" });
+    expect(urlOf(pets)).toBe("https://us.example.com/v1/pets");
+    pets.selectServer(0);
+    pets.selectServer(1);
+    expect(urlOf(pets)).toBe("https://eu.example.com/v1/pets");
+  });
+
+  it("lets a typed URL win until another server or variable is chosen", () => {
+    const { pets } = setup();
+    pets.selectServer(1);
+    pets.getServerProps().onChange({ currentTarget: { value: "http://localhost:8080" } });
+    expect(urlOf(pets)).toBe("http://localhost:8080/pets");
+    pets.setServerVariable("region", "us");
+    expect(urlOf(pets)).toBe("https://us.example.com/v1/pets");
   });
 });
 

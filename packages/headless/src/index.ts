@@ -14,6 +14,7 @@ export {
   type OperationTryItSnapshot,
   type RequestDraft,
   type ResponseLike,
+  type ServerSelection,
   type TryIt,
   type TryItOptions,
   type TryItResult,
@@ -24,6 +25,9 @@ export {
   initialDraft,
   parameterExample,
   parseParameterInput,
+  selectedServerUrl,
+  serverListKey,
+  serverVariableValues,
 } from "./try-it";
 export {
   type SchemaChild,

@@ -26,7 +26,7 @@ export const useOperation = (id?: string) => {
   return id === undefined ? active : model.operations.find((operation) => operation.id === id);
 };
 
-/** The server URL and credentials shared by every operation. */
+/** The credentials shared by every operation. */
 export const useTryItSettings = () => {
   const { tryIt } = useSpectile();
   return { ...tryIt, ...useStore(tryIt) };

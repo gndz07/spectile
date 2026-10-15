@@ -1,7 +1,7 @@
 import type { FetchLike } from "@spectile/headless";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { model } from "../../headless/test/fixture";
+import { model, serversModel } from "../../headless/test/fixture";
 import { Operation, SpectileProvider, TryIt } from "../src";
 
 const fetch = vi.fn<FetchLike>(async () => ({
@@ -66,6 +66,40 @@ describe("TryIt primitives", () => {
     renderTryIt("getPet");
     fireEvent.submit(screen.getByTestId("form"));
     expect(screen.getByRole("alert").textContent).toBe("Missing required parameters: id");
+  });
+
+  it("picks a server and fills in its variables", () => {
+    const ServerFields = ({ operationId }: { operationId: string }) => (
+      <Operation.Root operation={serversModel.operations.find(({ id }) => id === operationId)!}>
+        <TryIt.Root>
+          <TryIt.ServerSelect aria-label={`${operationId} server`} />
+          <TryIt.ServerVariable name="region" aria-label={`${operationId} region`} />
+          <TryIt.ServerVariable name="version" aria-label={`${operationId} version`} />
+          <TryIt.Server aria-label={`${operationId} URL`} />
+        </TryIt.Root>
+      </Operation.Root>
+    );
+    render(
+      <SpectileProvider model={serversModel}>
+        <ServerFields operationId="listPets" />
+        <ServerFields operationId="upload" />
+      </SpectileProvider>,
+    );
+    const select = screen.getByLabelText("listPets server");
+    expect([...select.querySelectorAll("option")].map((option) => option.textContent)).toEqual([
+      "https://api.example.com",
+      "Regional",
+    ]);
+    expect(screen.queryByLabelText("listPets region")).toBeNull();
+    expect(screen.queryByLabelText("upload server")).toBeNull();
+
+    fireEvent.change(select, { target: { value: "1" } });
+    const region = screen.getByLabelText("listPets region");
+    expect(region.tagName).toBe("SELECT");
+    expect(screen.getByLabelText("listPets version").tagName).toBe("INPUT");
+    fireEvent.change(region, { target: { value: "us" } });
+    expect(screen.getByLabelText("listPets URL")).toHaveProperty("value", "https://us.example.com/v1");
+    expect(screen.getByLabelText("upload URL")).toHaveProperty("value", "/uploads");
   });
 
   it("edits the request body", () => {

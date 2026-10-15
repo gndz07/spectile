@@ -4,6 +4,7 @@ import {
   type MediaType,
   type NormalizedOperation,
   type Parameter,
+  type Server,
   type SpecModel,
   buildRequest,
   exampleFromSchema,
@@ -48,28 +49,43 @@ export type FetchLike = (
 export type TryItOptions = {
   /** Defaults to the global `fetch`. Pass your own to add a proxy, logging or test doubles. */
   fetch?: FetchLike;
-  /** Defaults to the first server in the spec. */
-  serverUrl?: string;
+  /** Where the spec was loaded from. Relative server URLs like `/api/v3` resolve against it. */
+  baseUrl?: string;
 };
 
-export type TryItSettings = { serverUrl: string; credentials: Record<string, Credential> };
+export type TryItSettings = { credentials: Record<string, Credential> };
+
+/** The chosen server and its variable values, shared by operations with the same servers. */
+export type ServerSelection = {
+  index: number;
+  variables: Record<string, string>;
+  /** Typed by hand; wins over the chosen server. */
+  url?: string;
+};
 
 export type OperationTryItSnapshot = {
   draft: RequestDraft;
   result: TryItResult;
   request: HttpRequest;
   missing: Parameter[];
+  /** Index into the operation's `servers`. */
+  serverIndex: number;
+  /** The chosen server's variables with their current values. */
+  serverVariables: Record<string, string>;
+  serverUrl: string;
 };
 
 type TryItState = TryItSettings & {
   drafts: Record<string, RequestDraft>;
   results: Record<string, TryItResult>;
+  servers: Record<string, ServerSelection>;
 };
 
 type Controller = { signal?: unknown; abort: () => void };
 
 const IDLE: TryItResult = { status: "idle" };
 const PENDING: TryItResult = { status: "pending" };
+const FIRST_SERVER: ServerSelection = { index: 0, variables: {} };
 
 const isJson = (mediaType = "") => /[/+]json\b/i.test(mediaType);
 
@@ -128,7 +144,39 @@ export const parseParameterInput = (model: SpecModel, parameter: Parameter, text
   return text;
 };
 
-export const formatResponseBody = (body: string, contentType?: string) => {
+/** Operations whose server lists have the same URLs share one selection. */
+export const serverListKey = (servers: readonly Server[]) =>
+  JSON.stringify(servers.map(({ url }) => url));
+
+export const serverVariableValues = (server: Server | undefined, values: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(server?.variables ?? {}).map(([name, { default: fallback }]) => [
+      name,
+      values[name] ?? fallback,
+    ]),
+  );
+
+const absoluteUrl = (url: string, baseUrl?: string) => {
+  const UrlClass = (globalThis as { URL?: new (url: string, base: string) => { href: string } }).URL;
+  if (!baseUrl || !UrlClass) return url;
+  try {
+    return new UrlClass(url, baseUrl).href;
+  } catch {
+    return url;
+  }
+};
+
+export const selectedServerUrl = (
+  servers: readonly Server[],
+  { index, variables, url }: ServerSelection,
+  baseUrl?: string,
+) => {
+  if (url !== undefined) return url;
+  const server = servers[index];
+  return server ? absoluteUrl(resolveServerUrl(server, variables), baseUrl) : "";
+};
+
+export const formatResponseBody =(body: string, contentType?: string) => {
   if (!isJson(contentType)) return body;
   try {
     return JSON.stringify(JSON.parse(body), null, 2);
@@ -162,13 +210,7 @@ const createController = (): Controller => {
 const globalFetch = () => (globalThis as { fetch?: FetchLike }).fetch;
 
 export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
-  const [firstServer] = model.servers;
-  const store = createStore<TryItState>({
-    serverUrl: options.serverUrl ?? (firstServer ? resolveServerUrl(firstServer) : ""),
-    credentials: {},
-    drafts: {},
-    results: {},
-  });
+  const store = createStore<TryItState>({ credentials: {}, drafts: {}, results: {}, servers: {} });
   const controllers = new Map<string, Controller>();
   const initialDrafts = new Map<string, RequestDraft>();
 
@@ -180,8 +222,6 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
     return initial;
   };
 
-  const setServerUrl = (serverUrl: string) => store.setState({ serverUrl });
-
   const setCredential = (name: string, credential: Credential | undefined) =>
     store.setState((state) => ({
       ...state,
@@ -192,22 +232,10 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
     }));
 
   const settingsFor = memoizeLast(
-    (serverUrl: string, credentials: Record<string, Credential>): TryItSettings => ({
-      serverUrl,
-      credentials,
-    }),
+    (credentials: Record<string, Credential>): TryItSettings => ({ credentials }),
   );
 
-  const getSnapshot = () => {
-    const { serverUrl, credentials } = store.getSnapshot();
-    return settingsFor(serverUrl, credentials);
-  };
-
-  const getServerProps = () => ({
-    type: "url" as const,
-    value: store.getSnapshot().serverUrl,
-    onChange: (event: InputEventLike) => setServerUrl(event.currentTarget.value),
-  });
+  const getSnapshot = () => settingsFor(store.getSnapshot().credentials);
 
   /** Without `field`, the credential is a token or key. With it, one half of a username and password. */
   const getCredentialProps = (name: string, field?: "username" | "password") => {
@@ -226,7 +254,9 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
   };
 
   const createSession = (operation: NormalizedOperation) => {
-    const { id } = operation;
+    const { id, servers } = operation;
+    const serverKey = serverListKey(servers);
+    const selectionOf = (state: TryItState) => state.servers[serverKey] ?? FIRST_SERVER;
 
     const parse = (parameters: Record<string, string>) =>
       Object.fromEntries(
@@ -240,10 +270,11 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
       (
         draft: RequestDraft,
         result: TryItResult,
-        serverUrl: string,
+        selection: ServerSelection,
         credentials: Record<string, Credential>,
       ): OperationTryItSnapshot => {
         const parameters = parse(draft.parameters);
+        const serverUrl = selectedServerUrl(servers, selection, options.baseUrl);
         return {
           draft,
           result,
@@ -255,6 +286,9 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
             mediaType: draft.mediaType,
           }),
           missing: missingParameters(operation, parameters),
+          serverIndex: selection.index,
+          serverVariables: serverVariableValues(servers[selection.index], selection.variables),
+          serverUrl,
         };
       },
     );
@@ -264,10 +298,26 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
       return snapshotFor(
         draftFor(state, operation),
         state.results[id] ?? IDLE,
-        state.serverUrl,
+        selectionOf(state),
         state.credentials,
       );
     };
+
+    const updateSelection = (change: (selection: ServerSelection) => ServerSelection) =>
+      store.setState((state) => ({
+        ...state,
+        servers: { ...state.servers, [serverKey]: change(selectionOf(state)) },
+      }));
+
+    const selectServer = (index: number) => updateSelection(() => ({ index, variables: {} }));
+
+    const setServerVariable = (name: string, value: string) =>
+      updateSelection(({ index, variables }) => ({
+        index,
+        variables: { ...variables, [name]: value },
+      }));
+
+    const setServerUrl = (url: string) => updateSelection((selection) => ({ ...selection, url }));
 
     const updateDraft = (change: (draft: RequestDraft) => RequestDraft) =>
       store.setState((state) => ({
@@ -374,12 +424,36 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
       "aria-busy": isPending(),
     });
 
+    /** Not `type: "url"`, so relative URLs like `/` don't block the form. */
+    const getServerProps = () => ({
+      name: "server",
+      inputMode: "url" as const,
+      value: getSnapshot().serverUrl,
+      onChange: (event: InputEventLike) => setServerUrl(event.currentTarget.value),
+    });
+
+    /** Option values are indexes into the operation's `servers`. */
+    const getServerSelectProps = () => ({
+      name: "server",
+      value: String(getSnapshot().serverIndex),
+      onChange: (event: InputEventLike) => selectServer(Number(event.currentTarget.value)),
+    });
+
+    const getServerVariableProps = (name: string) => ({
+      name: `server.${name}`,
+      value: getSnapshot().serverVariables[name] ?? "",
+      onChange: (event: InputEventLike) => setServerVariable(name, event.currentTarget.value),
+    });
+
     return {
       getSnapshot,
       subscribe: store.subscribe,
       setParameter,
       setBody,
       setMediaType,
+      selectServer,
+      setServerVariable,
+      setServerUrl,
       send,
       cancel,
       reset,
@@ -387,6 +461,9 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
       getParameterProps,
       getBodyProps,
       getSendProps,
+      getServerProps,
+      getServerSelectProps,
+      getServerVariableProps,
     };
   };
 
@@ -405,9 +482,7 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
   return {
     getSnapshot,
     subscribe: store.subscribe,
-    setServerUrl,
     setCredential,
-    getServerProps,
     getCredentialProps,
     forOperation,
   };

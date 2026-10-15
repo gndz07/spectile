@@ -97,7 +97,6 @@ import { createTryIt } from "@spectile/headless";
 
 const tryIt = createTryIt(model);           // one per spec
 tryIt.setCredential("apiKey", "secret");    // shared by every operation
-tryIt.setServerUrl("http://localhost:3000");
 
 const getPet = tryIt.forOperation("getPet");
 getPet.setParameter("path.petId", "7");
@@ -114,7 +113,21 @@ const { draft, request, missing, result } = getPet.getSnapshot();
 
 Parameter inputs are text: list values are separated by commas, and object values are JSON. They're converted to what the schema expects before the request is built.
 
-**Options:** `createTryIt(model, { fetch, serverUrl })`. Pass your own `fetch` to route requests through a proxy, add logging, or test without a network.
+**Servers.** Each operation sends to one of its own `servers` (the operation's, its path's, or the spec's), starting with the first.
+
+```ts
+getPet.selectServer(1);                       // index into operation.servers
+getPet.setServerVariable("region", "us");     // fills in {region}
+getPet.setServerUrl("http://localhost:3000"); // typed by hand; wins until another server or variable is chosen
+
+const { serverIndex, serverVariables, serverUrl } = getPet.getSnapshot();
+```
+
+The choice is shared by operations with the same server list. Picking a server for one endpoint picks it for every endpoint that uses the spec's servers, while an endpoint with its own servers keeps its own choice.
+
+**Options:** `createTryIt(model, { fetch, baseUrl })`.
+- `fetch`: pass your own to route requests through a proxy, add logging, or test without a network.
+- `baseUrl`: where the spec was loaded from. Relative server URLs such as `/api/v3` are resolved against it, as the OpenAPI spec says.
 
 **Prop getters:**
 
@@ -123,7 +136,9 @@ getPet.getFormProps();              // onSubmit sends; data-state: idle | pendin
 getPet.getParameterProps(parameter); // name, value, required, onChange
 getPet.getBodyProps();               // name, value, onChange
 getPet.getSendProps();               // type: "submit", disabled and aria-busy while pending
-tryIt.getServerProps();              // type: "url", value, onChange
+getPet.getServerProps();             // the server URL: name, inputMode: "url", value, onChange
+getPet.getServerSelectProps();       // for a <select> whose option values are server indexes
+getPet.getServerVariableProps("region"); // name, value, onChange
 tryIt.getCredentialProps("apiKey");  // or ("basic", "username" | "password")
 ```
 
