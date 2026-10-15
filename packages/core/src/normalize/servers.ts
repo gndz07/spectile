@@ -1,5 +1,5 @@
+import { asArray, asString, asStrings, entries, isObject } from "../json/read";
 import type { Server, ServerVariable } from "../model";
-import { asArray, asString, asStrings, entries, isObject } from "./read";
 
 export const defaultServers = (): Server[] => [{ url: "/", variables: {} }];
 

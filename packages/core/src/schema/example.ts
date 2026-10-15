@@ -1,5 +1,6 @@
+import { isObject } from "../json/read";
 import type { SchemaNode, SchemaRef, SpecModel } from "../model";
-import { getSchema } from "../normalize/schema";
+import { getSchema } from "./get";
 
 export type ExampleOptions = {
   /** `request` leaves out readOnly properties, `response` leaves out writeOnly ones. */
@@ -18,9 +19,6 @@ const STRING_FORMATS: Record<string, string> = {
   ipv4: "192.0.2.1",
   ipv6: "2001:db8::1",
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const declaredValue = (node: SchemaNode) =>
   node.examples.length > 0
@@ -51,7 +49,7 @@ export const exampleFromSchema = (
 
     if (node.allOf.length > 0) {
       const parts = [...node.allOf.map(child), type === "object" ? objectOf(node, inner) : undefined];
-      return Object.assign({}, ...parts.filter(isRecord));
+      return Object.assign({}, ...parts.filter(isObject));
     }
     const choice = node.oneOf[0] ?? node.anyOf[0];
     if (choice && type === undefined && node.properties.length === 0) return child(choice);

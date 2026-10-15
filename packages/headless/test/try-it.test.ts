@@ -4,7 +4,6 @@ import {
   type OperationTryIt,
   type ResponseLike,
   createTryIt,
-  formatResponseBody,
 } from "../src";
 import { model, serversModel } from "./fixture";
 
@@ -190,13 +189,5 @@ describe("servers", () => {
     expect(urlOf(pets)).toBe("http://localhost:8080/pets");
     pets.setServerVariable("region", "us");
     expect(urlOf(pets)).toBe("https://us.example.com/v1/pets");
-  });
-});
-
-describe("formatResponseBody", () => {
-  it("pretty-prints JSON and leaves everything else alone", () => {
-    expect(formatResponseBody('{"a":1}', "application/problem+json")).toBe('{\n  "a": 1\n}');
-    expect(formatResponseBody("{oops", "application/json")).toBe("{oops");
-    expect(formatResponseBody('{"a":1}', "text/plain")).toBe('{"a":1}');
   });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildRequest,
   exampleFromSchema,
+  formatResponseBody,
   missingParameters,
   normalize,
   resolveServerUrl,
@@ -172,5 +173,13 @@ describe("exampleFromSchema", () => {
     expect(
       exampleFromSchema(model, { pointer: "#/components/schemas/Combined", circular: false }),
     ).toEqual({ a: 0, b: true });
+  });
+});
+
+describe("formatResponseBody", () => {
+  it("pretty-prints JSON and leaves everything else alone", () => {
+    expect(formatResponseBody('{"a":1}', "application/problem+json")).toBe('{\n  "a": 1\n}');
+    expect(formatResponseBody("{oops", "application/json")).toBe("{oops");
+    expect(formatResponseBody('{"a":1}', "text/plain")).toBe('{"a":1}');
   });
 });

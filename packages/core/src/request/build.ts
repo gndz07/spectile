@@ -1,12 +1,18 @@
-import type { NormalizedOperation, Parameter, ParameterLocation, Server, SpecModel } from "../model";
+import {
+  type NormalizedOperation,
+  type Parameter,
+  type ParameterLocation,
+  type SpecModel,
+  parameterKey,
+} from "../model";
 import { type Credential, applySecurity } from "./auth";
 import {
   isEmptyValue,
-  parameterKey,
   serializeFormParameter,
   serializeHeaderParameter,
   serializePathParameter,
 } from "./parameters";
+import { fillTemplate } from "./template";
 
 export type RequestInput = {
   /** The base URL, e.g. from `resolveServerUrl`. */
@@ -25,11 +31,6 @@ export type HttpRequest = {
   headers: Record<string, string>;
   body?: string;
 };
-
-const TEMPLATE = /\{([^}]+)\}/g;
-
-export const resolveServerUrl = ({ url, variables }: Server, values: Record<string, string> = {}) =>
-  url.replace(TEMPLATE, (match, name: string) => values[name] ?? variables[name]?.default ?? match);
 
 export const missingParameters = (
   operation: NormalizedOperation,
@@ -52,9 +53,9 @@ export const buildRequest = (
     provided.filter(({ parameter }) => parameter.in === location);
   const auth = applySecurity(model.securitySchemes, operation.security, credentials);
 
-  const path = operation.path.replace(TEMPLATE, (match, name: string) => {
+  const path = fillTemplate(operation.path, (name) => {
     const found = located("path").find(({ parameter }) => parameter.name === name);
-    return found ? serializePathParameter(found.parameter, found.value) : match;
+    return found && serializePathParameter(found.parameter, found.value);
   });
   const query = [
     ...located("query").flatMap(({ parameter, value }) => serializeFormParameter(parameter, value)),

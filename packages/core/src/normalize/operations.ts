@@ -1,21 +1,30 @@
-import type {
-  Example,
-  Header,
-  HttpMethod,
-  MediaType,
-  NormalizedOperation,
-  Parameter,
-  ParameterFields,
-  ParameterLocation,
-  RequestBody,
-  Response,
-  SchemaRef,
+import { appendPointer } from "../json/pointer";
+import {
+  asArray,
+  asBoolean,
+  asOptionalBoolean,
+  asString,
+  asStrings,
+  entries,
+  isOneOf,
+} from "../json/read";
+import { issue } from "../json/refs";
+import {
+  type Example,
+  type Header,
+  type HttpMethod,
+  type MediaType,
+  type NormalizedOperation,
+  type Parameter,
+  type ParameterFields,
+  type ParameterLocation,
+  type RequestBody,
+  type Response,
+  type SchemaRef,
+  parameterKey,
 } from "../model";
+import { schemaRef } from "../schema/get";
 import { type Context, type Located, resolveObject } from "./context";
-import { appendPointer } from "./pointer";
-import { asArray, asBoolean, asString, asStrings, entries, isOneOf } from "./read";
-import { issue } from "./refs";
-import { schemaRef } from "./schema";
 import { securityRequirements } from "./security";
 import { defaultServers, serverList } from "./servers";
 
@@ -77,7 +86,7 @@ const parameterFields = (context: Context, located: Located): ParameterFields =>
   schema: schemaAt(context, located),
   content: mediaTypes(context, located),
   style: asString(located.value.style),
-  explode: typeof located.value.explode === "boolean" ? located.value.explode : undefined,
+  explode: asOptionalBoolean(located.value.explode),
   examples: examplesOf(context, located),
 });
 
@@ -103,8 +112,6 @@ const parameterList = (context: Context, owner: Located): Parameter[] =>
     const located = resolveObject(context, appendPointer(owner.pointer, "parameters", index));
     return (located && parameter(context, located)) ?? [];
   });
-
-const parameterKey = (parameter: Parameter) => `${parameter.in}:${parameter.name}`;
 
 const mergeParameters = (pathLevel: Parameter[], operationLevel: Parameter[]) => {
   const overridden = new Set(operationLevel.map(parameterKey));

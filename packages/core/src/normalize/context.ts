@@ -1,6 +1,6 @@
+import { type JsonObject, asString, isObject, withoutUndefined } from "../json/read";
+import { fromReferences, resolvePointer } from "../json/refs";
 import type { Issue, OpenAPIDocument } from "../model";
-import { type JsonObject, asString, isObject, withoutUndefined } from "./read";
-import { fromReferences, resolvePointer } from "./refs";
 
 export type Context = { document: OpenAPIDocument; issues: Issue[] };
 

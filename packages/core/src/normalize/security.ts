@@ -1,3 +1,6 @@
+import { appendPointer } from "../json/pointer";
+import { asArray, asString, asStrings, entries, isObject, isOneOf } from "../json/read";
+import { issue } from "../json/refs";
 import type {
   ApiKeyLocation,
   OAuthFlow,
@@ -6,9 +9,6 @@ import type {
   SecurityScheme,
 } from "../model";
 import { type Context, type Located, resolveObject } from "./context";
-import { appendPointer } from "./pointer";
-import { asArray, asString, asStrings, entries, isObject, isOneOf } from "./read";
-import { issue } from "./refs";
 
 const isApiKeyLocation = isOneOf<ApiKeyLocation>(["query", "header", "cookie"]);
 

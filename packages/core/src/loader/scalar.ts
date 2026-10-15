@@ -1,10 +1,10 @@
 import { bundle } from "@scalar/json-magic/bundle";
 import { fetchUrls, parseJson, parseYaml } from "@scalar/json-magic/bundle/plugins/browser";
 import { upgrade, validate } from "@scalar/openapi-parser";
+import { appendPointer } from "../json/pointer";
+import { isObject } from "../json/read";
+import { issue } from "../json/refs";
 import type { Issue, OpenAPIDocument } from "../model";
-import { appendPointer } from "../normalize/pointer";
-import { isObject } from "../normalize/read";
-import { issue } from "../normalize/refs";
 
 const pointerOf = (path: string | string[] | undefined) => {
   if (Array.isArray(path)) return appendPointer("#", ...path);

@@ -1,7 +1,7 @@
+import { asArray, asString, isObject } from "../json/read";
 import type { Info, NormalizedOperation, OpenAPIDocument, SpecModel, Tag } from "../model";
 import type { Context } from "./context";
 import { normalizeOperations } from "./operations";
-import { asArray, asString, isObject } from "./read";
 import { securitySchemes } from "./security";
 import { defaultServers, serverList } from "./servers";
 

@@ -17,24 +17,21 @@ const OPERATORS: Record<string, Operator> = {
 
 const DELIMITERS: Record<string, string> = { form: ",", spaceDelimited: "%20", pipeDelimited: "|" };
 
-export const parameterKey = ({ in: location, name }: Pick<Parameter, "in" | "name">) =>
-  `${location}.${name}`;
-
 export const isEmptyValue = (value: unknown) =>
   value === undefined ||
   value === null ||
   value === "" ||
   (Array.isArray(value) && value.length === 0);
 
-const text = (value: unknown) =>
+export const toText = (value: unknown) =>
   typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
 
 const shape = (value: unknown): Shape => {
-  if (Array.isArray(value)) return { kind: "array", items: value.map(text) };
+  if (Array.isArray(value)) return { kind: "array", items: value.map(toText) };
   if (typeof value === "object" && value !== null) {
-    return { kind: "object", entries: Object.entries(value).map(([key, item]) => [key, text(item)]) };
+    return { kind: "object", entries: Object.entries(value).map(([key, item]) => [key, toText(item)]) };
   }
-  return { kind: "primitive", value: text(value) };
+  return { kind: "primitive", value: toText(value) };
 };
 
 const encode = encodeURIComponent;
