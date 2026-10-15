@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { model, operation, schemaRef } from "../../headless/test/fixture";
+import { render, screen } from "@testing-library/react"
+import { describe, expect, it } from "vitest"
+import { model, operation, schemaRef } from "../../headless/test/fixture"
 import {
   Info,
   Markdown,
@@ -12,9 +12,9 @@ import {
   Response,
   Schema,
   SpectileProvider,
-} from "../src";
+} from "../src"
 
-const users = operation("listUsers").responses[0]!;
+const users = operation("listUsers").responses[0]!
 
 const Descriptions = ({ renderMarkdown }: { renderMarkdown?: RenderMarkdown }) => (
   <SpectileProvider model={model} defaultActiveId="getPet" renderMarkdown={renderMarkdown}>
@@ -55,30 +55,30 @@ const Descriptions = ({ renderMarkdown }: { renderMarkdown?: RenderMarkdown }) =
       )}
     </Navigation.Groups>
   </SpectileProvider>
-);
+)
 
 describe("Markdown", () => {
   it("renders plain text without a renderer", () => {
-    render(<Descriptions />);
-    const operation = screen.getByTestId("operation");
-    expect(operation.tagName).toBe("DIV");
-    expect(operation.innerHTML).toBe("Returns **one** pet.");
-    expect(screen.getByTestId("row-name").textContent).toBe("Display _name_");
-    expect(screen.queryByTestId("row-friends")).toBeNull();
-    expect(screen.queryByTestId("empty")).toBeNull();
-  });
+    render(<Descriptions />)
+    const operation = screen.getByTestId("operation")
+    expect(operation.tagName).toBe("DIV")
+    expect(operation.innerHTML).toBe("Returns **one** pet.")
+    expect(screen.getByTestId("row-name").textContent).toBe("Display _name_")
+    expect(screen.queryByTestId("row-friends")).toBeNull()
+    expect(screen.queryByTestId("empty")).toBeNull()
+  })
 
   it("renders every description with the provider's renderer", () => {
-    render(<Descriptions renderMarkdown={(markdown) => <em>{markdown.toUpperCase()}</em>} />);
-    expect(screen.getByTestId("operation").innerHTML).toBe("<em>RETURNS **ONE** PET.</em>");
-    expect(screen.getByTestId("row-name").innerHTML).toBe("<em>DISPLAY _NAME_</em>");
-    expect(screen.getByTestId("custom").innerHTML).toBe("<em>A `STRING`</em>");
-    expect(screen.getByTestId("info").innerHTML).toBe("<em>THE _FIXTURE_ API</em>");
-    expect(screen.getByTestId("body").innerHTML).toBe("<em>THE _NEW_ USER</em>");
-    expect(screen.getByTestId("parameter").innerHTML).toBe("<em>THE PET'S `ID`</em>");
-    expect(screen.getByTestId("response").innerHTML).toBe("<em>USERS</em>");
-    expect(screen.getByTestId("header").innerHTML).toBe("<em>HOW _MANY_</em>");
-    expect(screen.getByTestId("tag-users").innerHTML).toBe("<em>ALL **USERS**</em>");
-    expect(screen.queryByTestId("tag-pets")).toBeNull();
-  });
-});
+    render(<Descriptions renderMarkdown={(markdown) => <em>{markdown.toUpperCase()}</em>} />)
+    expect(screen.getByTestId("operation").innerHTML).toBe("<em>RETURNS **ONE** PET.</em>")
+    expect(screen.getByTestId("row-name").innerHTML).toBe("<em>DISPLAY _NAME_</em>")
+    expect(screen.getByTestId("custom").innerHTML).toBe("<em>A `STRING`</em>")
+    expect(screen.getByTestId("info").innerHTML).toBe("<em>THE _FIXTURE_ API</em>")
+    expect(screen.getByTestId("body").innerHTML).toBe("<em>THE _NEW_ USER</em>")
+    expect(screen.getByTestId("parameter").innerHTML).toBe("<em>THE PET'S `ID`</em>")
+    expect(screen.getByTestId("response").innerHTML).toBe("<em>USERS</em>")
+    expect(screen.getByTestId("header").innerHTML).toBe("<em>HOW _MANY_</em>")
+    expect(screen.getByTestId("tag-users").innerHTML).toBe("<em>ALL **USERS**</em>")
+    expect(screen.queryByTestId("tag-pets")).toBeNull()
+  })
+})

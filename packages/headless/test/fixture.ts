@@ -1,6 +1,6 @@
-import { type SchemaRef, normalize } from "@spectile/core";
+import { type SchemaRef, normalize } from "@spectile/core"
 
-const json = { "application/json": { schema: { $ref: "#/components/schemas/User" } } };
+const json = { "application/json": { schema: { $ref: "#/components/schemas/User" } } }
 
 export const model = normalize({
   openapi: "3.1.0",
@@ -82,9 +82,9 @@ export const model = normalize({
       Name: { type: "string" },
     },
   },
-});
+})
 
-export const operation = (id: string) => model.operations.find((each) => each.id === id)!;
+export const operation = (id: string) => model.operations.find((each) => each.id === id)!
 
 export const serversModel = normalize({
   openapi: "3.1.0",
@@ -105,9 +105,9 @@ export const serversModel = normalize({
       post: { operationId: "upload", responses: {} },
     },
   },
-});
+})
 
-export const schemaRef =(name: string): SchemaRef => ({
+export const schemaRef = (name: string): SchemaRef => ({
   pointer: `#/components/schemas/${name}`,
   circular: false,
-});
+})

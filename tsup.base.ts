@@ -1,4 +1,4 @@
-import type { Options } from "tsup";
+import type { Options } from "tsup"
 
 export const tsupOptions: Options = {
   entry: ["src/index.ts"],
@@ -7,4 +7,4 @@ export const tsupOptions: Options = {
   dts: { compilerOptions: { ignoreDeprecations: "6.0" } },
   sourcemap: true,
   clean: true,
-};
+}

@@ -17,7 +17,12 @@
         "summary": "List users",
         "tags": ["users"],
         "parameters": [
-          { "name": "limit", "in": "query", "description": "How many users to return, at most `100`", "schema": { "type": "integer", "maximum": 100 } }
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "How many users to return, at most `100`",
+            "schema": { "type": "integer", "maximum": 100 }
+          }
         ],
         "responses": {
           "200": {
@@ -55,7 +60,9 @@
       }
     },
     "/users/{id}": {
-      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+      "parameters": [
+        { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
       "get": {
         "operationId": "getUser",
         "summary": "Fetch a user",
@@ -75,7 +82,9 @@
         "operationId": "getPet",
         "summary": "Fetch a pet",
         "tags": ["pets"],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
         "responses": {
           "200": {
             "description": "A cat or a dog",
@@ -128,7 +137,10 @@
       "Dog": {
         "type": "object",
         "required": ["kind"],
-        "properties": { "kind": { "const": "dog" }, "goodBoy": { "type": "boolean", "default": true } }
+        "properties": {
+          "kind": { "const": "dog" },
+          "goodBoy": { "type": "boolean", "default": true }
+        }
       },
       "Error": {
         "type": "object",

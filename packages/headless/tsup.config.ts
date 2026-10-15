@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
-import { tsupOptions } from "../../tsup.base";
+import { defineConfig } from "tsup"
+import { tsupOptions } from "../../tsup.base"
 
-export default defineConfig(tsupOptions);
+export default defineConfig(tsupOptions)

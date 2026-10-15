@@ -1,4 +1,4 @@
-import type { Response } from "@spectile/core";
-import { createRequiredContext } from "../../context";
+import type { Response } from "@spectile/core"
+import { createRequiredContext } from "../../context"
 
-export const [ResponseProvider, useResponse] = createRequiredContext<Response>("Response.Root");
+export const [ResponseProvider, useResponse] = createRequiredContext<Response>("Response.Root")

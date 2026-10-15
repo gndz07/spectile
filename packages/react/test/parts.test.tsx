@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { model, operation } from "../../headless/test/fixture";
+import { fireEvent, render, screen } from "@testing-library/react"
+import { describe, expect, it } from "vitest"
+import { model, operation } from "../../headless/test/fixture"
 import {
   Info,
   Navigation,
@@ -9,14 +9,14 @@ import {
   RequestBody,
   Response,
   SpectileProvider,
-} from "../src";
+} from "../src"
 
 const Parameters = ({ id }: { id: string }) =>
   operation(id).parameters.map((parameter) => (
     <Parameter.Root key={parameter.name} parameter={parameter} data-testid={parameter.name}>
       <Parameter.Name /> <Parameter.Location /> <Parameter.Type /> <Parameter.Required />
     </Parameter.Root>
-  ));
+  ))
 
 describe("Info", () => {
   it("renders the API info", () => {
@@ -28,11 +28,11 @@ describe("Info", () => {
         </h1>
         <Info.Description data-testid="description" />
       </SpectileProvider>,
-    );
-    expect(screen.getByTestId("title").textContent).toBe("Fixture 1.0.0");
-    expect(screen.getByTestId("description").textContent).toBe("The _fixture_ API");
-  });
-});
+    )
+    expect(screen.getByTestId("title").textContent).toBe("Fixture 1.0.0")
+    expect(screen.getByTestId("description").textContent).toBe("The _fixture_ API")
+  })
+})
 
 describe("Parameter", () => {
   it("renders each parameter's fields and state", () => {
@@ -40,16 +40,16 @@ describe("Parameter", () => {
       <SpectileProvider model={model}>
         <Parameters id="getPet" />
       </SpectileProvider>,
-    );
-    const id = screen.getByTestId("id");
-    expect(id.textContent).toBe("id path string required");
-    expect(id.dataset).toMatchObject({ location: "path", required: "" });
-    expect(screen.getByTestId("fields").textContent).toBe("fields query string[] ");
-    expect(screen.getByTestId("fields").dataset.required).toBeUndefined();
-  });
+    )
+    const id = screen.getByTestId("id")
+    expect(id.textContent).toBe("id path string required")
+    expect(id.dataset).toMatchObject({ location: "path", required: "" })
+    expect(screen.getByTestId("fields").textContent).toBe("fields query string[] ")
+    expect(screen.getByTestId("fields").dataset.required).toBeUndefined()
+  })
 
   it("renders a response header", () => {
-    const [header] = operation("listUsers").responses[0]!.headers;
+    const [header] = operation("listUsers").responses[0]!.headers
     render(
       <SpectileProvider model={model}>
         <Parameter.Root parameter={header!} data-testid="header">
@@ -57,12 +57,12 @@ describe("Parameter", () => {
           <Parameter.Location />: <Parameter.Type />
         </Parameter.Root>
       </SpectileProvider>,
-    );
-    const element = screen.getByTestId("header");
-    expect(element.textContent).toBe("X-Total: integer");
-    expect(element.dataset.location).toBeUndefined();
-  });
-});
+    )
+    const element = screen.getByTestId("header")
+    expect(element.textContent).toBe("X-Total: integer")
+    expect(element.dataset.location).toBeUndefined()
+  })
+})
 
 describe("RequestBody", () => {
   const Body = () => (
@@ -70,7 +70,7 @@ describe("RequestBody", () => {
       <RequestBody.Required />
       <RequestBody.Description />
     </RequestBody.Root>
-  );
+  )
 
   it("renders the operation's request body", () => {
     render(
@@ -79,9 +79,9 @@ describe("RequestBody", () => {
           <Body />
         </Operation.Root>
       </SpectileProvider>,
-    );
-    expect(screen.getByTestId("body").textContent).toBe("The _new_ user");
-  });
+    )
+    expect(screen.getByTestId("body").textContent).toBe("The _new_ user")
+  })
 
   it("renders nothing when the operation takes no body", () => {
     render(
@@ -90,10 +90,10 @@ describe("RequestBody", () => {
           <Body />
         </Operation.Root>
       </SpectileProvider>,
-    );
-    expect(screen.queryByTestId("body")).toBeNull();
-  });
-});
+    )
+    expect(screen.queryByTestId("body")).toBeNull()
+  })
+})
 
 describe("Response", () => {
   it("renders each response", () => {
@@ -105,12 +105,12 @@ describe("Response", () => {
           </Response.Root>
         ))}
       </SpectileProvider>,
-    );
-    const response = screen.getByTestId("response");
-    expect(response.textContent).toBe("200 Users");
-    expect(response.dataset.status).toBe("200");
-  });
-});
+    )
+    const response = screen.getByTestId("response")
+    expect(response.textContent).toBe("200 Users")
+    expect(response.dataset.status).toBe("200")
+  })
+})
 
 describe("Navigation", () => {
   it("lists, searches and activates operations", () => {
@@ -134,20 +134,22 @@ describe("Navigation", () => {
           <Operation.Path />
         </Operation.Root>
       </SpectileProvider>,
-    );
+    )
     expect(screen.getByTestId("users").textContent).toBe(
       "usersAll **users**GET List usersPOST Create a user",
-    );
-    expect(screen.getByTestId("untagged").textContent).toBe("GET ");
+    )
+    expect(screen.getByTestId("untagged").textContent).toBe("GET ")
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), { target: { value: "pet" } });
-    const item = screen.getByRole("button", { name: "GET Fetch a pet" });
-    expect(screen.getAllByRole("button")).toEqual([item]);
-    expect(item.getAttribute("type")).toBe("button");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), {
+      target: { value: "pet" },
+    })
+    const item = screen.getByRole("button", { name: "GET Fetch a pet" })
+    expect(screen.getAllByRole("button")).toEqual([item])
+    expect(item.getAttribute("type")).toBe("button")
 
-    fireEvent.click(item);
-    expect(item.getAttribute("aria-current")).toBe("page");
-    expect(item.dataset.state).toBe("active");
-    expect(screen.getByTestId("active").textContent).toBe("/pets/{id}");
-  });
-});
+    fireEvent.click(item)
+    expect(item.getAttribute("aria-current")).toBe("page")
+    expect(item.dataset.state).toBe("active")
+    expect(screen.getByTestId("active").textContent).toBe("/pets/{id}")
+  })
+})

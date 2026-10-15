@@ -5,8 +5,8 @@ import {
   type SecurityScheme,
   type SpecModel,
   normalize,
-} from "@spectile/core";
-import { schemaTypeLabel } from "@spectile/headless";
+} from "@spectile/core"
+import { schemaTypeLabel } from "@spectile/headless"
 import {
   Info,
   Navigation,
@@ -24,26 +24,26 @@ import {
   useSchema,
   useSpectile,
   useTryItContext,
-} from "@spectile/react";
-import { type FormEvent, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import example from "./example.json";
+} from "@spectile/react"
+import { type FormEvent, useState } from "react"
+import ReactMarkdown from "react-markdown"
+import example from "./example.json"
 
-const renderMarkdown = (markdown: string) => <ReactMarkdown>{markdown}</ReactMarkdown>;
+const renderMarkdown = (markdown: string) => <ReactMarkdown>{markdown}</ReactMarkdown>
 
-type Loaded = { model: SpecModel; specUrl?: string };
+type Loaded = { model: SpecModel; specUrl?: string }
 
 const loadModel = async (specUrl: string): Promise<Loaded> => {
-  const { loadSpec } = await import("@spectile/core/loader");
-  return { model: normalize((await loadSpec(specUrl)).document), specUrl };
-};
+  const { loadSpec } = await import("@spectile/core/loader")
+  return { model: normalize((await loadSpec(specUrl)).document), specUrl }
+}
 
 const SpecForm = ({ onLoad }: { onLoad: (url: string) => void }) => {
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState("")
   const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (url) onLoad(url);
-  };
+    event.preventDefault()
+    if (url) onLoad(url)
+  }
   return (
     <form className="spec-form" onSubmit={submit}>
       <input
@@ -55,8 +55,8 @@ const SpecForm = ({ onLoad }: { onLoad: (url: string) => void }) => {
       />
       <button type="submit">Load</button>
     </form>
-  );
-};
+  )
+}
 
 const Sidebar = () => (
   <nav className="sidebar">
@@ -84,11 +84,11 @@ const Sidebar = () => (
       )}
     </Navigation.Groups>
   </nav>
-);
+)
 
 const RootType = () => (
   <code className="type">{schemaTypeLabel(useSchema().root, useSpectile().model)}</code>
-);
+)
 
 const SchemaView = ({ media }: { media: MediaType }) =>
   media.schema ? (
@@ -110,12 +110,12 @@ const SchemaView = ({ media }: { media: MediaType }) =>
         </Schema.Rows>
       </Schema.Tree>
     </Schema.Root>
-  ) : null;
+  ) : null
 
 const MediaList = ({ content }: { content: MediaType[] }) =>
-  content.map((media) => <SchemaView key={media.mediaType} media={media} />);
+  content.map((media) => <SchemaView key={media.mediaType} media={media} />)
 
-const RequestBodyContent = () => <MediaList content={useRequestBody().content} />;
+const RequestBodyContent = () => <MediaList content={useRequestBody().content} />
 
 const ParameterView = ({ parameter }: Pick<Parameter.RootProps, "parameter">) => (
   <Parameter.Root parameter={parameter} asChild>
@@ -129,13 +129,13 @@ const ParameterView = ({ parameter }: Pick<Parameter.RootProps, "parameter">) =>
       <Parameter.Description className="description" />
     </li>
   </Parameter.Root>
-);
+)
 
 const isBasic = (scheme: SecurityScheme) =>
-  scheme.type === "http" && scheme.scheme.toLowerCase() === "basic";
+  scheme.type === "http" && scheme.scheme.toLowerCase() === "basic"
 
 const CredentialFields = ({ scheme }: { scheme: SecurityScheme }) => {
-  if (scheme.type === "mutualTLS") return null;
+  if (scheme.type === "mutualTLS") return null
   if (isBasic(scheme)) {
     return (
       <>
@@ -148,19 +148,19 @@ const CredentialFields = ({ scheme }: { scheme: SecurityScheme }) => {
           <TryIt.Credential scheme={scheme.name} field="password" type="password" />
         </label>
       </>
-    );
+    )
   }
   return (
     <label>
       {scheme.name} <span className="muted">{scheme.type === "apiKey" ? "API key" : "token"}</span>
       <TryIt.Credential scheme={scheme.name} type="password" autoComplete="off" />
     </label>
-  );
-};
+  )
+}
 
 const ServerFields = () => {
-  const { servers } = useOperationContext();
-  const { serverVariables } = useTryItContext();
+  const { servers } = useOperationContext()
+  const { serverVariables } = useTryItContext()
   return (
     <div className="fields">
       {servers.length > 1 && (
@@ -180,11 +180,11 @@ const ServerFields = () => {
         <TryIt.Server />
       </label>
     </div>
-  );
-};
+  )
+}
 
-const TryItPanel =({ operation }: { operation: NormalizedOperation }) => {
-  const { model } = useSpectile();
+const TryItPanel = ({ operation }: { operation: NormalizedOperation }) => {
+  const { model } = useSpectile()
   return (
     <section className="try-it">
       <h2>Try it</h2>
@@ -215,13 +215,13 @@ const TryItPanel =({ operation }: { operation: NormalizedOperation }) => {
         </TryIt.ResponseBody>
       </TryIt.Root>
     </section>
-  );
-};
+  )
+}
 
 const OperationView = () => {
-  const operation = useOperation();
-  if (!operation) return <p className="muted">Select an operation</p>;
-  const { parameters, responses } = operation;
+  const operation = useOperation()
+  if (!operation) return <p className="muted">Select an operation</p>
+  const { parameters, responses } = operation
   return (
     <Operation.Root key={operation.id} className="operation">
       <header>
@@ -275,24 +275,24 @@ const OperationView = () => {
 
       <TryItPanel operation={operation} />
     </Operation.Root>
-  );
-};
+  )
+}
 
 export const App = () => {
   const [loaded, setLoaded] = useState<Loaded>(() => ({
     model: normalize(example as OpenAPIDocument),
-  }));
-  const [error, setError] = useState<string>();
-  const { model } = loaded;
+  }))
+  const [error, setError] = useState<string>()
+  const { model } = loaded
 
   const load = (url: string) =>
     loadModel(url).then(
       (next) => {
-        setLoaded(next);
-        setError(undefined);
+        setLoaded(next)
+        setError(undefined)
       },
       (reason: unknown) => setError(String(reason)),
-    );
+    )
 
   return (
     <SpectileProvider
@@ -318,5 +318,5 @@ export const App = () => {
         </div>
       </div>
     </SpectileProvider>
-  );
-};
+  )
+}

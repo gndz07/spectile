@@ -37,7 +37,13 @@
     },
     "/pets/{petId}": {
       "parameters": [
-        { "name": "petId", "in": "path", "required": true, "description": "Path-level id", "schema": { "type": "string" } },
+        {
+          "name": "petId",
+          "in": "path",
+          "required": true,
+          "description": "Path-level id",
+          "schema": { "type": "string" }
+        },
         { "name": "X-Trace", "in": "header", "schema": { "type": "string" } }
       ],
       "get": {

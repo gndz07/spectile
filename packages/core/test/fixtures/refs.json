@@ -14,7 +14,13 @@
   },
   "components": {
     "parameters": {
-      "Id": { "name": "id", "in": "path", "required": true, "description": "An id", "schema": { "type": "string" } }
+      "Id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "An id",
+        "schema": { "type": "string" }
+      }
     },
     "responses": {
       "Profile": {

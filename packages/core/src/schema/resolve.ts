@@ -1,7 +1,7 @@
-import type { JsonObject } from "../json/read";
-import { resolvePointer } from "../json/refs";
+import type { JsonObject } from "../json/read"
+import { resolvePointer } from "../json/refs"
 
-export const SCHEMA_PREFIX = "#/components/schemas/";
+export const SCHEMA_PREFIX = "#/components/schemas/"
 
 const NON_STRUCTURAL_KEYS = new Set([
   "$ref",
@@ -20,11 +20,11 @@ const NON_STRUCTURAL_KEYS = new Set([
   "example",
   "externalDocs",
   "xml",
-]);
+])
 
 /** A `$ref` with keywords of its own (e.g. extra `properties`) is a schema that also matches its target. */
 const extendsRef = (schema: JsonObject) =>
-  Object.keys(schema).some((key) => !NON_STRUCTURAL_KEYS.has(key) && !key.startsWith("x-"));
+  Object.keys(schema).some((key) => !NON_STRUCTURAL_KEYS.has(key) && !key.startsWith("x-"))
 
 export const resolveSchema = (document: unknown, pointer: string) =>
-  resolvePointer(document, pointer, extendsRef);
+  resolvePointer(document, pointer, extendsRef)

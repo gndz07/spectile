@@ -25,12 +25,12 @@ Snapshots only change when something actually changed, so they plug straight int
 The list of operations: search, grouping by tag, and the selected operation.
 
 ```ts
-import { createNavigation } from "@spectile/headless";
+import { createNavigation } from "@spectile/headless"
 
-const nav = createNavigation(model, { activeId: "listPets" });
+const nav = createNavigation(model, { activeId: "listPets" })
 
-nav.setQuery("get pets");
-const { groups, resultCount, active } = nav.getSnapshot();
+nav.setQuery("get pets")
+const { groups, resultCount, active } = nav.getSnapshot()
 ```
 
 - **Search** matches method, path, operationId, summary and tags. Every word must match.
@@ -40,8 +40,8 @@ const { groups, resultCount, active } = nav.getSnapshot();
 Prop getters:
 
 ```ts
-nav.getSearchProps();         // { type: "search", value, onChange }
-nav.getItemProps(operation);  // { "aria-current", "data-state": "active" | "inactive", "data-method", onClick }
+nav.getSearchProps() // { type: "search", value, onChange }
+nav.getItemProps(operation) // { "aria-current", "data-state": "active" | "inactive", "data-method", onClick }
 ```
 
 ## Schema tree
@@ -49,12 +49,12 @@ nav.getItemProps(operation);  // { "aria-current", "data-state": "active" | "ina
 An expandable tree of a schema's properties, following the WAI-ARIA tree pattern.
 
 ```ts
-import { createSchemaTree } from "@spectile/headless";
+import { createSchemaTree } from "@spectile/headless"
 
 // any SchemaRef from the model, e.g. a response's media.schema
-const tree = createSchemaTree(model, schemaRef, { defaultExpandedDepth: 1 });
+const tree = createSchemaTree(model, schemaRef, { defaultExpandedDepth: 1 })
 
-const { root, rows } = tree.getSnapshot();
+const { root, rows } = tree.getSnapshot()
 ```
 
 `rows` is a flat list of the visible rows, ready to render in order. Use `depth` to indent. Each row has:
@@ -71,20 +71,20 @@ Actions: `expand(id)`, `collapse(id)`, `toggle(id)`, `expandAll()`, `collapseAll
 Prop getters:
 
 ```ts
-tree.getTreeProps();     // { role: "tree" }
-tree.getRowProps(row);   // role, aria-level, aria-expanded, tabIndex, data-state, data-depth, data-kind,
-                         // data-required, data-recursive, data-deprecated, onKeyDown, onClick, onFocus
+tree.getTreeProps() // { role: "tree" }
+tree.getRowProps(row) // role, aria-level, aria-expanded, tabIndex, data-state, data-depth, data-kind,
+// data-required, data-recursive, data-deprecated, onKeyDown, onClick, onFocus
 ```
 
 **Keyboard support:**
 
-| Key | Action |
-| --- | --- |
-| ↓ / ↑ | next / previous row |
-| → | expand, or move to the first child |
-| ← | collapse, or move to the parent |
-| Home / End | first / last row |
-| Enter / Space | toggle |
+| Key           | Action                             |
+| ------------- | ---------------------------------- |
+| ↓ / ↑         | next / previous row                |
+| →             | expand, or move to the first child |
+| ←             | collapse, or move to the parent    |
+| Home / End    | first / last row                   |
+| Enter / Space | toggle                             |
 
 Only one row is in the tab order (`tabStopId`). The snapshot's `focusedId` tells you which row should have DOM focus. Moving that focus is up to you.
 
@@ -93,16 +93,16 @@ Only one row is in the tab order (`tabStopId`). The snapshot's `focusedId` tells
 Fill in a request, send it and show the response, like Swagger's "Try it out".
 
 ```ts
-import { createTryIt } from "@spectile/headless";
+import { createTryIt } from "@spectile/headless"
 
-const tryIt = createTryIt(model);           // one per spec
-tryIt.setCredential("apiKey", "secret");    // shared by every operation
+const tryIt = createTryIt(model) // one per spec
+tryIt.setCredential("apiKey", "secret") // shared by every operation
 
-const getPet = tryIt.forOperation("getPet");
-getPet.setParameter("path.petId", "7");
-await getPet.send();
+const getPet = tryIt.forOperation("getPet")
+getPet.setParameter("path.petId", "7")
+await getPet.send()
 
-const { draft, request, missing, result } = getPet.getSnapshot();
+const { draft, request, missing, result } = getPet.getSnapshot()
 ```
 
 - **`draft`**: what the user typed. It starts with the spec's examples; the body starts as an example built from the schema. Each operation keeps its own draft, so switching between operations doesn't lose input. `reset()` restores the starting values.
@@ -116,30 +116,31 @@ Parameter inputs are text: list values are separated by commas, and object value
 **Servers.** Each operation sends to one of its own `servers` (the operation's, its path's, or the spec's), starting with the first.
 
 ```ts
-getPet.selectServer(1);                       // index into operation.servers
-getPet.setServerVariable("region", "us");     // fills in {region}
-getPet.setServerUrl("http://localhost:3000"); // typed by hand; wins until another server or variable is chosen
+getPet.selectServer(1) // index into operation.servers
+getPet.setServerVariable("region", "us") // fills in {region}
+getPet.setServerUrl("http://localhost:3000") // typed by hand; wins until another server or variable is chosen
 
-const { serverIndex, serverVariables, serverUrl } = getPet.getSnapshot();
+const { serverIndex, serverVariables, serverUrl } = getPet.getSnapshot()
 ```
 
 The choice is shared by operations with the same server list. Picking a server for one endpoint picks it for every endpoint that uses the spec's servers, while an endpoint with its own servers keeps its own choice.
 
 **Options:** `createTryIt(model, { fetch, baseUrl })`.
+
 - `fetch`: pass your own to route requests through a proxy, add logging, or test without a network.
 - `baseUrl`: where the spec was loaded from. Relative server URLs such as `/api/v3` are resolved against it, as the OpenAPI spec says.
 
 **Prop getters:**
 
 ```ts
-getPet.getFormProps();              // onSubmit sends; data-state: idle | pending | done | error
-getPet.getParameterProps(parameter); // name, value, required, onChange
-getPet.getBodyProps();               // name, value, onChange
-getPet.getSendProps();               // type: "submit", disabled and aria-busy while pending
-getPet.getServerProps();             // the server URL: name, inputMode: "url", value, onChange
-getPet.getServerSelectProps();       // for a <select> whose option values are server indexes
-getPet.getServerVariableProps("region"); // name, value, onChange
-tryIt.getCredentialProps("apiKey");  // or ("basic", "username" | "password")
+getPet.getFormProps() // onSubmit sends; data-state: idle | pending | done | error
+getPet.getParameterProps(parameter) // name, value, required, onChange
+getPet.getBodyProps() // name, value, onChange
+getPet.getSendProps() // type: "submit", disabled and aria-busy while pending
+getPet.getServerProps() // the server URL: name, inputMode: "url", value, onChange
+getPet.getServerSelectProps() // for a <select> whose option values are server indexes
+getPet.getServerVariableProps("region") // name, value, onChange
+tryIt.getCredentialProps("apiKey") // or ("basic", "username" | "password")
 ```
 
 > Browsers only let a page call another site's API if that API allows it (CORS). When a request fails for this reason, the error says so. Browsers also refuse to set the `Cookie` header, so cookie parameters and cookie API keys only work through a proxy.
@@ -149,8 +150,8 @@ tryIt.getCredentialProps("apiKey");  // or ("basic", "username" | "password")
 Pure helpers so every framework shows the same text:
 
 ```ts
-schemaTypeLabel(node, model); // "Pet", "Pet[]", "string[]", "string | null", "oneOf", "any"
-schemaRowLabel(row);   // property name, else title, else schema name, else "oneOf[0]"
+schemaTypeLabel(node, model) // "Pet", "Pet[]", "string[]", "string | null", "oneOf", "any"
+schemaRowLabel(row) // property name, else title, else schema name, else "oneOf[0]"
 ```
 
 ## Building your own store
@@ -158,11 +159,11 @@ schemaRowLabel(row);   // property name, else title, else schema name, else "one
 The store tools are exported if you want to add features in the same style:
 
 ```ts
-import { createStore, select } from "@spectile/headless";
+import { createStore, select } from "@spectile/headless"
 
-const store = createStore({ open: false });
-store.setState({ open: true });                       // merge; no-op if nothing changed
-store.setState((state) => ({ ...state, open: !state.open }));
+const store = createStore({ open: false })
+store.setState({ open: true }) // merge; no-op if nothing changed
+store.setState((state) => ({ ...state, open: !state.open }))
 
-const label = select(store, (state) => (state.open ? "Hide" : "Show")); // derived, cached
+const label = select(store, (state) => (state.open ? "Hide" : "Show")) // derived, cached
 ```

@@ -9,26 +9,26 @@ npm install @spectile/core
 ## Quick start
 
 ```ts
-import { normalize } from "@spectile/core";
-import { loadSpec } from "@spectile/core/loader";
+import { normalize } from "@spectile/core"
+import { loadSpec } from "@spectile/core/loader"
 
-const { document, warnings } = await loadSpec("https://petstore3.swagger.io/api/v3/openapi.json");
-const model = normalize(document);
+const { document, warnings } = await loadSpec("https://petstore3.swagger.io/api/v3/openapi.json")
+const model = normalize(document)
 
-model.operations; // every endpoint, ready to render
+model.operations // every endpoint, ready to render
 ```
 
 ## The two entry points
 
-| Import | What it does | Size |
-| --- | --- | --- |
-| `@spectile/core` | `normalize`, `getSchema` and the model types | small |
+| Import                  | What it does                                        | Size    |
+| ----------------------- | --------------------------------------------------- | ------- |
+| `@spectile/core`        | `normalize`, `getSchema` and the model types        | small   |
 | `@spectile/core/loader` | `loadSpec`: parses, bundles, upgrades and validates | ~390 KB |
 
 The loader is separate because the parser is large. If you build the model ahead of time (on the server or at build time), the browser never needs it. In the browser you can load it on demand:
 
 ```ts
-const { loadSpec } = await import("@spectile/core/loader");
+const { loadSpec } = await import("@spectile/core/loader")
 ```
 
 ## `loadSpec(input, options?)`
@@ -78,9 +78,9 @@ Schemas aren't expanded up front. Operations hold a `SchemaRef`:
 Call `getSchema` with it (or with a pointer string) to read one level:
 
 ```ts
-const pet = getSchema(model, ref);
-pet.types;      // ["object"]
-pet.properties; // [{ name, required, schema: SchemaRef }]
+const pet = getSchema(model, ref)
+pet.types // ["object"]
+pet.properties // [{ name, required, schema: SchemaRef }]
 ```
 
 Children are `SchemaRef`s too, so you only resolve what you show. This is what makes circular schemas (a `User` with `friends: User[]`) safe: `circular: true` marks a reference back to a schema that's already being resolved.
@@ -98,18 +98,18 @@ Along the way it also:
 Pure helpers for a "try it" feature or code samples. They build requests but never send them.
 
 ```ts
-import { buildRequest, missingParameters, resolveServerUrl, toCurl } from "@spectile/core";
+import { buildRequest, missingParameters, resolveServerUrl, toCurl } from "@spectile/core"
 
 const request = buildRequest(model, operation, {
-  serverUrl: resolveServerUrl(model.servers[0]),   // fills in {variables} with their defaults
+  serverUrl: resolveServerUrl(model.servers[0]), // fills in {variables} with their defaults
   parameters: { "path.petId": "7", "query.tags": ["a", "b"] },
   body: '{"name":"Rex"}',
   mediaType: "application/json",
   credentials: { apiKey: "secret" },
-});
+})
 // { method: "POST", url: "https://…/pets/7?tags=a&tags=b", headers: {…}, body: "…" }
 
-toCurl(request); // curl -X POST 'https://…' -H '…' --data '…'
+toCurl(request) // curl -X POST 'https://…' -H '…' --data '…'
 ```
 
 - **Parameters** are keyed by `parameterKey(parameter)`, which is `"<in>.<name>"`. Arrays and objects follow the parameter's `style` and `explode`, as the OpenAPI spec says. Empty values are left out.
@@ -133,5 +133,5 @@ Show them, log them or ignore them.
 All model types are exported: `SpecModel`, `NormalizedOperation`, `SchemaNode`, `SchemaRef`, `Parameter`, `Response`, `SecurityScheme`, `Issue` and more.
 
 ```ts
-import type { NormalizedOperation } from "@spectile/core";
+import type { NormalizedOperation } from "@spectile/core"
 ```

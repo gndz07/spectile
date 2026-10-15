@@ -27,14 +27,25 @@
         "summary": "Create a pet",
         "tags": ["pets"],
         "parameters": [
-          { "name": "pet", "in": "body", "required": true, "schema": { "$ref": "#/definitions/Pet" } }
+          {
+            "name": "pet",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Pet" }
+          }
         ],
         "responses": { "201": { "description": "Created" } }
       }
     },
     "/pets/{petId}": {
       "parameters": [
-        { "name": "petId", "in": "path", "required": true, "description": "Path-level id", "type": "string" },
+        {
+          "name": "petId",
+          "in": "path",
+          "required": true,
+          "description": "Path-level id",
+          "type": "string"
+        },
         { "name": "X-Trace", "in": "header", "type": "string" }
       ],
       "get": {

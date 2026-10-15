@@ -1,5 +1,5 @@
-import type { RequestBody } from "@spectile/core";
-import { createRequiredContext } from "../../context";
+import type { RequestBody } from "@spectile/core"
+import { createRequiredContext } from "../../context"
 
 export const [RequestBodyProvider, useRequestBody] =
-  createRequiredContext<RequestBody>("RequestBody.Root");
+  createRequiredContext<RequestBody>("RequestBody.Root")

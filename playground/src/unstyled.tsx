@@ -1,4 +1,4 @@
-import { type MediaType, type OpenAPIDocument, normalize } from "@spectile/core";
+import { type MediaType, type OpenAPIDocument, normalize } from "@spectile/core"
 import {
   Operation,
   Schema,
@@ -6,14 +6,14 @@ import {
   TryIt,
   useNavigation,
   useOperation,
-} from "@spectile/react";
-import example from "./example.json";
-import { mount } from "./mount";
+} from "@spectile/react"
+import example from "./example.json"
+import { mount } from "./mount"
 
-const model = normalize(example as OpenAPIDocument);
+const model = normalize(example as OpenAPIDocument)
 
 const Sidebar = () => {
-  const { groups, getSearchProps, getItemProps } = useNavigation();
+  const { groups, getSearchProps, getItemProps } = useNavigation()
   return (
     <nav>
       <input {...getSearchProps()} aria-label="Search" />
@@ -28,8 +28,8 @@ const Sidebar = () => {
         </section>
       ))}
     </nav>
-  );
-};
+  )
+}
 
 const SchemaView = ({ media }: { media: MediaType }) =>
   media.schema ? (
@@ -45,11 +45,11 @@ const SchemaView = ({ media }: { media: MediaType }) =>
         </Schema.Rows>
       </Schema.Tree>
     </Schema.Root>
-  ) : null;
+  ) : null
 
 const OperationView = () => {
-  const operation = useOperation();
-  if (!operation) return null;
+  const operation = useOperation()
+  if (!operation) return null
   return (
     <Operation.Root key={operation.id}>
       <Operation.Method /> <Operation.Path />
@@ -57,7 +57,6 @@ const OperationView = () => {
         <Operation.Summary />
       </h1>
       <Operation.Description />
-
       {operation.requestBody?.content.map((media) => (
         <SchemaView key={media.mediaType} media={media} />
       ))}
@@ -69,7 +68,6 @@ const OperationView = () => {
           ))}
         </section>
       ))}
-
       <TryIt.Root>
         <TryIt.ServerSelect />
         <TryIt.Server />
@@ -90,8 +88,8 @@ const OperationView = () => {
         </TryIt.ResponseBody>
       </TryIt.Root>
     </Operation.Root>
-  );
-};
+  )
+}
 
 mount(
   <SpectileProvider model={model} defaultActiveId={model.operations[0]?.id}>
@@ -99,4 +97,4 @@ mount(
     <Sidebar />
     <OperationView />
   </SpectileProvider>,
-);
+)
