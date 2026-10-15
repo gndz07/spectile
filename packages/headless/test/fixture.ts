@@ -29,6 +29,7 @@ export const model = normalize({
       get: {
         operationId: "getPet",
         summary: "Fetch a pet",
+        description: "Returns **one** pet.",
         tags: ["pets"],
         parameters: [
           { name: "id", in: "path", required: true, schema: { type: "string" } },
@@ -57,7 +58,7 @@ export const model = normalize({
         type: "object",
         required: ["name"],
         properties: {
-          name: { type: "string" },
+          name: { type: "string", description: "Display _name_" },
           friends: { type: "array", items: { $ref: "#/components/schemas/User" } },
           profile: { $ref: "#/components/schemas/Profile" },
         },

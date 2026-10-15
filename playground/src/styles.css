@@ -167,8 +167,15 @@ main {
 }
 
 .description {
-  display: block;
   color: var(--muted);
+}
+
+.description > :first-child {
+  margin-top: 0;
+}
+
+.description > :last-child {
+  margin-bottom: 0;
 }
 
 .required {

@@ -1,5 +1,6 @@
 import type { NormalizedOperation } from "@spectile/core";
 import { useOperation } from "../../hooks";
+import { type DescriptionProps, Markdown } from "../../markdown";
 import { Primitive, type PrimitiveProps, Text, type TextProps, mergeProps } from "../../primitive";
 import { OperationProvider, useOperationContext } from "./context";
 
@@ -32,6 +33,6 @@ export const Summary = (props: TextProps) => (
   <Text value={useOperationContext().summary} {...props} />
 );
 
-export const Description = (props: TextProps) => (
-  <Text value={useOperationContext().description} {...props} />
+export const Description = (props: DescriptionProps) => (
+  <Markdown source={useOperationContext().description} {...props} />
 );

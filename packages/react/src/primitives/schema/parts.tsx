@@ -7,6 +7,7 @@ import {
 } from "@spectile/headless";
 import { type CSSProperties, Fragment, type ReactNode, useEffect, useRef } from "react";
 import { useSchemaTree } from "../../hooks";
+import { type DescriptionProps, Markdown } from "../../markdown";
 import {
   Primitive,
   type PrimitiveProps,
@@ -75,8 +76,8 @@ export const Type = (props: TextProps) => (
   <Text value={schemaTypeLabel(useSchemaRow().node)} {...props} />
 );
 
-export const Description = (props: TextProps) => (
-  <Text value={useSchemaRow().node.description} {...props} />
+export const Description = (props: DescriptionProps) => (
+  <Markdown source={useSchemaRow().node.description} {...props} />
 );
 
 export const Required = (props: TextProps) => (

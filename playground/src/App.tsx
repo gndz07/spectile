@@ -8,6 +8,7 @@ import {
 } from "@spectile/core";
 import { schemaTypeLabel } from "@spectile/headless";
 import {
+  Markdown,
   Operation,
   Schema,
   SpectileProvider,
@@ -20,7 +21,10 @@ import {
   useTryItContext,
 } from "@spectile/react";
 import { type FormEvent, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import example from "./example.json";
+
+const renderMarkdown = (markdown: string) => <ReactMarkdown>{markdown}</ReactMarkdown>;
 
 type Loaded = { model: SpecModel; specUrl?: string };
 
@@ -209,7 +213,7 @@ const OperationView = () => {
               <li key={`${parameter.in}:${parameter.name}`}>
                 <code>{parameter.name}</code> <span className="muted">{parameter.in}</span>
                 {parameter.required && <span className="required">required</span>}
-                {parameter.description && <p className="description">{parameter.description}</p>}
+                <Markdown source={parameter.description} className="description" />
               </li>
             ))}
           </ul>
@@ -272,6 +276,7 @@ export const App = () => {
         model={model}
         defaultActiveId={model.operations[0]?.id}
         tryIt={{ baseUrl: loaded.specUrl }}
+        renderMarkdown={renderMarkdown}
       >
         <div className="layout">
           <Sidebar />

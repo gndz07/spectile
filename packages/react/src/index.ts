@@ -22,6 +22,12 @@ export {
   mergeProps,
   useComposedRefs,
 } from "./primitive";
+export {
+  type DescriptionProps,
+  type MarkdownProps,
+  type RenderMarkdown,
+  Markdown,
+} from "./markdown";
 export { useSchema, useSchemaRow } from "./primitives/schema/context";
 export { useOperationContext } from "./primitives/operation/context";
 export * as Schema from "./primitives/schema/parts";

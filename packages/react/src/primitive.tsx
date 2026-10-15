@@ -84,11 +84,17 @@ const withDefaultChildren = (child: ReactNode, value: ReactNode) =>
     ? cloneElement(child, undefined, child.props.children ?? value)
     : child;
 
-export const Text = ({ value, children, asChild, ...props }: TextProps & { value: ReactNode }) => {
+export const Text = <T extends "span" | "div" = "span">({
+  as,
+  value,
+  children,
+  asChild,
+  ...props
+}: PrimitiveProps<T> & { as?: T; value: ReactNode }) => {
   if (value === undefined || value === null || value === false) return null;
   const content = asChild ? withDefaultChildren(children, value) : (children ?? value);
   return (
-    <Primitive as="span" asChild={asChild} {...props}>
+    <Primitive as={(as ?? "span") as "span"} asChild={asChild} {...(props as TextProps)}>
       {content}
     </Primitive>
   );

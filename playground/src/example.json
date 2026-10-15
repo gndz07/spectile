@@ -13,7 +13,7 @@
         "summary": "List users",
         "tags": ["users"],
         "parameters": [
-          { "name": "limit", "in": "query", "description": "How many users to return", "schema": { "type": "integer", "maximum": 100 } }
+          { "name": "limit", "in": "query", "description": "How many users to return, at most `100`", "schema": { "type": "integer", "maximum": 100 } }
         ],
         "responses": {
           "200": {
@@ -48,7 +48,7 @@
       "get": {
         "operationId": "getUser",
         "summary": "Fetch a user",
-        "description": "Returns one user, including their friends and pets.",
+        "description": "Returns **one** user, including:\n\n- their *friends*\n- their pets\n\nSee the [OpenAPI spec](https://spec.openapis.org/oas/latest.html) for how `description` fields are written.",
         "tags": ["users"],
         "responses": {
           "200": {
@@ -88,7 +88,7 @@
         "required": ["id", "name"],
         "properties": {
           "id": { "type": "string", "format": "uuid", "readOnly": true },
-          "name": { "type": "string", "description": "Display name" },
+          "name": { "type": "string", "description": "Display name, shown **publicly**" },
           "email": { "type": ["string", "null"], "format": "email" },
           "friends": {
             "type": "array",

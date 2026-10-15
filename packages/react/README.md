@@ -38,6 +38,7 @@ Wrap your reference in it once. Everything below reads from it.
 | `model` | the `SpecModel` from `normalize` |
 | `defaultActiveId` | the operation selected at first |
 | `tryIt` | `{ fetch, baseUrl }` for try-it; see `createTryIt` in `@spectile/headless` |
+| `renderMarkdown` | `(markdown) => ReactNode`, turns descriptions into elements; see [Markdown](#markdown) |
 
 ## Hooks
 
@@ -87,9 +88,29 @@ Clicking an item makes it the active operation, and `<Operation.Root>` and `useO
 | `Operation.Method` | `GET`, `POST`… |
 | `Operation.Path` | `/pets/{id}` |
 | `Operation.Summary` | the summary |
-| `Operation.Description` | the description |
+| `Operation.Description` | a `<div>` with the description, as [Markdown](#markdown) |
 
 For parameters, request bodies and responses, read them from `useOperation()` for now.
+
+### `Markdown`
+
+Descriptions in OpenAPI are Markdown. Spectile doesn't include a Markdown parser, so you can use the one you already have and decide how to handle raw HTML. Pass it to the provider:
+
+```tsx
+import ReactMarkdown from "react-markdown";
+
+<SpectileProvider model={model} renderMarkdown={(markdown) => <ReactMarkdown>{markdown}</ReactMarkdown>}>
+```
+
+`Operation.Description`, `Schema.Description` and `<Markdown>` then use it. Without it, they show the text as is. Use `<Markdown>` for any other description:
+
+```tsx
+<Markdown source={parameter.description} />
+```
+
+It renders a `<div>`, and nothing when `source` is empty.
+
+> Specs can come from anywhere. If your renderer allows raw HTML, sanitize it.
 
 ### `Schema`
 
@@ -122,7 +143,7 @@ An accessible, keyboard-navigable tree of a schema.
 | `Schema.Name` | the property name |
 | `Schema.Type` | `string`, `Pet`, `Pet[]`, `string \| null`… |
 | `Schema.Required` | `required`, only when it is |
-| `Schema.Description` | the description, when there is one |
+| `Schema.Description` | a `<div>` with the description as [Markdown](#markdown), when there is one |
 | `Schema.Indicator` | your expand icon, only on expandable rows |
 
 Inside a row, `useSchemaRow()` gives you the row (with its full `node`) for anything custom, such as constraints or enums. Inside a root, `useSchema()` gives you the whole tree state, including `expandAll()` and `collapseAll()`.
