@@ -248,6 +248,7 @@ export const App = () => {
       <header className="topbar">
         <strong>{model.info.title}</strong>
         <SpecForm onLoad={(url) => void load(url)} />
+        <a href="/unstyled.html">Unstyled</a>
       </header>
       {error && <p role="alert">{error}</p>}
       <SpectileProvider

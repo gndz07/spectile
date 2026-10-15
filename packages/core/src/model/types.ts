@@ -15,7 +15,23 @@ export type HttpMethod = "get" | "put" | "post" | "delete" | "options" | "head" 
 
 export type SchemaType = "string" | "number" | "integer" | "boolean" | "object" | "array" | "null";
 
-export type SchemaRef = { pointer: string; refName?: string; circular: boolean };
+export type SchemaAnnotations = {
+  title?: string;
+  description?: string;
+  deprecated?: boolean;
+  readOnly?: boolean;
+  writeOnly?: boolean;
+  default?: unknown;
+  examples?: unknown[];
+};
+
+export type SchemaRef = {
+  pointer: string;
+  refName?: string;
+  circular: boolean;
+  /** Written next to the `$ref` and winning over the target's own, e.g. a property's description. */
+  annotations?: SchemaAnnotations;
+};
 
 export type SchemaProperty = { name: string; required: boolean; schema: SchemaRef };
 

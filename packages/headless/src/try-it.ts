@@ -83,7 +83,7 @@ const without = <T>(record: Record<string, T>, key: string) =>
   Object.fromEntries(Object.entries(record).filter(([candidate]) => candidate !== key));
 
 export const parameterExample = (model: SpecModel, parameter: Parameter) => {
-  const node = parameter.schema && getSchema(model, parameter.schema.pointer);
+  const node = parameter.schema && getSchema(model, parameter.schema);
   return inputText(
     parameter.examples[0]?.value ?? node?.examples[0] ?? node?.default ?? node?.enum?.[0],
   );
@@ -111,7 +111,7 @@ export const initialDraft = (model: SpecModel, operation: NormalizedOperation): 
 
 /** Turns typed text into the value the parameter's schema expects: comma-separated arrays, JSON objects. */
 export const parseParameterInput = (model: SpecModel, parameter: Parameter, text: string): unknown => {
-  const types = parameter.schema ? getSchema(model, parameter.schema.pointer).types : [];
+  const types = parameter.schema ? getSchema(model, parameter.schema).types : [];
   if (types.includes("array")) {
     return text
       .split(",")

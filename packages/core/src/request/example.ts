@@ -39,14 +39,14 @@ export const exampleFromSchema = (
 ): unknown => {
   const hidden = (node: SchemaNode) => (usage === "request" ? node.readOnly : node.writeOnly);
 
-  const build = (pointer: string, ancestors: ReadonlySet<string>): unknown => {
-    if (ancestors.has(pointer)) return undefined;
-    const node = getSchema(model, pointer);
+  const build = (ref: SchemaRef, ancestors: ReadonlySet<string>): unknown => {
+    if (ancestors.has(ref.pointer)) return undefined;
+    const node = getSchema(model, ref);
     const declared = declaredValue(node);
     if (declared !== undefined) return declared;
 
-    const inner = new Set([...ancestors, pointer]);
-    const child = (schema: SchemaRef) => build(schema.pointer, inner);
+    const inner = new Set([...ancestors, ref.pointer]);
+    const child = (schema: SchemaRef) => build(schema, inner);
     const type = node.types.find((candidate) => candidate !== "null");
 
     if (node.allOf.length > 0) {
@@ -78,11 +78,11 @@ export const exampleFromSchema = (
   const objectOf = (node: SchemaNode, ancestors: ReadonlySet<string>) =>
     Object.fromEntries(
       node.properties.flatMap(({ name, schema }) => {
-        if (hidden(getSchema(model, schema.pointer))) return [];
-        const value = build(schema.pointer, ancestors);
+        if (hidden(getSchema(model, schema))) return [];
+        const value = build(schema, ancestors);
         return value === undefined ? [] : [[name, value]];
       }),
     );
 
-  return build(ref.pointer, new Set());
+  return build(ref, new Set());
 };

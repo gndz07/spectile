@@ -17,5 +17,8 @@ export const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? va
 export const asStrings = (value: unknown) =>
   asArray(value).filter((item): item is string => typeof item === "string");
 
-export const entries = (value: unknown): [string, unknown][] =>
+export const withoutUndefined = <T extends object>(value: T): Partial<T> =>
+  Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined)) as Partial<T>;
+
+export const entries =(value: unknown): [string, unknown][] =>
   isObject(value) ? Object.entries(value) : [];

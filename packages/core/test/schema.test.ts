@@ -51,6 +51,45 @@ describe("schema nodes", () => {
     });
   });
 
+  it("applies annotations written next to a $ref over the target's", () => {
+    const { schema } = property(getSchema(model, "#/components/schemas/Owner"), "profile");
+    expect(schema).toMatchObject({
+      pointer: "#/components/schemas/Profile",
+      annotations: { description: "The owner's profile", deprecated: true, examples: [{ bio: "Hi" }] },
+    });
+    expect(getSchema(model, schema)).toMatchObject({
+      refName: "Profile",
+      description: "The owner's profile",
+      deprecated: true,
+      examples: [{ bio: "Hi" }],
+      types: ["object"],
+    });
+    expect(getSchema(model, schema.pointer).description).toBe("A user profile");
+  });
+
+  it("lets the outermost $ref's annotations win along a chain", () => {
+    expect(getSchema(model, "#/components/schemas/Described").description).toBe("Outer wins");
+  });
+
+  it("treats a $ref with keywords of its own as that schema plus allOf the target", () => {
+    const extended = getSchema(model, "#/components/schemas/Extended");
+    const profile = getSchema(model, property(extended, "profile").schema);
+    expect(profile).toMatchObject({
+      pointer: "#/components/schemas/Extended/properties/profile",
+      refName: undefined,
+      types: ["object"],
+      description: "A profile with an age",
+      properties: [{ name: "age", required: true }],
+      allOf: [{ pointer: "#/components/schemas/Profile", refName: "Profile" }],
+    });
+  });
+
+  it("overrides the description of referenced parameters and responses", () => {
+    const [operation] = model.operations;
+    expect(operation?.parameters[0]).toMatchObject({ name: "id", description: "The profile's id" });
+    expect(operation?.responses[0]?.description).toBe("The profile");
+  });
+
   it("leaves inline schemas unnamed", () => {
     const profile = getSchema(model, "#/components/schemas/Profile");
     expect(property(profile, "bio").schema.refName).toBeUndefined();

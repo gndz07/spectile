@@ -3,14 +3,25 @@ import type {
   Discriminator,
   NumericConstraint,
   OpenAPIDocument,
+  SchemaAnnotations,
   SchemaNode,
   SchemaRef,
   SchemaType,
   SpecModel,
 } from "../model";
 import { appendPointer, escapeSegment, getAtPointer, unescapeSegment } from "./pointer";
-import { type JsonObject, asArray, asBoolean, asString, entries, isObject, isOneOf } from "./read";
-import { refOf, resolvePointer } from "./refs";
+import {
+  type JsonObject,
+  asArray,
+  asString,
+  entries,
+  isObject,
+  isOneOf,
+  withoutUndefined,
+} from "./read";
+import { fromReferences, refOf, resolvePointer } from "./refs";
+
+const asOptionalBoolean = (value: unknown) => (typeof value === "boolean" ? value : undefined);
 
 const SCHEMA_PREFIX = "#/components/schemas/";
 
@@ -40,20 +51,47 @@ const NUMERIC_CONSTRAINTS: readonly NumericConstraint[] = [
 
 const VALUE_KEYS = new Set(["example", "examples", "default", "const", "enum"]);
 const SCHEMA_MAP_KEYS = new Set(["properties", "patternProperties", "$defs", "dependentSchemas"]);
+const NON_STRUCTURAL_KEYS = new Set([
+  "$ref",
+  "$comment",
+  "$id",
+  "$schema",
+  "$anchor",
+  "$dynamicAnchor",
+  "title",
+  "description",
+  "deprecated",
+  "readOnly",
+  "writeOnly",
+  "default",
+  "examples",
+  "example",
+  "externalDocs",
+  "xml",
+]);
+
+/** A `$ref` with keywords of its own (e.g. extra `properties`) is a schema that also matches its target. */
+const extendsRef = (schema: JsonObject) =>
+  Object.keys(schema).some((key) => !NON_STRUCTURAL_KEYS.has(key) && !key.startsWith("x-"));
+
+const resolveSchema = (document: unknown, pointer: string) =>
+  resolvePointer(document, pointer, extendsRef);
 
 const collectRefs = (value: unknown): string[] => {
-  const ref = refOf(value);
-  if (ref !== undefined) return [ref];
   if (Array.isArray(value)) return value.flatMap(collectRefs);
-  return entries(value).flatMap(([key, child]) => {
-    if (VALUE_KEYS.has(key)) return [];
-    if (SCHEMA_MAP_KEYS.has(key)) return entries(child).flatMap(([, schema]) => collectRefs(schema));
-    return collectRefs(child);
-  });
+  const ref = refOf(value);
+  return [
+    ...(ref === undefined ? [] : [ref]),
+    ...entries(value).flatMap(([key, child]) => {
+      if (VALUE_KEYS.has(key)) return [];
+      if (SCHEMA_MAP_KEYS.has(key)) return entries(child).flatMap(([, schema]) => collectRefs(schema));
+      return collectRefs(child);
+    }),
+  ];
 };
 
 const buildRefGraph = (document: unknown) => {
-  const targetOf = (ref: string) => resolvePointer(document, ref).pointer;
+  const targetOf = (ref: string) => resolveSchema(document, ref).pointer;
   const graph = new Map<string, string[]>();
   const pending = collectRefs(document).map(targetOf);
   for (let node = pending.pop(); node !== undefined; node = pending.pop()) {
@@ -123,8 +161,27 @@ const refTo = (document: OpenAPIDocument, target: string): SchemaRef => ({
   circular: cyclicPointers(document).has(target),
 });
 
-export const schemaRef = (document: OpenAPIDocument, pointer: string): SchemaRef =>
-  refTo(document, resolvePointer(document, pointer).pointer);
+const annotationsOf = (schema: JsonObject): SchemaAnnotations =>
+  withoutUndefined({
+    title: asString(schema.title),
+    description: asString(schema.description),
+    deprecated: asOptionalBoolean(schema.deprecated),
+    readOnly: asOptionalBoolean(schema.readOnly),
+    writeOnly: asOptionalBoolean(schema.writeOnly),
+    default: schema.default,
+    examples: Array.isArray(schema.examples)
+      ? schema.examples
+      : "example" in schema
+        ? [schema.example]
+        : undefined,
+  });
+
+export const schemaRef = (document: OpenAPIDocument, pointer: string): SchemaRef => {
+  const resolution = resolveSchema(document, pointer);
+  const annotations = fromReferences(resolution.via, annotationsOf);
+  const ref = refTo(document, resolution.pointer);
+  return Object.keys(annotations).length > 0 ? { ...ref, annotations } : ref;
+};
 
 const inferTypes = (schema: JsonObject): SchemaType[] => {
   if (isObject(schema.properties) || schema.additionalProperties !== undefined) return ["object"];
@@ -158,10 +215,13 @@ const discriminatorOf = (document: OpenAPIDocument, value: unknown): Discriminat
   return { propertyName: value.propertyName, mapping: Object.fromEntries(mapping) };
 };
 
-export const getSchema = (model: SpecModel, pointer: string): SchemaNode => {
+/** The schema at a pointer, or behind a ref, with any annotations written next to its `$ref` applied. */
+export const getSchema = (model: SpecModel, ref: string | SchemaRef): SchemaNode => {
   const { document } = model;
-  const resolution = resolvePointer(document, pointer);
+  const { pointer, annotations } = typeof ref === "string" ? { pointer: ref } : ref;
+  const resolution = resolveSchema(document, pointer);
   const schema = isObject(resolution.value) ? resolution.value : {};
+  const extended = refOf(schema);
   const child = (...segments: (string | number)[]) =>
     schemaRef(document, appendPointer(resolution.pointer, ...segments));
   const optionalChild = (key: string) => (isObject(schema[key]) ? child(key) : undefined);
@@ -171,20 +231,16 @@ export const getSchema = (model: SpecModel, pointer: string): SchemaNode => {
   return {
     ...refTo(document, resolution.pointer),
     types: schemaTypes(schema),
-    title: asString(schema.title),
-    description: asString(schema.description),
     format: asString(schema.format),
-    deprecated: asBoolean(schema.deprecated),
-    readOnly: asBoolean(schema.readOnly),
-    writeOnly: asBoolean(schema.writeOnly),
+    deprecated: false,
+    readOnly: false,
+    writeOnly: false,
+    examples: [],
+    ...annotationsOf(schema),
+    ...fromReferences(resolution.via, annotationsOf),
+    ...annotations,
     enum: Array.isArray(schema.enum) ? schema.enum : undefined,
     const: schema.const,
-    default: schema.default,
-    examples: Array.isArray(schema.examples)
-      ? schema.examples
-      : "example" in schema
-        ? [schema.example]
-        : [],
     constraints: constraintsOf(schema),
     properties: entries(schema.properties).map(([name]) => ({
       name,
@@ -196,7 +252,7 @@ export const getSchema = (model: SpecModel, pointer: string): SchemaNode => {
         ? schema.additionalProperties
         : optionalChild("additionalProperties"),
     items: optionalChild("items"),
-    allOf: childList("allOf"),
+    allOf: [...(extended === undefined ? [] : [schemaRef(document, extended)]), ...childList("allOf")],
     oneOf: childList("oneOf"),
     anyOf: childList("anyOf"),
     not: optionalChild("not"),

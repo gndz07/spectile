@@ -1,14 +1,57 @@
 {
   "openapi": "3.1.0",
   "info": { "title": "Refs", "version": "1.0.0" },
-  "paths": {},
+  "paths": {
+    "/profiles/{id}": {
+      "get": {
+        "operationId": "getProfile",
+        "parameters": [{ "$ref": "#/components/parameters/Id", "description": "The profile's id" }],
+        "responses": {
+          "200": { "$ref": "#/components/responses/Profile", "description": "The profile" }
+        }
+      }
+    }
+  },
   "components": {
+    "parameters": {
+      "Id": { "name": "id", "in": "path", "required": true, "description": "An id", "schema": { "type": "string" } }
+    },
+    "responses": {
+      "Profile": {
+        "description": "A profile",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } }
+      }
+    },
     "schemas": {
       "Profile": {
         "type": "object",
+        "description": "A user profile",
         "properties": { "bio": { "type": "string" } }
       },
       "Alias": { "$ref": "#/components/schemas/Profile" },
+      "Described": { "$ref": "#/components/schemas/Alias", "description": "Outer wins" },
+      "Owner": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/Profile",
+            "description": "The owner's profile",
+            "deprecated": true,
+            "example": { "bio": "Hi" }
+          }
+        }
+      },
+      "Extended": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/Profile",
+            "description": "A profile with an age",
+            "properties": { "age": { "type": "integer" } },
+            "required": ["age"]
+          }
+        }
+      },
       "Broken": {
         "type": "object",
         "properties": { "missing": { "$ref": "#/components/schemas/DoesNotExist" } }

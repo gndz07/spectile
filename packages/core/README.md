@@ -67,7 +67,7 @@ Each operation is complete on its own, so you don't need to look anything up:
 
 The model is plain JSON. You can `JSON.stringify` it, cache it, or send it from a server to the browser.
 
-## `getSchema(model, pointer)`
+## `getSchema(model, ref)`
 
 Schemas aren't expanded up front. Operations hold a `SchemaRef`:
 
@@ -75,10 +75,10 @@ Schemas aren't expanded up front. Operations hold a `SchemaRef`:
 { pointer: "#/components/schemas/Pet", refName: "Pet", circular: false }
 ```
 
-Call `getSchema` to read one level of it:
+Call `getSchema` with it (or with a pointer string) to read one level:
 
 ```ts
-const pet = getSchema(model, ref.pointer);
+const pet = getSchema(model, ref);
 pet.types;      // ["object"]
 pet.properties; // [{ name, required, schema: SchemaRef }]
 ```
@@ -90,6 +90,8 @@ Along the way it also:
 - Keeps the schema's name in `refName`, so you can show `Pet` instead of `object`.
 - Turns 3.0 `nullable: true` into `types: [..., "null"]`.
 - Collects limits like `minLength` and `pattern` under `constraints`.
+- Applies what's written next to a `$ref`, as OpenAPI 3.1 says: a property `{ "$ref": "#/…/Pet", "description": "The owner's pet" }` gets that description instead of `Pet`'s. The `SchemaRef` carries these in `annotations`, so pass the ref itself rather than `ref.pointer`. Parameters, responses and other referenced objects get the same for `summary` and `description`.
+- Treats a `$ref` with keywords of its own, like `{ "$ref": "#/…/Pet", "properties": { "age": … } }`, as that schema plus `allOf: [Pet]`, which is what it means in OpenAPI 3.1.
 
 ## Building requests
 

@@ -49,7 +49,7 @@ export type SchemaTreeSnapshot = {
   tabStopId?: string;
 };
 
-type GetNode = (pointer: string) => SchemaNode;
+type GetNode = (ref: SchemaRef) => SchemaNode;
 
 const ROOT_ID = "#";
 const COMPOSITIONS = ["allOf", "oneOf", "anyOf"] as const;
@@ -99,7 +99,7 @@ const childEntries = (getNode: GetNode, parent: SchemaNode, parentId: string) =>
   schemaChildren(parent).map((child) => ({
     child,
     id: appendPointer(parentId, ...child.segments),
-    node: getNode(child.schema.pointer),
+    node: getNode(child.schema),
   }));
 
 const isExpandable = (node: SchemaNode) => schemaChildren(node).length > 0;
@@ -196,16 +196,16 @@ export const createSchemaTree = (
   rootRef: SchemaRef,
   { defaultExpandedDepth = 0 }: SchemaTreeOptions = {},
 ) => {
-  const nodes = new Map<string, SchemaNode>();
-  const getNode: GetNode = (pointer) => {
-    const cached = nodes.get(pointer);
+  const nodes = new WeakMap<SchemaRef, SchemaNode>();
+  const getNode: GetNode = (ref) => {
+    const cached = nodes.get(ref);
     if (cached) return cached;
-    const node = getSchema(model, pointer);
-    nodes.set(pointer, node);
+    const node = getSchema(model, ref);
+    nodes.set(ref, node);
     return node;
   };
 
-  const root = getNode(rootRef.pointer);
+  const root = getNode(rootRef);
   const store = createStore<TreeState>({
     expanded: expandedToDepth(getNode, root, defaultExpandedDepth),
   });
