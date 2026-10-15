@@ -8,9 +8,11 @@ import {
 import { type CSSProperties, Fragment, type ReactNode, useEffect, useRef } from "react";
 import { useSchemaTree } from "../../hooks";
 import { type DescriptionProps, Markdown } from "../../markdown";
+import { useSpectile } from "../../provider";
 import {
   Primitive,
   type PrimitiveProps,
+  RequiredText,
   Text,
   type TextProps,
   mergeProps,
@@ -73,7 +75,7 @@ export const Row = ({ row, ref, ...props }: RowProps) => {
 export const Name = (props: TextProps) => <Text value={schemaRowLabel(useSchemaRow())} {...props} />;
 
 export const Type = (props: TextProps) => (
-  <Text value={schemaTypeLabel(useSchemaRow().node)} {...props} />
+  <Text value={schemaTypeLabel(useSchemaRow().node, useSpectile().model)} {...props} />
 );
 
 export const Description = (props: DescriptionProps) => (
@@ -81,7 +83,7 @@ export const Description = (props: DescriptionProps) => (
 );
 
 export const Required = (props: TextProps) => (
-  <Text value={useSchemaRow().required ? "required" : undefined} {...props} />
+  <RequiredText required={useSchemaRow().required} {...props} />
 );
 
 export const Indicator = (props: TextProps) => {

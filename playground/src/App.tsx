@@ -8,14 +8,19 @@ import {
 } from "@spectile/core";
 import { schemaTypeLabel } from "@spectile/headless";
 import {
-  Markdown,
+  Info,
+  Navigation,
   Operation,
+  Parameter,
+  RequestBody,
+  Response,
   Schema,
   SpectileProvider,
   TryIt,
   useNavigation,
   useOperation,
   useOperationContext,
+  useRequestBody,
   useSchema,
   useSpectile,
   useTryItContext,
@@ -53,34 +58,37 @@ const SpecForm = ({ onLoad }: { onLoad: (url: string) => void }) => {
   );
 };
 
-const Sidebar = () => {
-  const { groups, resultCount, getSearchProps, getItemProps } = useNavigation();
-  return (
-    <nav className="sidebar">
-      <input {...getSearchProps()} placeholder="Search operations" aria-label="Search operations" />
-      <p className="muted">{resultCount} operations</p>
-      {groups.map(({ tag, operations }) => (
-        <section key={tag?.name ?? ""}>
-          <h2>{tag?.name ?? "Other"}</h2>
-          <ul>
-            {operations.map((operation) => (
-              <li key={operation.id}>
-                <button type="button" className="nav-item" {...getItemProps(operation)}>
-                  <span className="method" data-method={operation.method}>
-                    {operation.method}
-                  </span>
-                  {operation.summary ?? operation.path}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </nav>
-  );
-};
+const Sidebar = () => (
+  <nav className="sidebar">
+    <Info.Description className="description" />
+    <Navigation.Search placeholder="Search operations" aria-label="Search operations" />
+    <p className="muted">{useNavigation().resultCount} operations</p>
+    <Navigation.Groups>
+      {(group) => (
+        <Navigation.Group group={group} asChild>
+          <section>
+            <h2>{group.tag ? <Navigation.GroupName /> : "Other"}</h2>
+            <Navigation.GroupDescription className="description" />
+            <ul>
+              {group.operations.map((operation) => (
+                <li key={operation.id}>
+                  <Navigation.Item operation={operation} className="nav-item">
+                    <Operation.Method className="method" />
+                    {operation.summary ?? operation.path}
+                  </Navigation.Item>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Navigation.Group>
+      )}
+    </Navigation.Groups>
+  </nav>
+);
 
-const RootType = () => <code className="type">{schemaTypeLabel(useSchema().root)}</code>;
+const RootType = () => (
+  <code className="type">{schemaTypeLabel(useSchema().root, useSpectile().model)}</code>
+);
 
 const SchemaView = ({ media }: { media: MediaType }) =>
   media.schema ? (
@@ -103,6 +111,25 @@ const SchemaView = ({ media }: { media: MediaType }) =>
       </Schema.Tree>
     </Schema.Root>
   ) : null;
+
+const MediaList = ({ content }: { content: MediaType[] }) =>
+  content.map((media) => <SchemaView key={media.mediaType} media={media} />);
+
+const RequestBodyContent = () => <MediaList content={useRequestBody().content} />;
+
+const ParameterView = ({ parameter }: Pick<Parameter.RootProps, "parameter">) => (
+  <Parameter.Root parameter={parameter} asChild>
+    <li>
+      <Parameter.Name asChild>
+        <code />
+      </Parameter.Name>{" "}
+      <Parameter.Location className="muted" />
+      <Parameter.Type className="type" />
+      <Parameter.Required className="required" />
+      <Parameter.Description className="description" />
+    </li>
+  </Parameter.Root>
+);
 
 const isBasic = (scheme: SecurityScheme) =>
   scheme.type === "http" && scheme.scheme.toLowerCase() === "basic";
@@ -194,7 +221,7 @@ const TryItPanel =({ operation }: { operation: NormalizedOperation }) => {
 const OperationView = () => {
   const operation = useOperation();
   if (!operation) return <p className="muted">Select an operation</p>;
-  const { parameters, requestBody, responses } = operation;
+  const { parameters, responses } = operation;
   return (
     <Operation.Root key={operation.id} className="operation">
       <header>
@@ -210,36 +237,39 @@ const OperationView = () => {
           <h2>Parameters</h2>
           <ul className="parameters">
             {parameters.map((parameter) => (
-              <li key={`${parameter.in}:${parameter.name}`}>
-                <code>{parameter.name}</code> <span className="muted">{parameter.in}</span>
-                {parameter.required && <span className="required">required</span>}
-                <Markdown source={parameter.description} className="description" />
-              </li>
+              <ParameterView key={`${parameter.in}:${parameter.name}`} parameter={parameter} />
             ))}
           </ul>
         </section>
       )}
 
-      {requestBody && (
+      <RequestBody.Root asChild>
         <section>
-          <h2>Request body</h2>
-          {requestBody.content.map((media) => (
-            <SchemaView key={media.mediaType} media={media} />
-          ))}
+          <h2>
+            Request body <RequestBody.Required className="required" />
+          </h2>
+          <RequestBody.Description className="description" />
+          <RequestBodyContent />
         </section>
-      )}
+      </RequestBody.Root>
 
       <section>
         <h2>Responses</h2>
         {responses.map((response) => (
-          <div key={response.status} className="response">
+          <Response.Root key={response.status} response={response} className="response">
             <h3>
-              {response.status} <span className="muted">{response.description}</span>
+              <Response.Status />
             </h3>
-            {response.content.map((media) => (
-              <SchemaView key={media.mediaType} media={media} />
-            ))}
-          </div>
+            <Response.Description className="description" />
+            {response.headers.length > 0 && (
+              <ul className="parameters">
+                {response.headers.map((header) => (
+                  <ParameterView key={header.name} parameter={header} />
+                ))}
+              </ul>
+            )}
+            <MediaList content={response.content} />
+          </Response.Root>
         ))}
       </section>
 
@@ -265,26 +295,28 @@ export const App = () => {
     );
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <strong>{model.info.title}</strong>
-        <SpecForm onLoad={(url) => void load(url)} />
-        <a href="/unstyled.html">Unstyled</a>
-      </header>
-      {error && <p role="alert">{error}</p>}
-      <SpectileProvider
-        model={model}
-        defaultActiveId={model.operations[0]?.id}
-        tryIt={{ baseUrl: loaded.specUrl }}
-        renderMarkdown={renderMarkdown}
-      >
+    <SpectileProvider
+      model={model}
+      defaultActiveId={model.operations[0]?.id}
+      tryIt={{ baseUrl: loaded.specUrl }}
+      renderMarkdown={renderMarkdown}
+    >
+      <div className="app">
+        <header className="topbar">
+          <Info.Title asChild>
+            <strong />
+          </Info.Title>
+          <SpecForm onLoad={(url) => void load(url)} />
+          <a href="/unstyled.html">Unstyled</a>
+        </header>
+        {error && <p role="alert">{error}</p>}
         <div className="layout">
           <Sidebar />
           <main>
             <OperationView />
           </main>
         </div>
-      </SpectileProvider>
-    </div>
+      </div>
+    </SpectileProvider>
   );
 };

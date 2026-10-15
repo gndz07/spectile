@@ -1,9 +1,13 @@
 {
   "openapi": "3.1.0",
-  "info": { "title": "Playground API", "version": "1.0.0" },
+  "info": {
+    "title": "Playground API",
+    "version": "1.0.0",
+    "description": "A small API to try **Spectile** with. Load your own spec from a URL above."
+  },
   "servers": [{ "url": "https://api.example.com" }],
   "tags": [
-    { "name": "users", "description": "People using the service" },
+    { "name": "users", "description": "People using the _service_" },
     { "name": "pets", "description": "Their pets" }
   ],
   "paths": {
@@ -18,6 +22,12 @@
         "responses": {
           "200": {
             "description": "A page of users",
+            "headers": {
+              "X-Total-Count": {
+                "description": "How many users there are **in total**",
+                "schema": { "type": "integer" }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
@@ -31,6 +41,7 @@
         "summary": "Create a user",
         "tags": ["users"],
         "requestBody": {
+          "description": "The new user. `id` is set by the server.",
           "required": true,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
         },

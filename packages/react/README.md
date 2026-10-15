@@ -53,32 +53,45 @@ Wrap your reference in it once. Everything below reads from it.
 
 They return the headless state plus its methods, and re-render when that state changes. See `@spectile/headless` for every field.
 
-### A sidebar with `useNavigation`
+## Components
+
+### `Info`
+
+The API's `Info.Title`, `Info.Version`, `Info.Summary` and `Info.Description` (a `<div>`, as [Markdown](#markdown)). They work anywhere in the provider.
+
+### `Navigation`
+
+A sidebar with search, tag groups and the active operation.
 
 ```tsx
-const Sidebar = () => {
-  const { groups, getSearchProps, getItemProps } = useNavigation();
-  return (
-    <nav>
-      <input {...getSearchProps()} aria-label="Search" />
-      {groups.map(({ tag, operations }) => (
-        <section key={tag?.name ?? ""}>
-          <h2>{tag?.name ?? "Other"}</h2>
-          {operations.map((operation) => (
-            <button key={operation.id} {...getItemProps(operation)}>
-              {operation.summary ?? operation.path}
-            </button>
-          ))}
-        </section>
-      ))}
-    </nav>
-  );
-};
+<nav>
+  <Navigation.Search aria-label="Search" />
+  <Navigation.Groups>
+    {(group) => (
+      <Navigation.Group group={group}>
+        <h2>{group.tag ? <Navigation.GroupName /> : "Other"}</h2>
+        <Navigation.GroupDescription />
+        {group.operations.map((operation) => (
+          <Navigation.Item key={operation.id} operation={operation}>
+            <Operation.Method /> <Operation.Summary />
+          </Navigation.Item>
+        ))}
+      </Navigation.Group>
+    )}
+  </Navigation.Groups>
+</nav>
 ```
 
-Clicking an item makes it the active operation, and `<Operation.Root>` and `useOperation()` follow it.
+| Part | Renders |
+| --- | --- |
+| `Navigation.Search` | an `<input type="search">` that filters the operations |
+| `Navigation.Groups` | calls its child function once per tag with matching operations, then once for untagged ones |
+| `Navigation.Group` | a `<div>` for one group (prop `group`) |
+| `Navigation.GroupName` | the tag's name. Nothing for untagged operations. |
+| `Navigation.GroupDescription` | a `<div>` with the tag's description, as [Markdown](#markdown) |
+| `Navigation.Item` | a `<button>` that makes its `operation` active, with `aria-current="page"` when it is. `Operation.*` parts inside it show that operation. |
 
-## Components
+Clicking an item makes it the active operation, and `<Operation.Root>` and `useOperation()` follow it. For anything else, such as the number of results, use `useNavigation()`.
 
 ### `Operation`
 
@@ -90,7 +103,49 @@ Clicking an item makes it the active operation, and `<Operation.Root>` and `useO
 | `Operation.Summary` | the summary |
 | `Operation.Description` | a `<div>` with the description, as [Markdown](#markdown) |
 
-For parameters, request bodies and responses, read them from `useOperation()` for now.
+### `Parameter`, `RequestBody` and `Response`
+
+```tsx
+<Operation.Root>
+  {operation.parameters.map((parameter) => (
+    <Parameter.Root key={`${parameter.in}:${parameter.name}`} parameter={parameter}>
+      <Parameter.Name /> <Parameter.Location /> <Parameter.Type /> <Parameter.Required />
+      <Parameter.Description />
+    </Parameter.Root>
+  ))}
+
+  <RequestBody.Root>
+    <h2>Request body <RequestBody.Required /></h2>
+    <RequestBody.Description />
+  </RequestBody.Root>
+
+  {operation.responses.map((response) => (
+    <Response.Root key={response.status} response={response}>
+      <Response.Status /> <Response.Description />
+      {response.headers.map((header) => (
+        <Parameter.Root key={header.name} parameter={header}>…</Parameter.Root>
+      ))}
+    </Response.Root>
+  ))}
+</Operation.Root>
+```
+
+| Part | Renders |
+| --- | --- |
+| `Parameter.Root` | a `<div>` for one parameter or response header (prop `parameter`) |
+| `Parameter.Name` | the name |
+| `Parameter.Location` | `query`, `header`, `path` or `cookie`. Nothing for a response header. |
+| `Parameter.Type` | `string`, `Pet[]`… |
+| `Parameter.Required` | `required`, only when it is |
+| `Parameter.Description` | a `<div>` with the description, as [Markdown](#markdown) |
+| `RequestBody.Root` | a `<div>` for the operation's request body. Nothing when it takes none. Place it inside `Operation.Root`. |
+| `RequestBody.Required` | `required`, only when it is |
+| `RequestBody.Description` | a `<div>` with the description, as [Markdown](#markdown) |
+| `Response.Root` | a `<div>` for one response (prop `response`) |
+| `Response.Status` | `200`, `4XX` or `default` |
+| `Response.Description` | a `<div>` with the description, as [Markdown](#markdown) |
+
+For the body and response schemas, pass each `content[].schema` to [`Schema`](#schema). Inside a root, `useParameter()`, `useRequestBody()` and `useResponse()` give you the whole object.
 
 ### `Markdown`
 
@@ -102,10 +157,10 @@ import ReactMarkdown from "react-markdown";
 <SpectileProvider model={model} renderMarkdown={(markdown) => <ReactMarkdown>{markdown}</ReactMarkdown>}>
 ```
 
-`Operation.Description`, `Schema.Description` and `<Markdown>` then use it. Without it, they show the text as is. Use `<Markdown>` for any other description:
+Every `Description` part and `<Markdown>` then use it. Without it, they show the text as is. Use `<Markdown>` for any other description:
 
 ```tsx
-<Markdown source={parameter.description} />
+<Markdown source={example.description} />
 ```
 
 It renders a `<div>`, and nothing when `source` is empty.
@@ -214,7 +269,9 @@ Components render no styles. They describe their state with attributes you can t
 | `data-state` | navigation items | `active`, `inactive` |
 | `data-method` | operation parts, navigation items | `get`, `post`… |
 | `data-kind` | `Schema.Row` | `property`, `items`, `oneOf`… |
-| `data-required`, `data-deprecated`, `data-recursive` | rows, operations | present when true |
+| `data-required`, `data-deprecated`, `data-recursive` | rows, operations, parameters, request bodies | present when true |
+| `data-location` | `Parameter.Root` | `query`, `header`, `path`, `cookie` |
+| `data-status` | `Response.Root` | the status, e.g. `200` |
 | `data-state` | `TryIt.Root` | `idle`, `pending`, `done`, `error` |
 | `data-status`, `data-ok` | `TryIt.Status` | the HTTP status; `data-ok` for 2xx |
 | `--spectile-depth` | `Schema.Row` | nesting level, `0` at the top |

@@ -4,8 +4,8 @@ const json = { "application/json": { schema: { $ref: "#/components/schemas/User"
 
 export const model = normalize({
   openapi: "3.1.0",
-  info: { title: "Fixture", version: "1.0.0" },
-  tags: [{ name: "users" }, { name: "pets" }, { name: "admin" }],
+  info: { title: "Fixture", version: "1.0.0", description: "The _fixture_ API" },
+  tags: [{ name: "users", description: "All **users**" }, { name: "pets" }, { name: "admin" }],
   servers: [{ url: "https://api.example.com/v1" }],
   security: [{ apiKey: [] }],
   paths: {
@@ -14,14 +14,20 @@ export const model = normalize({
         operationId: "listUsers",
         summary: "List users",
         tags: ["users"],
-        responses: { "200": { description: "Users", content: json } },
+        responses: {
+          "200": {
+            description: "Users",
+            content: json,
+            headers: { "X-Total": { description: "How _many_", schema: { type: "integer" } } },
+          },
+        },
       },
       post: {
         operationId: "createUser",
         summary: "Create a user",
         tags: ["users", "admin"],
         deprecated: true,
-        requestBody: { content: json },
+        requestBody: { description: "The _new_ user", content: json },
         responses: { "201": { description: "Created" } },
       },
     },
@@ -32,7 +38,13 @@ export const model = normalize({
         description: "Returns **one** pet.",
         tags: ["pets"],
         parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "string" } },
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "The pet's `id`",
+            schema: { type: "string" },
+          },
           {
             name: "fields",
             in: "query",
@@ -71,6 +83,8 @@ export const model = normalize({
     },
   },
 });
+
+export const operation = (id: string) => model.operations.find((each) => each.id === id)!;
 
 export const serversModel = normalize({
   openapi: "3.1.0",

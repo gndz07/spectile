@@ -149,7 +149,7 @@ tryIt.getCredentialProps("apiKey");  // or ("basic", "username" | "password")
 Pure helpers so every framework shows the same text:
 
 ```ts
-schemaTypeLabel(node); // "Pet", "Pet[]", "string | null", "oneOf", "any"
+schemaTypeLabel(node, model); // "Pet", "Pet[]", "string[]", "string | null", "oneOf", "any"
 schemaRowLabel(row);   // property name, else title, else schema name, else "oneOf[0]"
 ```
 

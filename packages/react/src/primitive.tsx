@@ -99,3 +99,7 @@ export const Text = <T extends "span" | "div" = "span">({
     </Primitive>
   );
 };
+
+export const RequiredText = ({ required, ...props }: TextProps & { required: boolean }) => (
+  <Text value={required ? "required" : undefined} {...props} />
+);

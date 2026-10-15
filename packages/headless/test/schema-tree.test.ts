@@ -1,3 +1,4 @@
+import { getSchema, normalize } from "@spectile/core";
 import { describe, expect, it, vi } from "vitest";
 import { type SchemaTree, createSchemaTree, schemaRowLabel, schemaTypeLabel } from "../src";
 import { model, schemaRef } from "./fixture";
@@ -101,6 +102,27 @@ describe("createSchemaTree", () => {
     ]);
     const pet = createSchemaTree(model, schemaRef("Pet")).getSnapshot().root;
     expect(schemaTypeLabel({ ...pet, refName: undefined })).toBe("oneOf");
+  });
+
+  it("labels unnamed array items when given the model", () => {
+    const lists = normalize({
+      openapi: "3.1.0",
+      info: { title: "Lists", version: "1.0.0" },
+      components: {
+        schemas: {
+          Tags: { type: "array", items: { type: "string" } },
+          Notes: { type: "array", items: { type: ["string", "null"] } },
+        },
+      },
+    });
+    const label = (name: string, withModel: boolean) =>
+      schemaTypeLabel(
+        { ...getSchema(lists, `#/components/schemas/${name}`), refName: undefined },
+        withModel ? lists : undefined,
+      );
+    expect(label("Tags", true)).toBe("string[]");
+    expect(label("Notes", true)).toBe("(string | null)[]");
+    expect(label("Tags", false)).toBe("unknown[]");
   });
 
   it("labels rows by property name, then schema name, then position", () => {
