@@ -8,6 +8,7 @@ import {
 } from "@spectile/core"
 import { schemaTypeLabel } from "@spectile/headless"
 import {
+  ExternalDocs,
   Info,
   Navigation,
   Operation,
@@ -58,9 +59,19 @@ const SpecForm = ({ onLoad }: { onLoad: (url: string) => void }) => {
   )
 }
 
+const DocsLink = ({ externalDocs }: Pick<ExternalDocs.RootProps, "externalDocs">) => (
+  <ExternalDocs.Root externalDocs={externalDocs} className="external-docs">
+    <ExternalDocs.Description className="description" />
+    <ExternalDocs.Link target="_blank" rel="noreferrer">
+      Docs ↗
+    </ExternalDocs.Link>
+  </ExternalDocs.Root>
+)
+
 const Sidebar = () => (
   <nav className="sidebar">
     <Info.Description className="description" />
+    <DocsLink externalDocs={useSpectile().model.externalDocs} />
     <Navigation.Search placeholder="Search operations" aria-label="Search operations" />
     <p className="muted">{useNavigation().resultCount} operations</p>
     <Navigation.Groups>
@@ -69,6 +80,7 @@ const Sidebar = () => (
           <section>
             <h2>{group.tag ? <Navigation.GroupName /> : "Other"}</h2>
             <Navigation.GroupDescription className="description" />
+            <DocsLink externalDocs={group.tag?.externalDocs} />
             <ul>
               {group.operations.map((operation) => (
                 <li key={operation.id}>
@@ -231,6 +243,7 @@ const OperationView = () => {
         <Operation.Summary />
       </h1>
       <Operation.Description className="description" />
+      <DocsLink externalDocs={operation.externalDocs} />
 
       {parameters.length > 0 && (
         <section>

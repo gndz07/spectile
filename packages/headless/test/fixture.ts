@@ -5,6 +5,7 @@ const json = { "application/json": { schema: { $ref: "#/components/schemas/User"
 export const model = normalize({
   openapi: "3.1.0",
   info: { title: "Fixture", version: "1.0.0", description: "The _fixture_ API" },
+  externalDocs: { url: "https://docs.example.com", description: "More _docs_" },
   tags: [{ name: "users", description: "All **users**" }, { name: "pets" }, { name: "admin" }],
   servers: [{ url: "https://api.example.com/v1" }],
   security: [{ apiKey: [] }],

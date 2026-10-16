@@ -153,6 +153,23 @@ Clicking an item makes it the active operation, and `<Operation.Root>` and `useO
 
 For the body and response schemas, pass each `content[].schema` to [`Schema`](#schema). Inside a root, `useParameter()`, `useRequestBody()` and `useResponse()` give you the whole object.
 
+### `ExternalDocs`
+
+A "read more" link. Pass the `externalDocs` of the model, a tag, an operation or a schema:
+
+```tsx
+<ExternalDocs.Root externalDocs={operation.externalDocs}>
+  <ExternalDocs.Description />
+  <ExternalDocs.Link>Read more</ExternalDocs.Link>
+</ExternalDocs.Root>
+```
+
+| Part                       | Renders                                                          |
+| -------------------------- | ---------------------------------------------------------------- |
+| `ExternalDocs.Root`        | a `<div>`. Nothing when `externalDocs` is undefined.             |
+| `ExternalDocs.Link`        | an `<a href>` to the docs, showing the URL unless given children |
+| `ExternalDocs.Description` | a `<div>` with the description, as [Markdown](#markdown)         |
+
 ### `Markdown`
 
 Descriptions in OpenAPI are Markdown. Spectile doesn't include a Markdown parser, so you can use the one you already have and decide how to handle raw HTML. Pass it to the provider:

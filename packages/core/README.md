@@ -48,8 +48,9 @@ Builds the `SpecModel`:
 ```ts
 {
   info,            // { title, version, summary?, description? }
+  externalDocs,    // { url, description? }, also on tags, operations and schemas
   operations,      // NormalizedOperation[]
-  tags,            // [{ name, description? }]
+  tags,            // [{ name, description?, externalDocs? }]
   securitySchemes, // apiKey, http, oauth2, openIdConnect, mutualTLS
   servers,         // [{ url, description?, variables }]
   warnings,        // problems found while normalizing
@@ -60,7 +61,7 @@ Builds the `SpecModel`:
 Each operation is complete on its own, so you don't need to look anything up:
 
 - `id`: the `operationId`, or a slug like `get-users-id` when there isn't one. Always unique.
-- `method`, `path`, `summary`, `description`, `tags`, `deprecated`
+- `method`, `path`, `summary`, `description`, `externalDocs`, `tags`, `deprecated`
 - `parameters`: path-level and operation-level parameters, merged (the operation's win).
 - `requestBody`, `responses`: each with its content types, schemas and examples.
 - `security`, `servers`: inherited from the top level when the operation doesn't set its own. `security: []` means "no auth".

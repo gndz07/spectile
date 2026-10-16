@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import { model, operation } from "../../headless/test/fixture"
 import {
+  ExternalDocs,
   Info,
   Navigation,
   Operation,
@@ -31,6 +32,33 @@ describe("Info", () => {
     )
     expect(screen.getByTestId("title").textContent).toBe("Fixture 1.0.0")
     expect(screen.getByTestId("description").textContent).toBe("The _fixture_ API")
+  })
+})
+
+describe("ExternalDocs", () => {
+  it("links to the docs", () => {
+    render(
+      <ExternalDocs.Root externalDocs={model.externalDocs} data-testid="docs">
+        <ExternalDocs.Link />
+        <ExternalDocs.Link>Read more</ExternalDocs.Link>
+        <ExternalDocs.Description />
+      </ExternalDocs.Root>,
+    )
+    const links = screen.getAllByRole("link")
+    expect(links.map((link) => [link.getAttribute("href"), link.textContent])).toEqual([
+      ["https://docs.example.com", "https://docs.example.com"],
+      ["https://docs.example.com", "Read more"],
+    ])
+    expect(screen.getByTestId("docs").textContent).toContain("More _docs_")
+  })
+
+  it("renders nothing without docs", () => {
+    const { container } = render(
+      <ExternalDocs.Root externalDocs={operation("getPet").externalDocs}>
+        <ExternalDocs.Link />
+      </ExternalDocs.Root>,
+    )
+    expect(container.innerHTML).toBe("")
   })
 })
 

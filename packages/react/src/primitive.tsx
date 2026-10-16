@@ -84,7 +84,7 @@ const withDefaultChildren = (child: ReactNode, value: ReactNode) =>
     ? cloneElement(child, undefined, child.props.children ?? value)
     : child
 
-export const Text = <T extends "span" | "div" = "span">({
+export const Text = <T extends "span" | "div" | "a" = "span">({
   as,
   value,
   children,

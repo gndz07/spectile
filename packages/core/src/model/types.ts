@@ -15,9 +15,12 @@ export type HttpMethod = "get" | "put" | "post" | "delete" | "options" | "head" 
 
 export type SchemaType = "string" | "number" | "integer" | "boolean" | "object" | "array" | "null"
 
+export type ExternalDocs = { url: string; description?: string }
+
 export type SchemaAnnotations = {
   title?: string
   description?: string
+  externalDocs?: ExternalDocs
   deprecated?: boolean
   readOnly?: boolean
   writeOnly?: boolean
@@ -59,6 +62,7 @@ export type SchemaNode = SchemaRef & {
   types: SchemaType[]
   title?: string
   description?: string
+  externalDocs?: ExternalDocs
   format?: string
   deprecated: boolean
   readOnly: boolean
@@ -139,6 +143,7 @@ export type NormalizedOperation = {
   pointer: string
   summary?: string
   description?: string
+  externalDocs?: ExternalDocs
   tags: string[]
   deprecated: boolean
   parameters: Parameter[]
@@ -148,7 +153,7 @@ export type NormalizedOperation = {
   servers: Server[]
 }
 
-export type Tag = { name: string; description?: string }
+export type Tag = { name: string; description?: string; externalDocs?: ExternalDocs }
 
 export type ApiKeyLocation = "query" | "header" | "cookie"
 
@@ -175,6 +180,7 @@ export type Info = { title: string; version: string; summary?: string; descripti
 export type SpecModel = {
   document: OpenAPIDocument
   info: Info
+  externalDocs?: ExternalDocs
   operations: NormalizedOperation[]
   tags: Tag[]
   securitySchemes: SecurityScheme[]

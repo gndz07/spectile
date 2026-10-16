@@ -5,10 +5,18 @@
     "version": "1.0.0",
     "description": "A small API to try **Spectile** with. Load your own spec from a URL above."
   },
+  "externalDocs": {
+    "url": "https://spec.openapis.org/oas/latest.html",
+    "description": "The **OpenAPI** spec"
+  },
   "servers": [{ "url": "https://api.example.com" }],
   "tags": [
     { "name": "users", "description": "People using the _service_" },
-    { "name": "pets", "description": "Their pets" }
+    {
+      "name": "pets",
+      "description": "Their pets",
+      "externalDocs": { "url": "https://example.com/pets", "description": "Pet _care_" }
+    }
   ],
   "paths": {
     "/users": {
@@ -67,6 +75,7 @@
         "operationId": "getUser",
         "summary": "Fetch a user",
         "description": "Returns **one** user, including:\n\n- their *friends*\n- their pets\n\nSee the [OpenAPI spec](https://spec.openapis.org/oas/latest.html) for how `description` fields are written.",
+        "externalDocs": { "url": "https://example.com/users" },
         "tags": ["users"],
         "responses": {
           "200": {

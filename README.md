@@ -17,5 +17,5 @@ pnpm install
 pnpm build        # build every package
 pnpm test         # run every test
 pnpm typecheck
-pnpm --filter @spectile/playground dev   # try it in the browser (run pnpm build first)
+pnpm --filter @spectile/playground dev   # try it in the browser; runs the packages' source
 ```

@@ -25,6 +25,7 @@ import {
 } from "../model"
 import { schemaRef } from "../schema/get"
 import { type Context, type Located, resolveObject } from "./context"
+import { externalDocsOf } from "./external-docs"
 import { securityRequirements } from "./security"
 import { defaultServers, serverList } from "./servers"
 
@@ -164,6 +165,7 @@ const operationDraft = (
   pointer: operation.pointer,
   summary: asString(operation.value.summary),
   description: asString(operation.value.description),
+  externalDocs: externalDocsOf(operation.value.externalDocs),
   tags: asStrings(operation.value.tags),
   deprecated: asBoolean(operation.value.deprecated),
   parameters: mergeParameters(pathParameters, parameterList(context, operation)),

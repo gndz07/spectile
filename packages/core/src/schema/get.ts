@@ -21,6 +21,7 @@ import type {
   SchemaType,
   SpecModel,
 } from "../model"
+import { externalDocsOf } from "../normalize/external-docs"
 import { cyclicPointers } from "./cycles"
 import { SCHEMA_PREFIX, resolveSchema } from "./resolve"
 
@@ -64,6 +65,7 @@ const annotationsOf = (schema: JsonObject): SchemaAnnotations =>
   withoutUndefined({
     title: asString(schema.title),
     description: asString(schema.description),
+    externalDocs: externalDocsOf(schema.externalDocs),
     deprecated: asOptionalBoolean(schema.deprecated),
     readOnly: asOptionalBoolean(schema.readOnly),
     writeOnly: asOptionalBoolean(schema.writeOnly),
