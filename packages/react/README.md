@@ -39,7 +39,7 @@ Wrap your reference in it once. Everything below reads from it.
 | ----------------- | -------------------------------------------------------------------------------------- |
 | `model`           | the `SpecModel` from `normalize`                                                       |
 | `defaultActiveId` | the operation selected at first                                                        |
-| `tryIt`           | `{ fetch, baseUrl }` for try-it; see `createTryIt` in `@spectile/headless`             |
+| `tryIt`           | `{ fetch, baseUrl, storage }` for try-it; see `createTryIt` in `@spectile/headless`    |
 | `renderMarkdown`  | `(markdown) => ReactNode`, turns descriptions into elements; see [Markdown](#markdown) |
 
 ## Hooks
@@ -228,7 +228,7 @@ Inside a row, `useSchemaRow()` gives you the row (with its full `node`) for anyt
 
 ### `TryIt`
 
-Send real requests from the docs, like Swagger's "Try it out". Place it inside `Operation.Root`.
+Send real requests from the docs. Place it inside `Operation.Root`.
 
 ```tsx
 <Operation.Root>

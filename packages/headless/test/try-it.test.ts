@@ -330,3 +330,65 @@ describe("servers", () => {
     expect(urlOf(pets)).toBe("https://us.example.com/v1/pets")
   })
 })
+
+describe("credential storage", () => {
+  const memoryStorage = (entries: Record<string, string> = {}) => {
+    const items = new Map(Object.entries(entries))
+    return {
+      items,
+      getItem: (key: string) => items.get(key) ?? null,
+      setItem: vi.fn((key: string, value: string) => void items.set(key, value)),
+    }
+  }
+
+  it("keeps credentials across instances", () => {
+    const storage = memoryStorage()
+    const first = createTryIt(model, { storage })
+    first.setCredential("apiKey", "secret")
+    first.setCredential("basic", { username: "ada", password: "pw" })
+    const second = createTryIt(model, { storage })
+    expect(second.getSnapshot().credentials).toEqual({
+      apiKey: "secret",
+      basic: { username: "ada", password: "pw" },
+    })
+    second.setCredential("apiKey", undefined)
+    expect(createTryIt(model, { storage }).getSnapshot().credentials).toEqual({
+      basic: { username: "ada", password: "pw" },
+    })
+  })
+
+  it("keys storage by the spec's title unless given a key", () => {
+    const storage = memoryStorage()
+    createTryIt(model, { storage }).setCredential("apiKey", "a")
+    createTryIt(model, { storage, storageKey: "mine" }).setCredential("apiKey", "b")
+    expect(storage.items.get(`spectile:credentials:${model.info.title}`)).toBe('{"apiKey":"a"}')
+    expect(storage.items.get("mine")).toBe('{"apiKey":"b"}')
+  })
+
+  it("ignores broken or blocked storage", () => {
+    const broken = memoryStorage({ key: '{"apiKey":1,"basic":{"username":"x"},"token":"t"}' })
+    expect(createTryIt(model, { storage: broken, storageKey: "key" }).getSnapshot().credentials).toEqual({ token: "t" })
+    const blocked = {
+      getItem: () => {
+        throw new Error("blocked")
+      },
+      setItem: () => {
+        throw new Error("blocked")
+      },
+    }
+    const tryIt = createTryIt(model, { storage: blocked })
+    tryIt.setCredential("apiKey", "secret")
+    expect(tryIt.getSnapshot().credentials).toEqual({ apiKey: "secret" })
+  })
+
+  it("writes only when credentials change", () => {
+    const storage = memoryStorage()
+    const tryIt = createTryIt(model, { storage })
+    const getPet = tryIt.forOperation("getPet")
+    storage.setItem.mockClear()
+    getPet.setParameter("path.id", "7")
+    expect(storage.setItem).not.toHaveBeenCalled()
+    tryIt.setCredential("apiKey", "secret")
+    expect(storage.setItem).toHaveBeenCalledTimes(1)
+  })
+})

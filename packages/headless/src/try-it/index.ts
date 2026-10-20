@@ -4,9 +4,11 @@ import { createInitialDrafts } from "./draft"
 import { credentialProps } from "./props"
 import { type SessionContext, createSession } from "./session"
 import { EMPTY_STATE, withCredential } from "./state"
+import { readCredentials, writeCredentials } from "./storage"
 import type { TryItOptions, TryItSettings, TryItState } from "./types"
 
 export type {
+  CredentialStorage,
   FetchLike,
   HttpResponse,
   OperationTryItSnapshot,
@@ -23,7 +25,18 @@ export { selectedServerUrl, serverListKey } from "./servers"
 export type OperationTryIt = ReturnType<typeof createSession>
 
 export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
-  const store = createStore<TryItState>(EMPTY_STATE)
+  const { storage, storageKey = `spectile:credentials:${model.info.title}` } = options
+  const store = createStore<TryItState>({
+    ...EMPTY_STATE,
+    credentials: storage ? readCredentials(storage, storageKey) : {},
+  })
+  if (storage) {
+    const saved = memoizeLast((credentials: TryItState["credentials"]) =>
+      writeCredentials(storage, storageKey, credentials),
+    )
+    saved(store.getSnapshot().credentials)
+    store.subscribe(() => saved(store.getSnapshot().credentials))
+  }
   const context: SessionContext = {
     model,
     options,

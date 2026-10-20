@@ -44,11 +44,21 @@ export type FetchLike = (
   init: { method: string; headers: Record<string, string>; body?: string | Blob; signal?: unknown },
 ) => Promise<ResponseLike>
 
+/** `sessionStorage`, `localStorage` or anything with the same two methods. */
+export type CredentialStorage = {
+  getItem: (key: string) => string | null
+  setItem: (key: string, value: string) => void
+}
+
 export type TryItOptions = {
   /** Defaults to the global `fetch`. Pass your own to add a proxy, logging or test doubles. */
   fetch?: FetchLike
   /** Where the spec was loaded from. Relative server URLs like `/api/v3` resolve against it. */
   baseUrl?: string
+  /** Keeps credentials here, so they survive a reload. Not kept when left out. */
+  storage?: CredentialStorage
+  /** Defaults to `spectile:credentials:` plus the spec's title. */
+  storageKey?: string
 }
 
 export type TryItSettings = { credentials: Record<string, Credential> }

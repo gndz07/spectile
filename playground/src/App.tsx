@@ -334,7 +334,7 @@ export const App = () => {
     <SpectileProvider
       model={model}
       defaultActiveId={model.operations[0]?.id}
-      tryIt={{ baseUrl: loaded.specUrl }}
+      tryIt={{ baseUrl: loaded.specUrl, storage: sessionStorage }}
       renderMarkdown={renderMarkdown}
     >
       <div className="app">

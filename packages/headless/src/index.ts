@@ -17,6 +17,7 @@ export {
   type FetchLike,
   type HttpResponse,
   type OperationTryIt,
+  type CredentialStorage,
   type OperationTryItSnapshot,
   type RequestDraft,
   type ResponseLike,

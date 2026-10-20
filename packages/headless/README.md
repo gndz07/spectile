@@ -90,7 +90,7 @@ Only one row is in the tab order (`tabStopId`). The snapshot's `focusedId` tells
 
 ## Try it
 
-Fill in a request, send it and show the response, like Swagger's "Try it out".
+Fill in a request, send it and show the response.
 
 ```ts
 import { createTryIt } from "@spectile/headless"
@@ -137,10 +137,14 @@ const { serverIndex, serverVariables, serverUrl } = getPet.getSnapshot()
 
 The choice is shared by operations with the same server list. Picking a server for one endpoint picks it for every endpoint that uses the spec's servers, while an endpoint with its own servers keeps its own choice.
 
-**Options:** `createTryIt(model, { fetch, baseUrl })`.
+**Options:** `createTryIt(model, { fetch, baseUrl, storage, storageKey })`.
 
 - `fetch`: pass your own to route requests through a proxy, add logging, or test without a network.
 - `baseUrl`: where the spec was loaded from. Relative server URLs such as `/api/v3` are resolved against it, as the OpenAPI spec says.
+- `storage`: keeps credentials so they survive a reload. Without it, they're only kept in memory and a reload clears them. `sessionStorage` keeps them until the tab closes, while `localStorage` keeps them until the user clears them.
+- `storageKey`: defaults to `spectile:credentials:` plus the spec's title, so specs on the same site don't share credentials. To share them, give the specs the same key; credentials are stored by security scheme name, so only schemes with the same name carry over.
+
+Only credentials are stored, never drafts or responses. If the browser blocks storage, credentials just stay in memory.
 
 **Prop getters:**
 
