@@ -14,8 +14,8 @@ const Sidebar = () => {
   return (
     <nav>
       <input aria-label="Search" {...getSearchProps()} />
-      {groups.map(({ tag, operations }) => (
-        <ul key={tag?.name ?? "untagged"} aria-label={tag?.name ?? "untagged"}>
+      {groups.map(({ kind, tag, operations }) => (
+        <ul key={tag?.name ?? kind} aria-label={tag?.name ?? kind}>
           {operations.map((operation) => (
             <li key={operation.id}>
               <button type="button" {...getItemProps(operation)}>

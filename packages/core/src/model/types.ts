@@ -153,10 +153,15 @@ export type Server = {
   variables: Record<string, ServerVariable>
 }
 
+/** A webhook is a request the API sends to you, not one you send to it. */
+export type OperationKind = "operation" | "webhook"
+
 export type NormalizedOperation = {
   id: string
+  kind: OperationKind
   operationId?: string
   method: HttpMethod
+  /** For a webhook, its name. */
   path: string
   pointer: string
   summary?: string
@@ -200,6 +205,7 @@ export type SpecModel = {
   info: Info
   externalDocs?: ExternalDocs
   operations: NormalizedOperation[]
+  webhooks: NormalizedOperation[]
   tags: Tag[]
   securitySchemes: SecurityScheme[]
   servers: Server[]

@@ -64,6 +64,16 @@ export const model = normalize({
       },
     },
   },
+  webhooks: {
+    userCreated: {
+      post: {
+        summary: "A user signed up",
+        tags: ["users"],
+        requestBody: { content: json },
+        responses: { "200": { description: "Received" } },
+      },
+    },
+  },
   components: {
     securitySchemes: { apiKey: { type: "apiKey", in: "header", name: "X-API-Key" } },
     schemas: {

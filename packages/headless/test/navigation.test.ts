@@ -1,3 +1,4 @@
+import { findOperation } from "@spectile/core"
 import { describe, expect, it, vi } from "vitest"
 import { type Navigation, createNavigation } from "../src"
 import { model } from "./fixture"
@@ -5,21 +6,25 @@ import { model } from "./fixture"
 const groupIds = (navigation: Navigation) =>
   navigation
     .getSnapshot()
-    .groups.map(({ tag, operations }) => [tag?.name, operations.map(({ id }) => id)])
+    .groups.map(({ kind, tag, operations }) => [
+      tag?.name ?? kind,
+      operations.map(({ id }) => id),
+    ])
 
 const operation = (id: string) => {
-  const found = model.operations.find((candidate) => candidate.id === id)
+  const found = findOperation(model, id)
   if (!found) throw new Error(`No operation ${id}`)
   return found
 }
 
 describe("createNavigation", () => {
-  it("groups operations by tag, with untagged operations last", () => {
+  it("groups operations by tag, then untagged operations, then webhooks", () => {
     expect(groupIds(createNavigation(model))).toEqual([
       ["users", ["listUsers", "createUser"]],
       ["pets", ["getPet"]],
       ["admin", ["createUser"]],
-      [undefined, ["health"]],
+      ["operation", ["health"]],
+      ["webhook", ["webhook-post-usercreated"]],
     ])
   })
 
@@ -29,10 +34,19 @@ describe("createNavigation", () => {
     expect(groupIds(navigation)).toEqual([
       ["users", ["createUser"]],
       ["admin", ["createUser"]],
+      ["webhook", ["webhook-post-usercreated"]],
     ])
-    expect(navigation.getSnapshot().resultCount).toBe(1)
+    expect(navigation.getSnapshot().resultCount).toBe(2)
+    navigation.setQuery("webhook")
+    expect(groupIds(navigation)).toEqual([["webhook", ["webhook-post-usercreated"]]])
     navigation.setQuery("  ")
-    expect(navigation.getSnapshot().resultCount).toBe(4)
+    expect(navigation.getSnapshot().resultCount).toBe(5)
+  })
+
+  it("can make a webhook active", () => {
+    const navigation = createNavigation(model)
+    navigation.getItemProps(operation("webhook-post-usercreated")).onClick()
+    expect(navigation.getSnapshot().active).toMatchObject({ kind: "webhook", path: "userCreated" })
   })
 
   it("tracks the active operation", () => {

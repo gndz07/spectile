@@ -16,6 +16,7 @@ import {
   type HttpMethod,
   type MediaType,
   type NormalizedOperation,
+  type OperationKind,
   type Parameter,
   type ParameterFields,
   type ParameterLocation,
@@ -177,49 +178,63 @@ const responses = (context: Context, operation: Located): Response[] =>
     ]
   })
 
+const SECTIONS: Record<OperationKind, string> = { operation: "paths", webhook: "webhooks" }
+
+type PathItem = { kind: OperationKind; path: string; located: Located; parameters: Parameter[] }
+
+/** The API sends webhooks, so the document's security and servers don't apply to them. */
+const serversOf = (context: Context, { kind, located }: PathItem, operation: Located) =>
+  kind === "webhook"
+    ? []
+    : (serverList(operation.value.servers) ??
+      serverList(located.value.servers) ??
+      serverList(context.document.servers) ??
+      defaultServers())
+
+const securityOf = (context: Context, { kind }: PathItem, operation: Located) =>
+  securityRequirements(
+    operation.value.security ?? (kind === "operation" ? context.document.security : undefined),
+  )
+
 const operationDraft = (
   context: Context,
-  path: string,
+  item: PathItem,
   method: HttpMethod,
-  pathItem: Located,
-  pathParameters: Parameter[],
   operation: Located,
 ): OperationDraft => ({
+  kind: item.kind,
   operationId: asString(operation.value.operationId),
   method,
-  path,
+  path: item.path,
   pointer: operation.pointer,
   summary: asString(operation.value.summary),
   description: asString(operation.value.description),
   externalDocs: externalDocsOf(operation.value.externalDocs),
   tags: asStrings(operation.value.tags),
   deprecated: asBoolean(operation.value.deprecated),
-  parameters: mergeParameters(pathParameters, parameterList(context, operation)),
+  parameters: mergeParameters(item.parameters, parameterList(context, operation)),
   requestBody:
     operation.value.requestBody === undefined
       ? undefined
       : requestBody(context, appendPointer(operation.pointer, "requestBody")),
   responses: responses(context, operation),
-  security: securityRequirements(operation.value.security ?? context.document.security),
-  servers:
-    serverList(operation.value.servers) ??
-    serverList(pathItem.value.servers) ??
-    serverList(context.document.servers) ??
-    defaultServers(),
+  security: securityOf(context, item, operation),
+  servers: serversOf(context, item, operation),
 })
 
-const pathOperations = (context: Context, path: string): OperationDraft[] => {
-  const pathItem = resolveObject(context, appendPointer("#", "paths", path))
-  if (!pathItem) return []
-  const pathParameters = parameterList(context, pathItem)
+const pathOperations = (context: Context, kind: OperationKind, path: string): OperationDraft[] => {
+  const located = resolveObject(context, appendPointer("#", SECTIONS[kind], path))
+  if (!located) return []
+  const item = { kind, path, located, parameters: parameterList(context, located) }
   return METHODS.flatMap((method) => {
-    if (pathItem.value[method] === undefined) return []
-    const operation = resolveObject(context, appendPointer(pathItem.pointer, method))
-    return operation
-      ? [operationDraft(context, path, method, pathItem, pathParameters, operation)]
-      : []
+    if (located.value[method] === undefined) return []
+    const operation = resolveObject(context, appendPointer(located.pointer, method))
+    return operation ? [operationDraft(context, item, method, operation)] : []
   })
 }
+
+const sectionOperations = (context: Context, kind: OperationKind) =>
+  entries(context.document[SECTIONS[kind]]).flatMap(([path]) => pathOperations(context, kind, path))
 
 const slug = (value: string) =>
   value
@@ -233,6 +248,9 @@ const uniqueId = (base: string, taken: (id: string) => boolean) => {
   return id
 }
 
+const generatedId = ({ kind, method, path }: OperationDraft) =>
+  kind === "webhook" ? `webhook ${method} ${path}` : `${method} ${path}`
+
 /** Explicit operationIds are reserved first, so a generated id never takes one that comes later. */
 const assignIds = (context: Context, drafts: OperationDraft[]): NormalizedOperation[] => {
   const reserved = new Set(drafts.flatMap(({ operationId }) => operationId ?? []))
@@ -243,7 +261,7 @@ const assignIds = (context: Context, drafts: OperationDraft[]): NormalizedOperat
     const id =
       explicit !== undefined && !used.has(explicit)
         ? explicit
-        : uniqueId(explicit ?? slug(`${draft.method} ${draft.path}`), taken)
+        : uniqueId(explicit ?? slug(generatedId(draft)), taken)
     used.add(id)
     if (draft.operationId !== undefined && id !== draft.operationId) {
       context.issues.push(
@@ -258,8 +276,12 @@ const assignIds = (context: Context, drafts: OperationDraft[]): NormalizedOperat
   })
 }
 
-export const normalizeOperations = (context: Context): NormalizedOperation[] =>
-  assignIds(
-    context,
-    entries(context.document.paths).flatMap(([path]) => pathOperations(context, path)),
-  )
+/** Operations and webhooks share one id space, as the spec's operationIds do. */
+export const normalizeOperations = (context: Context) => {
+  const all = assignIds(context, [
+    ...sectionOperations(context, "operation"),
+    ...sectionOperations(context, "webhook"),
+  ])
+  const ofKind = (kind: OperationKind) => all.filter((operation) => operation.kind === kind)
+  return { operations: ofKind("operation"), webhooks: ofKind("webhook") }
+}

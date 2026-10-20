@@ -1,4 +1,4 @@
-import type { SchemaRef } from "@spectile/core"
+import { type SchemaRef, findOperation } from "@spectile/core"
 import {
   type ReadableStore,
   type SchemaTree,
@@ -23,7 +23,7 @@ export const useNavigation = () => {
 export const useOperation = (id?: string) => {
   const { model } = useSpectile()
   const { active } = useNavigation()
-  return id === undefined ? active : model.operations.find((operation) => operation.id === id)
+  return id === undefined ? active : findOperation(model, id)
 }
 
 /** The credentials shared by every operation. */

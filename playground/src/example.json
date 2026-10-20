@@ -18,6 +18,22 @@
       "externalDocs": { "url": "https://example.com/pets", "description": "Pet _care_" }
     }
   ],
+  "webhooks": {
+    "userCreated": {
+      "post": {
+        "operationId": "userCreated",
+        "summary": "A user signed up",
+        "description": "Sent to your webhook URL whenever someone creates an account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/User" } }
+          }
+        },
+        "responses": { "200": { "description": "Return any 2xx status to acknowledge it" } }
+      }
+    }
+  },
   "paths": {
     "/users": {
       "get": {

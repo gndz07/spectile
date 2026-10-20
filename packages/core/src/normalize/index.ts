@@ -34,12 +34,13 @@ const tagList = (document: OpenAPIDocument, operations: NormalizedOperation[]): 
 
 export const normalize = (document: OpenAPIDocument): SpecModel => {
   const context: Context = { document, issues: [] }
-  const operations = normalizeOperations(context)
+  const { operations, webhooks } = normalizeOperations(context)
   return {
     document,
     info: infoOf(document.info),
     externalDocs: externalDocsOf(document.externalDocs),
     operations,
+    webhooks,
     tags: tagList(document, operations),
     securitySchemes: securitySchemes(context),
     servers: serverList(document.servers) ?? defaultServers(),

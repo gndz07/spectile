@@ -15,21 +15,21 @@ export const Search = (props: SearchProps) => (
 
 export type GroupsProps = { children: (group: OperationGroup) => ReactNode }
 
-/** Calls its child function once per tag with matching operations, then once for untagged ones. */
+/** Calls its child function once per tag with matching operations, then for untagged ones, then for webhooks. */
 export const Groups = ({ children }: GroupsProps) =>
   useNavigation().groups.map((group) => (
-    <Fragment key={group.tag?.name ?? ""}>{children(group)}</Fragment>
+    <Fragment key={`${group.kind}:${group.tag?.name ?? ""}`}>{children(group)}</Fragment>
   ))
 
 export type GroupProps = PrimitiveProps<"div"> & { group: OperationGroup }
 
 export const Group = ({ group, ...props }: GroupProps) => (
   <NavigationGroupProvider value={group}>
-    <Primitive as="div" {...props} />
+    <Primitive as="div" {...mergeProps({ "data-kind": group.kind }, props)} />
   </NavigationGroupProvider>
 )
 
-/** The tag's name. Nothing for the untagged group. */
+/** The tag's name. Nothing for the untagged and webhook groups. */
 export const GroupName = (props: TextProps) => (
   <Text value={useNavigationGroup().tag?.name} {...props} />
 )

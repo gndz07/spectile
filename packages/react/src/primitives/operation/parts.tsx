@@ -12,6 +12,7 @@ export const Root = ({ operation, ...props }: RootProps) => {
   const current = operation ?? active
   if (!current) return null
   const ours = {
+    "data-kind": current.kind,
     "data-method": current.method,
     "data-deprecated": current.deprecated ? "" : undefined,
   }
@@ -27,6 +28,7 @@ export const Method = (props: TextProps) => {
   return <Text value={method.toUpperCase()} data-method={method} {...props} />
 }
 
+/** The path, or a webhook's name. */
 export const Path = (props: TextProps) => <Text value={useOperationContext().path} {...props} />
 
 export const Summary = (props: TextProps) => (

@@ -33,9 +33,9 @@ nav.setQuery("get pets")
 const { groups, resultCount, active } = nav.getSnapshot()
 ```
 
-- **Search** matches method, path, operationId, summary and tags. Every word must match.
-- **`groups`**: `[{ tag, operations }]` in the spec's tag order. Untagged operations come last with no `tag`. Empty groups are left out.
-- **`active`**: the selected operation.
+- **Search** matches method, path, operationId, summary and tags, and "webhook" for webhooks. Every word must match.
+- **`groups`**: `[{ kind, tag, operations }]` in the spec's tag order. Untagged operations follow with no `tag`, then webhooks in one group with `kind: "webhook"`. Empty groups are left out.
+- **`active`**: the selected operation or webhook.
 
 Prop getters:
 

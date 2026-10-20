@@ -122,6 +122,55 @@ describe("operation ids", () => {
   })
 })
 
+describe("webhooks", () => {
+  const ok = { responses: { "200": { description: "OK" } } }
+  const model = normalize({
+    openapi: "3.1.0",
+    info: { title: "Webhooks", version: "1" },
+    servers: [{ url: "https://api.example.com" }],
+    security: [{ apiKey: [] }],
+    paths: { "/pets": { get: { ...ok, operationId: "petAdopted" } } },
+    webhooks: {
+      petAdopted: {
+        parameters: [{ name: "X-Signature", in: "header", schema: { type: "string" } }],
+        post: { ...ok, operationId: "petAdopted", tags: ["events"] },
+        put: { ...ok, security: [{ signature: [] }] },
+      },
+    },
+  })
+
+  it("normalizes webhooks like operations, named instead of pathed", () => {
+    expect(model.operations.map(({ kind }) => kind)).toEqual(["operation"])
+    expect(model.webhooks).toMatchObject([
+      { kind: "webhook", method: "put", path: "petAdopted" },
+      { kind: "webhook", method: "post", path: "petAdopted", tags: ["events"] },
+    ])
+    expect(model.webhooks[1]?.parameters.map(({ name }) => name)).toEqual(["X-Signature"])
+  })
+
+  it("shares the operation id space and generates webhook ids", () => {
+    expect(model.webhooks.map(({ id }) => id)).toEqual(["webhook-put-petadopted", "petAdopted-2"])
+    expect(model.warnings).toMatchObject([
+      { code: "duplicate-operation-id", pointer: "#/webhooks/petAdopted/post" },
+    ])
+  })
+
+  it("inherits neither the document's security nor its servers", () => {
+    expect(model.webhooks.map(({ security, servers }) => [security, servers])).toEqual([
+      [[{ schemes: [{ name: "signature", scopes: [] }] }], []],
+      [[], []],
+    ])
+  })
+
+  it("leaves webhook tags out of the tag list", () => {
+    expect(model.tags).toEqual([])
+  })
+
+  it("is empty without webhooks", () => {
+    expect(petstore.webhooks).toEqual([])
+  })
+})
+
 describe("pointers", () => {
   it("resolves paths and properties whose names contain %", () => {
     const model = normalize({

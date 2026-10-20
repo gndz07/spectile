@@ -147,7 +147,7 @@ describe("Navigation", () => {
         <Navigation.Search aria-label="Search" />
         <Navigation.Groups>
           {(group) => (
-            <Navigation.Group group={group} data-testid={group.tag?.name ?? "untagged"}>
+            <Navigation.Group group={group} data-testid={group.tag?.name ?? group.kind}>
               <Navigation.GroupName />
               <Navigation.GroupDescription />
               {group.operations.map((each) => (
@@ -166,7 +166,14 @@ describe("Navigation", () => {
     expect(screen.getByTestId("users").textContent).toBe(
       "usersAll **users**GET List usersPOST Create a user",
     )
-    expect(screen.getByTestId("untagged").textContent).toBe("GET ")
+    expect(screen.getByTestId("operation").textContent).toBe("GET ")
+    const webhooks = screen.getByTestId("webhook")
+    expect(webhooks.textContent).toBe("POST A user signed up")
+    expect(webhooks.dataset.kind).toBe("webhook")
+
+    fireEvent.click(screen.getByRole("button", { name: "POST A user signed up" }))
+    expect(screen.getByTestId("active").textContent).toBe("userCreated")
+    expect(screen.getByTestId("active").dataset.kind).toBe("webhook")
 
     fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), {
       target: { value: "pet" },

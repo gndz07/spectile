@@ -1,10 +1,17 @@
-import type { NormalizedOperation, SpecModel, Tag } from "@spectile/core"
+import {
+  type NormalizedOperation,
+  type OperationKind,
+  type SpecModel,
+  type Tag,
+  findOperation,
+} from "@spectile/core"
 import type { InputEventLike } from "./events"
 import { createStore, memoizeLast, select } from "./store"
 
-export type OperationGroup = { tag?: Tag; operations: NormalizedOperation[] }
+/** Webhooks form one group without a tag. */
+export type OperationGroup = { kind: OperationKind; tag?: Tag; operations: NormalizedOperation[] }
 
-export type NavigationSource = Pick<SpecModel, "operations" | "tags">
+export type NavigationSource = Pick<SpecModel, "operations" | "webhooks" | "tags">
 
 export type NavigationOptions = { query?: string; activeId?: string }
 
@@ -16,8 +23,11 @@ export type NavigationSnapshot = {
   resultCount: number
 }
 
-const searchText = ({ method, path, operationId, summary, tags }: NormalizedOperation) =>
-  [method, path, operationId, summary, ...tags].filter(Boolean).join(" ").toLowerCase()
+const searchText = ({ kind, method, path, operationId, summary, tags }: NormalizedOperation) =>
+  [kind === "webhook" && kind, method, path, operationId, summary, ...tags]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
 
 export const filterOperations = (operations: NormalizedOperation[], query: string) => {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean)
@@ -31,11 +41,25 @@ export const filterOperations = (operations: NormalizedOperation[], query: strin
 export const groupByTag = (tags: Tag[], operations: NormalizedOperation[]): OperationGroup[] =>
   [
     ...tags.map((tag) => ({
+      kind: "operation" as const,
       tag,
       operations: operations.filter((operation) => operation.tags.includes(tag.name)),
     })),
-    { operations: operations.filter((operation) => operation.tags.length === 0) },
+    {
+      kind: "operation" as const,
+      operations: operations.filter((operation) => operation.tags.length === 0),
+    },
   ].filter((group) => group.operations.length > 0)
+
+/** Tag groups, then untagged operations, then webhooks. */
+export const navigationGroups = (
+  tags: Tag[],
+  operations: NormalizedOperation[],
+  webhooks: NormalizedOperation[],
+): OperationGroup[] => [
+  ...groupByTag(tags, operations),
+  ...(webhooks.length > 0 ? [{ kind: "webhook" as const, operations: webhooks }] : []),
+]
 
 export const createNavigation = (
   source: NavigationSource,
@@ -44,11 +68,15 @@ export const createNavigation = (
   const store = createStore<{ query: string; activeId?: string }>({ query, activeId })
   const resultsFor = memoizeLast((query: string) => {
     const operations = filterOperations(source.operations, query)
-    return { groups: groupByTag(source.tags, operations), resultCount: operations.length }
+    const webhooks = filterOperations(source.webhooks, query)
+    return {
+      groups: navigationGroups(source.tags, operations, webhooks),
+      resultCount: operations.length + webhooks.length,
+    }
   })
   const view = select(store, (state): NavigationSnapshot => ({
     ...state,
-    active: source.operations.find((operation) => operation.id === state.activeId),
+    active: findOperation(source, state.activeId),
     ...resultsFor(state.query),
   }))
 

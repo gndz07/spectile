@@ -87,9 +87,9 @@ A sidebar with search, tag groups and the active operation.
 | Part                          | Renders                                                                                                                                   |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `Navigation.Search`           | an `<input type="search">` that filters the operations                                                                                    |
-| `Navigation.Groups`           | calls its child function once per tag with matching operations, then once for untagged ones                                               |
+| `Navigation.Groups`           | calls its child function once per tag with matching operations, then for untagged ones, then for webhooks                                |
 | `Navigation.Group`            | a `<div>` for one group (prop `group`)                                                                                                    |
-| `Navigation.GroupName`        | the tag's name. Nothing for untagged operations.                                                                                          |
+| `Navigation.GroupName`        | the tag's name. Nothing for untagged operations and webhooks.                                                                             |
 | `Navigation.GroupDescription` | a `<div>` with the tag's description, as [Markdown](#markdown)                                                                            |
 | `Navigation.Item`             | a `<button>` that makes its `operation` active, with `aria-current="page"` when it is. `Operation.*` parts inside it show that operation. |
 
@@ -101,7 +101,7 @@ Clicking an item makes it the active operation, and `<Operation.Root>` and `useO
 | ----------------------- | ------------------------------------------------------------------------------------------------------- |
 | `Operation.Root`        | a `<section>` for the active operation, or the one in its `operation` prop. Nothing when there is none. |
 | `Operation.Method`      | `GET`, `POST`…                                                                                          |
-| `Operation.Path`        | `/pets/{id}`                                                                                            |
+| `Operation.Path`        | `/pets/{id}`, or a webhook's name                                                                       |
 | `Operation.Summary`     | the summary                                                                                             |
 | `Operation.Description` | a `<div>` with the description, as [Markdown](#markdown)                                                |
 
@@ -313,6 +313,7 @@ Components render no styles. They describe their state with attributes you can t
 | `data-state`                                         | navigation items                             | `active`, `inactive`                |
 | `data-method`                                        | operation parts, navigation items            | `get`, `post`…                      |
 | `data-kind`                                          | `Schema.Row`                                 | `property`, `items`, `oneOf`…       |
+| `data-kind`                                          | `Operation.Root`, `Navigation.Group`         | `operation`, `webhook`              |
 | `data-required`, `data-deprecated`, `data-recursive` | rows, operations, parameters, request bodies | present when true                   |
 | `data-location`                                      | `Parameter.Root`                             | `query`, `header`, `path`, `cookie` |
 | `data-status`                                        | `Response.Root`                              | the status, e.g. `200`              |

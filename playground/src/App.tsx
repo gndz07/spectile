@@ -68,6 +68,8 @@ const DocsLink = ({ externalDocs }: Pick<ExternalDocs.RootProps, "externalDocs">
   </ExternalDocs.Root>
 )
 
+const groupTitle = { operation: "Other", webhook: "Webhooks" }
+
 const Sidebar = () => (
   <nav className="sidebar">
     <Info.Description className="description" />
@@ -78,7 +80,7 @@ const Sidebar = () => (
       {(group) => (
         <Navigation.Group group={group} asChild>
           <section>
-            <h2>{group.tag ? <Navigation.GroupName /> : "Other"}</h2>
+            <h2>{group.tag ? <Navigation.GroupName /> : groupTitle[group.kind]}</h2>
             <Navigation.GroupDescription className="description" />
             <DocsLink externalDocs={group.tag?.externalDocs} />
             <ul>
@@ -249,6 +251,7 @@ const OperationView = () => {
   return (
     <Operation.Root key={operation.id} className="operation">
       <header>
+        {operation.kind === "webhook" && <span className="muted">Webhook </span>}
         <Operation.Method className="method" /> <Operation.Path className="path" />
       </header>
       <h1>
@@ -298,7 +301,7 @@ const OperationView = () => {
         ))}
       </section>
 
-      <TryItPanel operation={operation} />
+      {operation.kind === "operation" && <TryItPanel operation={operation} />}
     </Operation.Root>
   )
 }

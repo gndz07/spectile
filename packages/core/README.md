@@ -16,7 +16,10 @@ const { document, warnings } = await loadSpec("https://petstore3.swagger.io/api/
 const model = normalize(document)
 
 model.operations // every endpoint, ready to render
+model.webhooks // requests the API sends to you (OpenAPI 3.1)
 ```
+
+Webhooks have the same shape as operations, with `kind: "webhook"` and their name in `path`. They don't inherit the document's `security` or `servers`, since the API sends them. Ids are unique across both lists; `findOperation(model, id)` looks in both.
 
 ## The two entry points
 

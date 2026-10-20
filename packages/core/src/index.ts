@@ -2,7 +2,7 @@ export { normalize } from "./normalize"
 export { getSchema } from "./schema/get"
 export { type ExampleOptions, exampleFromSchema } from "./schema/example"
 export { appendPointer } from "./json/pointer"
-export { parameterKey } from "./model"
+export { findOperation, parameterKey } from "./model"
 export {
   type HttpRequest,
   type RequestInput,

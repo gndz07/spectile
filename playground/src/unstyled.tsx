@@ -18,9 +18,9 @@ const Sidebar = () => {
   return (
     <nav>
       <input {...getSearchProps()} aria-label="Search" />
-      {groups.map(({ tag, operations }) => (
-        <section key={tag?.name ?? ""}>
-          <h2>{tag?.name ?? "Other"}</h2>
+      {groups.map(({ kind, tag, operations }) => (
+        <section key={`${kind}:${tag?.name ?? ""}`}>
+          <h2>{tag?.name ?? (kind === "webhook" ? "Webhooks" : "Other")}</h2>
           {operations.map((operation) => (
             <button key={operation.id} {...getItemProps(operation)}>
               {operation.summary ?? operation.path}
@@ -76,26 +76,28 @@ const OperationView = () => {
           ))}
         </section>
       ))}
-      <TryIt.Root>
-        <TryIt.ServerSelect />
-        <TryIt.Server />
-        {operation.parameters.map((parameter) => (
-          <label key={`${parameter.in}.${parameter.name}`}>
-            {parameter.name} <TryIt.Parameter parameter={parameter} />
-          </label>
-        ))}
-        <BodyFields />
-        <TryIt.Body />
-        <TryIt.Send>Send</TryIt.Send>
-        <TryIt.Curl asChild>
-          <pre />
-        </TryIt.Curl>
-        <TryIt.Error />
-        <TryIt.Status />
-        <TryIt.ResponseBody asChild>
-          <pre />
-        </TryIt.ResponseBody>
-      </TryIt.Root>
+      {operation.kind === "operation" && (
+        <TryIt.Root>
+          <TryIt.ServerSelect />
+          <TryIt.Server />
+          {operation.parameters.map((parameter) => (
+            <label key={`${parameter.in}.${parameter.name}`}>
+              {parameter.name} <TryIt.Parameter parameter={parameter} />
+            </label>
+          ))}
+          <BodyFields />
+          <TryIt.Body />
+          <TryIt.Send>Send</TryIt.Send>
+          <TryIt.Curl asChild>
+            <pre />
+          </TryIt.Curl>
+          <TryIt.Error />
+          <TryIt.Status />
+          <TryIt.ResponseBody asChild>
+            <pre />
+          </TryIt.ResponseBody>
+        </TryIt.Root>
+      )}
     </Operation.Root>
   )
 }
