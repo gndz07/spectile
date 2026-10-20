@@ -6,6 +6,7 @@ import {
   parameterKey,
 } from "@spectile/core"
 import type { EventLike, FileInputEventLike, InputEventLike } from "../events"
+import { patched } from "../store"
 import type { OperationTryItSnapshot } from "./types"
 
 export type OperationActions = {
@@ -134,7 +135,7 @@ export const credentialProps =
       onChange: (event: InputEventLike) =>
         setCredential(
           name,
-          field ? { ...pairOf(getCredentials()[name]), [field]: valueOf(event) } : valueOf(event),
+          field ? patched(pairOf(getCredentials()[name]), { [field]: valueOf(event) }) : valueOf(event),
         ),
     }
   }

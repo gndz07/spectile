@@ -2,18 +2,19 @@ import { describe, expect, it, vi } from "vitest"
 import { type FetchLike, type OperationTryIt, type ResponseLike, createTryIt } from "../src"
 import { formModel, model, serversModel } from "./fixture"
 
-const response = (body: string, status = 200): ResponseLike => {
-  const headers = { "content-type": "application/json" }
-  return {
-    status,
-    statusText: status === 200 ? "OK" : "Not Found",
-    headers: {
-      forEach: (callback) =>
-        Object.entries(headers).forEach(([key, value]) => callback(value, key)),
-    },
-    text: async () => body,
-  }
-}
+const response = (
+  body: string,
+  status = 200,
+  headers: Record<string, string> = { "content-type": "application/json" },
+): ResponseLike => ({
+  status,
+  statusText: status === 200 ? "OK" : "Not Found",
+  headers: {
+    forEach: (callback) => Object.entries(headers).forEach(([key, value]) => callback(value, key)),
+  },
+  text: async () => body,
+  blob: async () => new Blob([body]),
+})
 
 const deferred = () => {
   let resolve: (value: ResponseLike) => void = () => {}
@@ -94,6 +95,49 @@ describe("createTryIt", () => {
     })
   })
 
+  it("lowercases header names and keeps binary bodies as a Blob", async () => {
+    const { getPet } = setup(async () => response("PNG", 200, { "Content-Type": "image/png" }))
+    getPet.setParameter("path.id", "7")
+    await getPet.send()
+    const { result } = getPet.getSnapshot()
+    const done = result.status === "done" ? result.response : undefined
+    expect(done).toMatchObject({ headers: { "content-type": "image/png" }, body: "" })
+    expect(await done?.blob?.text()).toBe("PNG")
+  })
+
+  it("refuses to send an empty required body", async () => {
+    const fetch = vi.fn<FetchLike>()
+    const required = {
+      ...model,
+      operations: model.operations.map((operation) =>
+        operation.requestBody
+          ? { ...operation, requestBody: { ...operation.requestBody, required: true } }
+          : operation,
+      ),
+    }
+    const create = createTryIt(required, { fetch }).forOperation("createUser")
+    create.setBody("")
+    expect(create.getSnapshot().missingBody).toBe(true)
+    await create.send()
+    expect(fetch).not.toHaveBeenCalled()
+    expect(create.getSnapshot().result).toEqual({ status: "error", error: "Missing required body" })
+  })
+
+  it("stops a pending request when a new send is refused", async () => {
+    const pending = deferred()
+    const { getPet } = setup(() => pending.promise)
+    getPet.setParameter("path.id", "7")
+    const first = getPet.send()
+    getPet.setParameter("path.id", "")
+    await getPet.send()
+    pending.resolve(response("{}"))
+    await first
+    expect(getPet.getSnapshot().result).toEqual({
+      status: "error",
+      error: "Missing required parameters: id",
+    })
+  })
+
   it("explains network failures", async () => {
     const { getPet } = setup(async () => {
       throw new TypeError("Failed to fetch")
@@ -124,6 +168,22 @@ describe("createTryIt", () => {
     expect(tryIt.forOperation("getPet")).toBe(getPet)
     getPet.reset()
     expect(getPet.getSnapshot().draft.parameters["path.id"]).toBe("")
+  })
+
+  it("doesn't notify subscribers when nothing changes", () => {
+    const { tryIt, getPet } = setup()
+    getPet.setParameter("path.id", "7")
+    tryIt.setCredential("basic", { username: "ada", password: "pw" })
+    const listener = vi.fn()
+    tryIt.subscribe(listener)
+    getPet.setParameter("path.id", "7")
+    getPet.selectServer(0)
+    getPet.cancel()
+    tryIt.forOperation("health").reset()
+    tryIt.forOperation("createUser").setMediaType("application/json")
+    tryIt.setCredential("apiKey", undefined)
+    tryIt.getCredentialProps("basic", "username").onChange({ currentTarget: { value: "ada" } })
+    expect(listener).not.toHaveBeenCalled()
   })
 
   it("gives props for form fields", () => {

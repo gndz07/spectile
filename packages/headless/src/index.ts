@@ -6,7 +6,13 @@ export {
   memoizeLast,
   select,
 } from "./store"
-export type { EventLike, FileInputEventLike, InputEventLike, KeyboardEventLike } from "./events"
+export type {
+  EventLike,
+  FileInputEventLike,
+  InputEventLike,
+  KeyboardEventLike,
+  TargetEventLike,
+} from "./events"
 export {
   type FetchLike,
   type HttpResponse,

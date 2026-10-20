@@ -59,4 +59,34 @@ describe("Slot", () => {
     expect(onChildClick).toHaveBeenCalledOnce()
     expect(onSlotClick).toHaveBeenCalledOnce()
   })
+
+  it("runs ref cleanups instead of calling refs with null", () => {
+    const calls: unknown[] = []
+    const ref = (node: unknown) => {
+      calls.push(node)
+      return () => {
+        calls.push("cleanup")
+      }
+    }
+    const view = render(
+      <Slot ref={ref}>
+        <i />
+      </Slot>,
+    )
+    view.unmount()
+    expect(calls).toEqual([expect.any(HTMLElement), "cleanup"])
+  })
+
+  it("rejects a Fragment child", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    expect(() =>
+      render(
+        <Slot>
+          <>
+            <i />
+          </>
+        </Slot>,
+      ),
+    ).toThrow("asChild needs a single element child")
+  })
 })

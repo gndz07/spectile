@@ -27,6 +27,11 @@ export {
   parseParameterInput,
   parseSchemaInput,
 } from "./request/input"
-export { formatResponseBody, isFormMediaType, isJsonMediaType } from "./request/media-type"
+export {
+  formatResponseBody,
+  isFormMediaType,
+  isJsonMediaType,
+  isTextMediaType,
+} from "./request/media-type"
 export { toCurl } from "./request/curl"
 export type * from "./model"

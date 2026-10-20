@@ -1,7 +1,8 @@
 import { isObject } from "./read"
 
+/** Pointers are URI fragments, so `%` is encoded too: `unescapeSegment` percent-decodes. */
 export const escapeSegment = (segment: string | number) =>
-  String(segment).replaceAll("~", "~0").replaceAll("/", "~1")
+  String(segment).replaceAll("~", "~0").replaceAll("/", "~1").replaceAll("%", "%25")
 
 const decode = (segment: string) => {
   try {

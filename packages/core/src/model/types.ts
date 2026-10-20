@@ -120,6 +120,7 @@ export type ParameterFields = {
   content: MediaType[]
   style?: string
   explode?: boolean
+  allowReserved?: boolean
   examples: Example[]
 }
 

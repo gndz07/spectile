@@ -37,14 +37,14 @@ export type RowsProps = { children: (row: SchemaRow) => ReactNode }
 export const Rows = ({ children }: RowsProps) =>
   useSchema().rows.map((row) => <Fragment key={row.id}>{children(row)}</Fragment>)
 
-/** Moves DOM focus to the row the tree says is focused, unless focus is somewhere outside the tree. */
+/** Moves DOM focus to the row the tree says is focused, unless focus is already in it or outside the tree. */
 const useFollowFocus = <T extends HTMLElement>(focused: boolean) => {
   const ref = useRef<T>(null)
   useEffect(() => {
     const element = ref.current
     if (!focused || !element) return
     const { activeElement, body } = element.ownerDocument
-    if (activeElement === element) return
+    if (activeElement && element.contains(activeElement)) return
     const focusInTree =
       !activeElement ||
       activeElement === body ||

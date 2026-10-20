@@ -107,8 +107,8 @@ const { draft, request, missing, result } = getPet.getSnapshot()
 
 - **`draft`**: what the user typed. It starts with the spec's examples; the body starts as an example built from the schema. Each operation keeps its own draft, so switching between operations doesn't lose input. `reset()` restores the starting values.
 - **`request`**: the request that will be sent, rebuilt on every change. Pass it to `toCurl` for a code sample.
-- **`missing`**: required parameters still empty. `send()` refuses to send while this isn't empty.
-- **`result`**: `idle`, `pending`, `done` (with `response`: `status`, `headers`, `body`, `duration`) or `error` (with `error`). A 404 or 500 is still `done`: a response arrived.
+- **`missing`**: required parameters still empty. `send()` refuses to send while this isn't empty, or while `missingBody` (a required body left empty) is true.
+- **`result`**: `idle`, `pending`, `done` (with `response`: `status`, `headers`, `body`, `duration`) or `error` (with `error`). A 404 or 500 is still `done`: a response arrived. Header names are lowercase. JSON bodies are indented without being re-parsed, so large numbers stay exact. Binary bodies (images, PDFs…) come as `response.blob`, with an empty `body`.
 - `cancel()` stops a request in flight. Sending again replaces the previous request.
 
 Parameter inputs are text: list values are separated by commas, and object values are JSON. They're converted to what the schema expects before the request is built.

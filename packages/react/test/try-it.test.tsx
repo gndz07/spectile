@@ -114,14 +114,23 @@ describe("TryIt primitives", () => {
     const body = screen.getByLabelText("Body")
     expect(JSON.parse((body as HTMLTextAreaElement).value)).toMatchObject({ name: "string" })
     fireEvent.change(body, { target: { value: '{"name":"Ada"}' } })
-    expect(screen.getByTestId("curl").textContent).toContain(`--data '{"name":"Ada"}'`)
+    expect(screen.getByTestId("curl").textContent).toContain(`--data-raw '{"name":"Ada"}'`)
   })
 
   it("fills in a multipart body field by field", () => {
-    const Fields = () =>
-      useTryItContext().bodyFields.map((field) => (
-        <TryIt.Field key={field.name} field={field} aria-label={field.name} />
-      ))
+    const Fields = () => {
+      const tryIt = useTryItContext()
+      return (
+        <>
+          {tryIt.bodyFields.map((field) => (
+            <TryIt.Field key={field.name} field={field} aria-label={field.name} />
+          ))}
+          <button type="button" onClick={tryIt.reset}>
+            Reset
+          </button>
+        </>
+      )
+    }
     render(
       <SpectileProvider model={formModel}>
         <Operation.Root operation={formModel.operations[0]!}>
@@ -145,5 +154,10 @@ describe("TryIt primitives", () => {
     const curl = screen.getByTestId("curl").textContent
     expect(curl).toContain(`-F 'photo=@"me.png";type=image/png'`)
     expect(curl).toContain(`--form-string 'caption=Hi'`)
+
+    const setValue = vi.fn()
+    Object.defineProperty(photo, "value", { get: () => "", set: setValue, configurable: true })
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }))
+    expect(setValue).toHaveBeenCalledWith("")
   })
 })

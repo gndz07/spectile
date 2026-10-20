@@ -82,19 +82,21 @@ export const createSession = (
       const fields = fieldsFor(draft.mediaType)
       const fieldValues = parseDraftFields(model, fields, draft)
       const serverUrl = selectedServerUrl(servers, selection, options.baseUrl)
+      const request = buildRequest(model, operation, {
+        serverUrl,
+        credentials,
+        parameters,
+        body: fields.length > 0 ? fieldValues : draft.body,
+        mediaType: draft.mediaType,
+      })
       return {
         draft,
         result,
-        request: buildRequest(model, operation, {
-          serverUrl,
-          credentials,
-          parameters,
-          body: fields.length > 0 ? fieldValues : draft.body,
-          mediaType: draft.mediaType,
-        }),
+        request,
         missing: missingParameters(operation, parameters),
         bodyFields: fields,
         missingFields: missingFields(fields, fieldValues),
+        missingBody: Boolean(operation.requestBody?.required) && request.body === undefined,
         serverIndex: selection.index,
         serverVariables: serverVariableValues(servers[selection.index], selection.variables),
         serverUrl,
@@ -113,15 +115,24 @@ export const createSession = (
   }
 
   const updateSelection = (change: (selection: ServerSelection) => ServerSelection) =>
-    store.setState((state) => withSelection(state, serverKey, change(selectionOf(state))))
+    store.setState((state) => {
+      const selection = selectionOf(state)
+      const next = change(selection)
+      return next === selection ? state : withSelection(state, serverKey, next)
+    })
 
   const updateDraft = (change: (draft: RequestDraft) => RequestDraft) =>
-    store.setState((state) => withDraft(state, id, change(draftOf(state))))
+    store.setState((state) => {
+      const draft = draftOf(state)
+      const next = change(draft)
+      return next === draft ? state : withDraft(state, id, next)
+    })
 
   const setResult = (result: TryItResult) =>
     store.setState((state) => withResult(state, id, result))
 
-  const selectServer = (index: number) => updateSelection(() => chooseServer(index))
+  const selectServer = (index: number) =>
+    updateSelection((selection) => chooseServer(selection, index))
 
   const setServerVariable = (name: string, value: string) =>
     updateSelection((selection) => withServerVariable(selection, name, value))
@@ -143,25 +154,30 @@ export const createSession = (
   const setMediaType = (mediaType: string) =>
     updateDraft((draft) => withMediaType(model, operation, draft, mediaType))
 
-  const cancel = () => {
+  const abort = () => {
     const controller = controllers.get(id)
-    if (!controller) return
+    if (!controller) return false
     controllers.delete(id)
     controller.abort()
-    setResult(IDLE)
+    return true
+  }
+
+  const cancel = () => {
+    if (abort()) setResult(IDLE)
   }
 
   const send = async () => {
-    const { request, missing, missingFields } = getSnapshot()
+    abort()
+    const { request, missing, missingFields, missingBody } = getSnapshot()
     const problems = [
       ...missingMessage("parameters", missing),
       ...missingMessage("fields", missingFields),
+      ...(missingBody && missingFields.length === 0 ? ["Missing required body"] : []),
     ]
     if (problems.length > 0) return setResult({ status: "error", error: problems.join(". ") })
     const fetchRequest = options.fetch ?? globalFetch()
     if (!fetchRequest) return setResult({ status: "error", error: "fetch is not available" })
 
-    controllers.get(id)?.abort()
     const controller = createController()
     controllers.set(id, controller)
     setResult(PENDING)

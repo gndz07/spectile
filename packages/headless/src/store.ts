@@ -9,20 +9,27 @@ export type Store<T> = ReadableStore<T> & {
   setState: (update: Partial<T> | ((state: T) => T)) => void
 }
 
-const hasChanges = <T extends object>(state: T, patch: Partial<T>) =>
-  (Object.keys(patch) as (keyof T)[]).some((key) => !Object.is(state[key], patch[key]))
+const hasChanges = <T extends object>(object: T, patch: Partial<T>) =>
+  (Object.keys(patch) as (keyof T)[]).some((key) => !Object.is(object[key], patch[key]))
+
+/** These return the same object when nothing changes, so stores skip notifying. */
+export const patched = <T extends object>(object: T, patch: Partial<T>): T =>
+  hasChanges(object, patch) ? { ...object, ...patch } : object
+
+export const withEntry = <T>(record: Record<string, T>, key: string, value: T) =>
+  patched(record, { [key]: value })
+
+export const withoutEntry = <T>(record: Record<string, T>, key: string) =>
+  Object.hasOwn(record, key)
+    ? Object.fromEntries(Object.entries(record).filter(([candidate]) => candidate !== key))
+    : record
 
 export const createStore = <T extends object>(initial: T): Store<T> => {
   let state = initial
   const listeners = new Set<Listener>()
 
   const setState = (update: Partial<T> | ((state: T) => T)) => {
-    const next =
-      typeof update === "function"
-        ? update(state)
-        : hasChanges(state, update)
-          ? { ...state, ...update }
-          : state
+    const next = typeof update === "function" ? update(state) : patched(state, update)
     if (next === state) return
     state = next
     listeners.forEach((listener) => listener())

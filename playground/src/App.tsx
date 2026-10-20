@@ -26,7 +26,7 @@ import {
   useSpectile,
   useTryItContext,
 } from "@spectile/react"
-import { type FormEvent, useState } from "react"
+import { type FormEvent, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import example from "./example.json"
 
@@ -308,16 +308,24 @@ export const App = () => {
     model: normalize(example as OpenAPIDocument),
   }))
   const [error, setError] = useState<string>()
+  const [loading, setLoading] = useState(false)
+  const latestLoad = useRef(0)
   const { model } = loaded
 
-  const load = (url: string) =>
-    loadModel(url).then(
-      (next) => {
-        setLoaded(next)
-        setError(undefined)
-      },
-      (reason: unknown) => setError(String(reason)),
+  const load = (url: string) => {
+    const id = ++latestLoad.current
+    const settle = (apply: () => void) => {
+      if (id !== latestLoad.current) return
+      apply()
+      setLoading(false)
+    }
+    setError(undefined)
+    setLoading(true)
+    return loadModel(url).then(
+      (next) => settle(() => setLoaded(next)),
+      (reason: unknown) => settle(() => setError(String(reason))),
     )
+  }
 
   return (
     <SpectileProvider
@@ -334,6 +342,7 @@ export const App = () => {
           <SpecForm onLoad={(url) => void load(url)} />
           <a href="/unstyled.html">Unstyled</a>
         </header>
+        {loading && <p role="status">Loading…</p>}
         {error && <p role="alert">{error}</p>}
         <div className="layout">
           <Sidebar />

@@ -52,10 +52,13 @@ export const exampleFromSchema = (
         ...node.allOf.map(child),
         type === "object" ? objectOf(node, inner) : undefined,
       ]
-      return Object.assign({}, ...parts.filter(isObject))
+      const objects = parts.filter(isObject)
+      return objects.length > 0
+        ? Object.assign({}, ...objects)
+        : parts.find((part) => part !== undefined)
     }
     const choice = node.oneOf[0] ?? node.anyOf[0]
-    if (choice && type === undefined && node.properties.length === 0) return child(choice)
+    if (choice && node.properties.length === 0) return child(choice)
 
     switch (type ?? (node.properties.length > 0 ? "object" : undefined)) {
       case "object":

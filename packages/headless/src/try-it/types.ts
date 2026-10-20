@@ -3,8 +3,11 @@ import type { BodyField, Credential, FileLike, HttpRequest, Parameter } from "@s
 export type HttpResponse = {
   status: number
   statusText: string
+  /** Names in lowercase. */
   headers: Record<string, string>
+  /** The body as text; JSON is indented. Empty for binary responses, which come as `blob`. */
   body: string
+  blob?: Blob
   /** Milliseconds from sending to the full body. */
   duration: number
 }
@@ -32,6 +35,8 @@ export type ResponseLike = {
   statusText: string
   headers: { forEach: (callback: (value: string, key: string) => void) => void }
   text: () => Promise<string>
+  /** Used for binary responses when present. */
+  blob?: () => Promise<Blob>
 }
 
 export type FetchLike = (
@@ -64,6 +69,8 @@ export type OperationTryItSnapshot = {
   /** One per property of a form or multipart body; empty when the body is edited as text. */
   bodyFields: BodyField[]
   missingFields: BodyField[]
+  /** The body is required but empty. */
+  missingBody: boolean
   /** Index into the operation's `servers`. */
   serverIndex: number
   /** The chosen server's variables with their current values. */

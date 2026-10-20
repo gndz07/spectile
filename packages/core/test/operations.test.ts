@@ -109,4 +109,27 @@ describe("operation ids", () => {
       { code: "duplicate-operation-id", pointer: "#/paths/~1b/get" },
     ])
   })
+
+  it("never gives a generated id to an operationId that comes later", () => {
+    const ok = { responses: { "200": { description: "OK" } } }
+    const later = normalize({
+      openapi: "3.1.0",
+      info: { title: "Ids", version: "1" },
+      paths: { "/pets": { get: ok }, "/x": { get: { ...ok, operationId: "get-pets" } } },
+    })
+    expect(later.operations.map(({ id }) => id)).toEqual(["get-pets-2", "get-pets"])
+    expect(later.warnings).toEqual([])
+  })
+})
+
+describe("pointers", () => {
+  it("resolves paths and properties whose names contain %", () => {
+    const model = normalize({
+      openapi: "3.1.0",
+      info: { title: "Percent", version: "1" },
+      paths: { "/users/%40me": { get: { responses: { "200": { description: "OK" } } } } },
+    })
+    expect(model.operations.map(({ path }) => path)).toEqual(["/users/%40me"])
+    expect(model.warnings).toEqual([])
+  })
 })

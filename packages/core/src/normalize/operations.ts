@@ -108,8 +108,12 @@ const parameterFields = (context: Context, located: Located): ParameterFields =>
   content: mediaTypes(context, located),
   style: asString(located.value.style),
   explode: asOptionalBoolean(located.value.explode),
+  allowReserved: asOptionalBoolean(located.value.allowReserved),
   examples: examplesOf(context, located),
 })
+
+/** The spec says header parameters with these names are ignored. */
+const IGNORED_HEADERS = new Set(["accept", "content-type", "authorization"])
 
 const parameter = (context: Context, located: Located): Parameter | undefined => {
   const name = asString(located.value.name)
@@ -120,6 +124,7 @@ const parameter = (context: Context, located: Located): Parameter | undefined =>
     )
     return undefined
   }
+  if (location === "header" && IGNORED_HEADERS.has(name.toLowerCase())) return undefined
   return {
     name,
     in: location,
@@ -152,6 +157,7 @@ const requestBody = (context: Context, pointer: string): RequestBody | undefined
 
 const headers = (context: Context, owner: Located): Header[] =>
   entries(owner.value.headers).flatMap(([name]) => {
+    if (name.toLowerCase() === "content-type") return []
     const located = resolveObject(context, appendPointer(owner.pointer, "headers", name))
     return located ? [{ name, ...parameterFields(context, located) }] : []
   })
@@ -221,16 +227,23 @@ const slug = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
 
-const uniqueId = (base: string, used: ReadonlySet<string>) => {
+const uniqueId = (base: string, taken: (id: string) => boolean) => {
   let id = base
-  for (let suffix = 2; used.has(id); suffix++) id = `${base}-${suffix}`
+  for (let suffix = 2; taken(id); suffix++) id = `${base}-${suffix}`
   return id
 }
 
+/** Explicit operationIds are reserved first, so a generated id never takes one that comes later. */
 const assignIds = (context: Context, drafts: OperationDraft[]): NormalizedOperation[] => {
+  const reserved = new Set(drafts.flatMap(({ operationId }) => operationId ?? []))
   const used = new Set<string>()
+  const taken = (id: string) => used.has(id) || reserved.has(id)
   return drafts.map((draft) => {
-    const id = uniqueId(draft.operationId ?? slug(`${draft.method} ${draft.path}`), used)
+    const explicit = draft.operationId
+    const id =
+      explicit !== undefined && !used.has(explicit)
+        ? explicit
+        : uniqueId(explicit ?? slug(`${draft.method} ${draft.path}`), taken)
     used.add(id)
     if (draft.operationId !== undefined && id !== draft.operationId) {
       context.issues.push(

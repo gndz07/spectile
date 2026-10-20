@@ -5,6 +5,8 @@ import {
   type ReactNode,
   type Ref,
   type RefCallback,
+  Children,
+  Fragment,
   cloneElement,
   isValidElement,
   useCallback,
@@ -54,19 +56,34 @@ export const mergeProps = <A extends object, B extends object>(ours: A, theirs: 
 }
 
 const assignRef = <T,>(ref: Ref<T> | undefined, value: T | null) => {
-  if (typeof ref === "function") ref(value)
-  else if (ref) ref.current = value
+  if (typeof ref === "function") return ref(value)
+  if (ref) ref.current = value
 }
 
+/** Runs each callback ref's cleanup when it returns one (React 19), else resets it to `null`. */
 export const useComposedRefs = <T,>(...refs: (Ref<T> | undefined)[]): RefCallback<T> =>
-  useCallback((node: T | null) => refs.forEach((ref) => assignRef(ref, node)), refs)
+  useCallback((node: T | null) => {
+    const cleanups = refs.map((ref) => assignRef(ref, node))
+    return () =>
+      cleanups.forEach((cleanup, index) =>
+        typeof cleanup === "function" ? cleanup() : assignRef(refs[index], null),
+      )
+  }, refs)
 
 type SlotProps = AnyProps & { children?: ReactNode; ref?: Ref<unknown> }
 
+const slotChild = (children: ReactNode) => {
+  const child = Children.only(children)
+  if (!isValidElement<AnyProps & { ref?: Ref<unknown> }>(child) || child.type === Fragment) {
+    throw new Error("asChild needs a single element child, not text or a Fragment")
+  }
+  return child
+}
+
 export const Slot = ({ children, ref, ...props }: SlotProps) => {
-  const child = isValidElement<AnyProps & { ref?: Ref<unknown> }>(children) ? children : undefined
-  const composedRef = useComposedRefs(ref, child?.props.ref)
-  return child ? cloneElement(child, { ...mergeProps(props, child.props), ref: composedRef }) : null
+  const child = slotChild(children)
+  const composedRef = useComposedRefs(ref, child.props.ref)
+  return cloneElement(child, { ...mergeProps(props, child.props), ref: composedRef })
 }
 
 export const Primitive = <T extends keyof JSX.IntrinsicElements>({

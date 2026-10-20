@@ -27,6 +27,6 @@ export const toCurl = ({ method, url, headers, body, form }: HttpRequest) =>
     ...(form
       ? form.map(formArgument)
       : typeof body === "string"
-        ? [`--data ${quote(body)}`]
+        ? [`--data-raw ${quote(body)}`]
         : []),
   ].join(" \\\n  ")

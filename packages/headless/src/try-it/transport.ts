@@ -1,5 +1,5 @@
-import { type HttpRequest, formatResponseBody } from "@spectile/core"
-import type { FetchLike, HttpResponse, ResponseLike, TryItResult } from "./types"
+import { type HttpRequest, formatResponseBody, isTextMediaType } from "@spectile/core"
+import type { FetchLike, ResponseLike, TryItResult } from "./types"
 
 export type Controller = { signal?: unknown; abort: () => void }
 
@@ -10,20 +10,18 @@ const errorMessage = (error: unknown) => {
   return error instanceof Error ? error.message : String(error)
 }
 
-const toResponse = (response: ResponseLike, body: string, duration: number): HttpResponse => {
+const readHeaders = (response: ResponseLike) => {
   const headers: Record<string, string> = {}
   response.headers.forEach((value, key) => {
-    headers[key] = value
+    headers[key.toLowerCase()] = value
   })
-  const { status, statusText } = response
-  return {
-    status,
-    statusText,
-    headers,
-    body: formatResponseBody(body, headers["content-type"]),
-    duration,
-  }
+  return headers
 }
+
+const readBody = async (response: ResponseLike, contentType?: string) =>
+  !isTextMediaType(contentType) && response.blob
+    ? { body: "", blob: await response.blob() }
+    : { body: formatResponseBody(await response.text(), contentType) }
 
 export const createController = (): Controller => {
   const AbortControllerClass = (globalThis as { AbortController?: new () => Controller })
@@ -45,8 +43,19 @@ export const fetchResult = async (
   const started = Date.now()
   try {
     const response = await fetchRequest(url, { method, headers, body: fetchBody(body), signal })
-    const text = await response.text()
-    return { status: "done", response: toResponse(response, text, Date.now() - started) }
+    const received = readHeaders(response)
+    const content = await readBody(response, received["content-type"])
+    const { status, statusText } = response
+    return {
+      status: "done",
+      response: {
+        status,
+        statusText,
+        headers: received,
+        ...content,
+        duration: Date.now() - started,
+      },
+    }
   } catch (error) {
     return { status: "error", error: errorMessage(error) }
   }

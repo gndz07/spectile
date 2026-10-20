@@ -227,4 +227,18 @@ describe("schema tree accessibility", () => {
     expect(tree.getSnapshot()).toMatchObject({ focusedId: PROFILE })
     expect(rowOf(tree, PROFILE).expanded).toBe(true)
   })
+
+  it("ignores events from a link or button inside the row", () => {
+    const tree = userTree()
+    const row = { closest: () => row }
+    const link = { closest: () => link }
+    const props = tree.getRowProps(rowOf(tree, PROFILE))
+    props.onClick({ target: link, currentTarget: row })
+    props.onFocus({ target: link, currentTarget: row })
+    props.onKeyDown({ key: "Enter", preventDefault: () => {}, target: link, currentTarget: row })
+    expect(tree.getSnapshot().focusedId).toBeUndefined()
+    expect(rowOf(tree, PROFILE).expanded).toBe(false)
+    props.onClick({ target: { closest: () => row }, currentTarget: row })
+    expect(rowOf(tree, PROFILE).expanded).toBe(true)
+  })
 })

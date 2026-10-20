@@ -12,6 +12,7 @@ import {
   parseParameterInput,
   parseSchemaInput,
 } from "@spectile/core"
+import { patched, withEntry } from "../store"
 import type { RequestDraft } from "./types"
 
 export const requestMedia = (operation: NormalizedOperation, mediaType?: string) =>
@@ -77,22 +78,21 @@ export const parseDraftFields = (
     }),
   )
 
-export const withParameter = (draft: RequestDraft, key: string, value: string): RequestDraft => ({
-  ...draft,
-  parameters: { ...draft.parameters, [key]: value },
-})
+export const withParameter = (draft: RequestDraft, key: string, value: string) =>
+  patched(draft, { parameters: withEntry(draft.parameters, key, value) })
 
-export const withBody = (draft: RequestDraft, body: string): RequestDraft => ({ ...draft, body })
+export const withBody = (draft: RequestDraft, body: string) => patched(draft, { body })
 
-export const withField = (draft: RequestDraft, name: string, text: string): RequestDraft => ({
-  ...draft,
-  fields: { ...draft.fields, [name]: text },
-})
+export const withField = (draft: RequestDraft, name: string, text: string) =>
+  patched(draft, { fields: withEntry(draft.fields, name, text) })
 
-export const withFiles = (draft: RequestDraft, name: string, files: FileLike[]): RequestDraft => ({
-  ...draft,
-  files: { ...draft.files, [name]: files },
-})
+const sameFiles = (left: readonly FileLike[] = [], right: readonly FileLike[]) =>
+  left.length === right.length && left.every((file, index) => file === right[index])
+
+export const withFiles = (draft: RequestDraft, name: string, files: FileLike[]) =>
+  sameFiles(draft.files[name], files)
+    ? draft
+    : patched(draft, { files: withEntry(draft.files, name, files) })
 
 /** Switches the request content type and refills the body with its example. */
 export const withMediaType = (
@@ -101,6 +101,7 @@ export const withMediaType = (
   draft: RequestDraft,
   mediaType: string,
 ): RequestDraft => {
+  if (mediaType === draft.mediaType) return draft
   const media = requestMedia(operation, mediaType)
   return media ? { ...draft, ...bodyDraft(model, media) } : { ...draft, mediaType }
 }

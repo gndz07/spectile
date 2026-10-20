@@ -1,6 +1,19 @@
-import { type BodyField, type Parameter as ParameterModel, toCurl } from "@spectile/core"
+import {
+  type BodyField,
+  type FileLike,
+  type Parameter as ParameterModel,
+  toCurl,
+} from "@spectile/core"
+import { useLayoutEffect, useRef } from "react"
 import { useTryIt, useTryItSettings } from "../../hooks"
-import { Primitive, type PrimitiveProps, Text, type TextProps, mergeProps } from "../../primitive"
+import {
+  Primitive,
+  type PrimitiveProps,
+  Text,
+  type TextProps,
+  mergeProps,
+  useComposedRefs,
+} from "../../primitive"
 import { useOperationContext } from "../operation/context"
 import { TryItProvider, useTryItContext } from "./context"
 
@@ -34,10 +47,28 @@ export const Body = (props: BodyProps) => {
 
 export type FieldProps = PrimitiveProps<"input"> & { field: BodyField }
 
+/** Browsers keep showing chosen files, so clear the input when the draft's files are cleared, e.g. by `reset`. */
+const useClearedFiles = (files: FileLike[] | undefined) => {
+  const ref = useRef<HTMLInputElement>(null)
+  useLayoutEffect(() => {
+    const input = ref.current
+    if (input?.type === "file" && !files?.length && input.files?.length) input.value = ""
+  }, [files])
+  return ref
+}
+
 /** One property of a form or multipart body: a file input for files, else a text input. */
-export const Field = ({ field, ...props }: FieldProps) => (
-  <Primitive as="input" {...mergeProps(useTryItContext().getFieldProps(field), props)} />
-)
+export const Field = ({ field, ref, ...props }: FieldProps) => {
+  const tryIt = useTryItContext()
+  const composedRef = useComposedRefs(ref, useClearedFiles(tryIt.draft.files[field.name]))
+  return (
+    <Primitive
+      as="input"
+      {...mergeProps(tryIt.getFieldProps(field), props)}
+      ref={composedRef}
+    />
+  )
+}
 
 export type SendProps = PrimitiveProps<"button">
 

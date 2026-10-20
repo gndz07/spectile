@@ -32,6 +32,8 @@ const model = normalize({
           parameter("filter", "query", { style: "deepObject" }),
           parameter("X-Trace", "header"),
           parameter("session", "cookie"),
+          parameter("next", "query", { allowReserved: true }),
+          parameter("Content-Type", "header", { required: true }),
         ],
         requestBody: {
           content: { "application/json": { schema: { $ref: "#/components/schemas/Item" } } },
@@ -70,6 +72,12 @@ const model = normalize({
           { type: "object", properties: { b: { type: "boolean" } } },
         ],
       },
+      Code: { type: "string", enum: ["active", "archived"] },
+      Described: { allOf: [{ $ref: "#/components/schemas/Code" }], description: "A code" },
+      Choice: {
+        type: "object",
+        oneOf: [{ type: "object", properties: { meow: { type: "boolean" } } }],
+      },
     },
   },
 })
@@ -95,6 +103,13 @@ describe("buildRequest", () => {
       url: "https://api.example.com/items/a%20b?tags=x&tags=y&ids=1,2&filter[color]=red",
       headers: { "X-Trace": "abc", Cookie: "session=s1" },
     })
+  })
+
+  it("keeps reserved characters for allowReserved and ignores Content-Type header parameters", () => {
+    expect(buildRequest(model, update, { parameters: { "query.next": "/a?b" } }).url).toBe(
+      "/items/{id}?next=/a?b",
+    )
+    expect(update.parameters.map(({ name }) => name)).not.toContain("Content-Type")
   })
 
   it("skips empty values and keeps unfilled path templates", () => {
@@ -185,7 +200,10 @@ describe("request helpers", () => {
   it("prints a request as curl", () => {
     expect(
       toCurl({ method: "POST", url: "https://x.dev/a", headers: { A: "it's" }, body: '{"a":1}' }),
-    ).toBe(`curl -X POST 'https://x.dev/a' \\\n  -H 'A: it'\\''s' \\\n  --data '{"a":1}'`)
+    ).toBe(`curl -X POST 'https://x.dev/a' \\\n  -H 'A: it'\\''s' \\\n  --data-raw '{"a":1}'`)
+    expect(toCurl({ method: "POST", url: "/a", headers: {}, body: "@here hi" })).toContain(
+      "--data-raw '@here hi'",
+    )
   })
 })
 
@@ -215,6 +233,13 @@ describe("exampleFromSchema", () => {
       exampleFromSchema(model, { pointer: "#/components/schemas/Combined", circular: false }),
     ).toEqual({ a: 0, b: true })
   })
+
+  it("keeps a non-object allOf part, and uses the first choice of an object without properties", () => {
+    const of = (name: string) =>
+      exampleFromSchema(model, { pointer: `#/components/schemas/${name}`, circular: false })
+    expect(of("Described")).toBe("active")
+    expect(of("Choice")).toEqual({ meow: true })
+  })
 })
 
 describe("formatResponseBody", () => {
@@ -222,5 +247,22 @@ describe("formatResponseBody", () => {
     expect(formatResponseBody('{"a":1}', "application/problem+json")).toBe('{\n  "a": 1\n}')
     expect(formatResponseBody("{oops", "application/json")).toBe("{oops")
     expect(formatResponseBody('{"a":1}', "text/plain")).toBe('{"a":1}')
+  })
+
+  it("only adds whitespace, so numbers, duplicate keys and strings stay as sent", () => {
+    const body = '{"id":9007199254740993,"price":1.10,"a":1,"a":2,"s":"x,\\"{y}:","e":[],"o":{ }}'
+    expect(formatResponseBody(body, "application/json")).toBe(
+      [
+        "{",
+        '  "id": 9007199254740993,',
+        '  "price": 1.10,',
+        '  "a": 1,',
+        '  "a": 2,',
+        '  "s": "x,\\"{y}:",',
+        '  "e": [],',
+        '  "o": {}',
+        "}",
+      ].join("\n"),
+    )
   })
 })

@@ -1,4 +1,5 @@
 import { type Server, absoluteUrl, resolveServerUrl } from "@spectile/core"
+import { patched, withEntry } from "../store"
 import type { ServerSelection } from "./types"
 
 export const FIRST_SERVER: ServerSelection = { index: 0, variables: {} }
@@ -17,15 +18,21 @@ export const selectedServerUrl = (
   return server ? absoluteUrl(resolveServerUrl(server, variables), baseUrl) : ""
 }
 
-export const chooseServer = (index: number): ServerSelection => ({ index, variables: {} })
+/** Choosing another server starts from its default variables; choosing the current one changes nothing. */
+export const chooseServer = (selection: ServerSelection, index: number): ServerSelection =>
+  selection.index === index && selection.url === undefined
+    ? selection
+    : { index, variables: {} }
 
+/** Also drops a typed URL, so the chosen server is used again. */
 export const withServerVariable = (
-  { index, variables }: ServerSelection,
+  selection: ServerSelection,
   name: string,
   value: string,
-): ServerSelection => ({ index, variables: { ...variables, [name]: value } })
+): ServerSelection =>
+  selection.url === undefined && selection.variables[name] === value
+    ? selection
+    : { index: selection.index, variables: withEntry(selection.variables, name, value) }
 
-export const withServerUrl = (selection: ServerSelection, url: string): ServerSelection => ({
-  ...selection,
-  url,
-})
+export const withServerUrl = (selection: ServerSelection, url: string) =>
+  patched(selection, { url })

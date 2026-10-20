@@ -1,5 +1,5 @@
 import { type SchemaNode, type SchemaRef, type SpecModel, getSchema } from "@spectile/core"
-import type { KeyboardEventLike } from "../events"
+import { type KeyboardEventLike, type TargetEventLike, fromNestedControl } from "../events"
 import { createStore, memoizeLast, select } from "../store"
 import type { GetNode } from "./children"
 import { type TreeAction, treeKeyAction } from "./keyboard"
@@ -81,16 +81,20 @@ export const createSchemaTree = (
     "data-recursive": row.recursive ? "" : undefined,
     "data-deprecated": row.node.deprecated ? "" : undefined,
     onKeyDown: (event: KeyboardEventLike) => {
+      if (fromNestedControl(event)) return
       const action = treeKeyAction(view.getSnapshot().rows, row.id, event.key)
       if (!action) return
       event.preventDefault()
       actions[action.type](action.id)
     },
-    onClick: () => {
+    onClick: (event?: TargetEventLike) => {
+      if (fromNestedControl(event)) return
       focus(row.id)
       if (row.expandable) toggle(row.id)
     },
-    onFocus: () => focus(row.id),
+    onFocus: (event?: TargetEventLike) => {
+      if (!fromNestedControl(event)) focus(row.id)
+    },
   })
 
   return {
