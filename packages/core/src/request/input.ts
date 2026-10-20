@@ -1,6 +1,8 @@
-import type { MediaType, Parameter, SpecModel } from "../model"
+import { isObject } from "../json/read"
+import type { MediaType, Parameter, SchemaRef, SpecModel } from "../model"
 import { exampleFromSchema } from "../schema/example"
 import { getSchema } from "../schema/get"
+import { bodyFields } from "./fields"
 import { isJsonMediaType } from "./media-type"
 import { toText } from "./parameters"
 
@@ -17,21 +19,31 @@ export const parameterExample = (model: SpecModel, parameter: Parameter) => {
   )
 }
 
-export const bodyExample = (model: SpecModel, { mediaType, schema, examples }: MediaType) => {
-  const value = examples[0]?.value ?? (schema && exampleFromSchema(model, schema))
+const mediaExample = (model: SpecModel, { schema, examples }: MediaType) =>
+  examples[0]?.value ?? (schema && exampleFromSchema(model, schema))
+
+export const bodyExample = (model: SpecModel, media: MediaType) => {
+  const value = mediaExample(model, media)
   if (value === undefined) return ""
-  return isJsonMediaType(mediaType) || typeof value !== "string"
+  return isJsonMediaType(media.mediaType) || typeof value !== "string"
     ? JSON.stringify(value, null, 2)
     : value
 }
 
-/** Turns typed text into the value the parameter's schema expects: comma-separated arrays, JSON objects. */
-export const parseParameterInput = (
-  model: SpecModel,
-  parameter: Parameter,
-  text: string,
-): unknown => {
-  const types = parameter.schema ? getSchema(model, parameter.schema).types : []
+/** Text for each of the body's typed fields (see `bodyFields`), from its example. */
+export const fieldExamples = (model: SpecModel, media: MediaType): Record<string, string> => {
+  const example = mediaExample(model, media)
+  const values = isObject(example) ? example : {}
+  return Object.fromEntries(
+    bodyFields(model, media)
+      .filter((field) => !field.file)
+      .map((field) => [field.name, inputText(values[field.name])]),
+  )
+}
+
+/** Turns typed text into the value a schema expects: comma-separated arrays, JSON objects. */
+export const parseSchemaInput = (model: SpecModel, schema: SchemaRef | undefined, text: string) => {
+  const types = schema ? getSchema(model, schema).types : []
   if (types.includes("array")) {
     return text
       .split(",")
@@ -40,10 +52,13 @@ export const parseParameterInput = (
   }
   if (types.includes("object")) {
     try {
-      return JSON.parse(text)
+      return JSON.parse(text) as unknown
     } catch {
       return text
     }
   }
   return text
 }
+
+export const parseParameterInput = (model: SpecModel, parameter: Parameter, text: string) =>
+  parseSchemaInput(model, parameter.schema, text)

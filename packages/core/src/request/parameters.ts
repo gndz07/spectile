@@ -78,22 +78,28 @@ export const serializePathParameter = (
 export const serializeHeaderParameter = ({ name, explode = false }: Parameter, value: unknown) =>
   expand(name, shape(value), explode, SIMPLE, identity)
 
-/** Query and cookie parameters, as encoded `name=value` pairs. */
+export type FormStyle = Pick<Parameter, "name" | "style" | "explode"> & { allowReserved?: boolean }
+
+const encodeAllowingReserved = (value: string) =>
+  encodeURI(value).replaceAll("%5B", "[").replaceAll("%5D", "]")
+
+/** Query and cookie parameters and form fields, as encoded `name=value` pairs. */
 export const serializeFormParameter = (
-  { name, style = "form", explode = style === "form" }: Parameter,
+  { name, style = "form", explode = style === "form", allowReserved = false }: FormStyle,
   value: unknown,
 ): string[] => {
   const data = shape(value)
+  const escape = allowReserved ? encodeAllowingReserved : encode
   const pair = (key: string, content: string) => `${encode(key)}=${content}`
   if (style === "deepObject" && data.kind === "object") {
-    return data.entries.map(([key, item]) => `${encode(name)}[${encode(key)}]=${encode(item)}`)
+    return data.entries.map(([key, item]) => `${encode(name)}[${encode(key)}]=${escape(item)}`)
   }
-  if (data.kind === "primitive") return [pair(name, encode(data.value))]
+  if (data.kind === "primitive") return [pair(name, escape(data.value))]
   if (explode) {
     return data.kind === "array"
-      ? data.items.map((item) => pair(name, encode(item)))
-      : data.entries.map(([key, item]) => pair(key, encode(item)))
+      ? data.items.map((item) => pair(name, escape(item)))
+      : data.entries.map(([key, item]) => pair(key, escape(item)))
   }
   const parts = data.kind === "array" ? data.items : data.entries.flat()
-  return [pair(name, parts.map(encode).join(DELIMITERS[style] ?? ","))]
+  return [pair(name, parts.map(escape).join(DELIMITERS[style] ?? ","))]
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { type FetchLike, type OperationTryIt, type ResponseLike, createTryIt } from "../src"
-import { model, serversModel } from "./fixture"
+import { formModel, model, serversModel } from "./fixture"
 
 const response = (body: string, status = 200): ResponseLike => {
   const headers = { "content-type": "application/json" }
@@ -148,6 +148,73 @@ describe("createTryIt", () => {
 
   it("rejects unknown operations", () => {
     expect(() => setup().tryIt.forOperation("nope")).toThrow("Unknown operation nope")
+  })
+})
+
+describe("form bodies", () => {
+  const setup = () => {
+    const fetch = vi.fn<FetchLike>(async () => response("{}"))
+    return { fetch, upload: createTryIt(formModel, { fetch }).forOperation("upload") }
+  }
+  const photo = new File(["PNG"], "me.png", { type: "image/png" })
+
+  it("has one field per property, filled in from the example", () => {
+    const { upload } = setup()
+    const { bodyFields, draft } = upload.getSnapshot()
+    expect(bodyFields.map(({ name, file, multiple, accept }) => [name, file, multiple, accept])).toEqual(
+      [
+        ["photo", true, false, "image/png"],
+        ["extras", true, true, "image/*"],
+        ["caption", false, false, undefined],
+        ["tags", false, true, undefined],
+      ],
+    )
+    expect(draft.fields).toEqual({ caption: "Me", tags: "string" })
+    expect(upload.getFieldProps(bodyFields[2]!)).toMatchObject({ name: "body.caption", value: "Me" })
+  })
+
+  it("refuses to send without required fields", async () => {
+    const { fetch, upload } = setup()
+    await upload.send()
+    expect(fetch).not.toHaveBeenCalled()
+    expect(upload.getSnapshot().result).toEqual({
+      status: "error",
+      error: "Missing required fields: photo",
+    })
+  })
+
+  it("sends chosen files and typed fields as multipart", async () => {
+    const { fetch, upload } = setup()
+    const props = upload.getFieldProps(upload.getSnapshot().bodyFields[0]!)
+    expect(props).toMatchObject({ name: "body.photo", type: "file", accept: "image/png", required: true })
+    if (props.type === "file") props.onChange({ currentTarget: { files: [photo] } })
+    upload.setField("tags", "a, b")
+    await upload.send()
+
+    const { request } = upload.getSnapshot()
+    expect(request.headers).toEqual({
+      "Content-Type": "multipart/form-data; boundary=spectile-boundary",
+    })
+    expect(request.form).toEqual([
+      { name: "photo", value: photo, contentType: "image/png" },
+      { name: "caption", value: "Me" },
+      { name: "tags", value: "a" },
+      { name: "tags", value: "b" },
+    ])
+    const sent = await (fetch.mock.calls[0]![1].body as Blob).text()
+    expect(sent).toContain(
+      'name="photo"; filename="me.png"\r\nContent-Type: image/png\r\n\r\nPNG\r\n--spectile-boundary\r\n',
+    )
+  })
+
+  it("switches to the fields of another media type", () => {
+    const { upload } = setup()
+    upload.setMediaType("application/x-www-form-urlencoded")
+    const { bodyFields, draft } = upload.getSnapshot()
+    expect(bodyFields.map(({ name }) => name)).toEqual(["q", "ids"])
+    expect(draft.fields).toEqual({ q: "string", ids: "string" })
+    upload.setField("ids", "1,2")
+    expect(upload.getSnapshot().request.body).toBe("q=string&ids=1,2")
   })
 })
 

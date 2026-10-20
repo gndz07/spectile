@@ -6,6 +6,7 @@ import {
   parameterKey,
 } from "../model"
 import { type Credential, applySecurity } from "./auth"
+import { type BodyChunk, type FormPart, type RequestBodyValue, encodeBody } from "./body"
 import {
   isEmptyValue,
   serializeFormParameter,
@@ -19,7 +20,8 @@ export type RequestInput = {
   serverUrl?: string
   /** Values by `parameterKey(parameter)`. Arrays and objects are serialized with the parameter's style. */
   parameters?: Record<string, unknown>
-  body?: string
+  /** Text, or for form and multipart bodies, values by property name (files included). */
+  body?: RequestBodyValue
   mediaType?: string
   /** Credentials by security scheme name. */
   credentials?: Record<string, Credential>
@@ -29,8 +31,14 @@ export type HttpRequest = {
   method: string
   url: string
   headers: Record<string, string>
-  body?: string
+  /** Chunks of text and files when a multipart body holds files; send `new Blob(body)`. */
+  body?: string | BodyChunk[]
+  /** The parts of a `multipart/form-data` body, also encoded in `body`. */
+  form?: FormPart[]
 }
+
+const hasBody = (body?: RequestBodyValue): body is RequestBodyValue =>
+  typeof body === "string" ? body !== "" : body !== undefined && Object.keys(body).length > 0
 
 export const missingParameters = (
   operation: NormalizedOperation,
@@ -67,7 +75,13 @@ export const buildRequest = (
     ),
     ...auth.cookies,
   ].join("; ")
-  const sendsBody = operation.requestBody !== undefined && body !== undefined && body !== ""
+  const media = operation.requestBody?.content.find(
+    (candidate) => candidate.mediaType === mediaType,
+  )
+  const encoded =
+    operation.requestBody && hasBody(body)
+      ? encodeBody(body, mediaType, media?.encoding)
+      : undefined
 
   const headers = Object.fromEntries([
     ...located("header").map(({ parameter, value }) => [
@@ -76,13 +90,14 @@ export const buildRequest = (
     ]),
     ...auth.headers,
     ...(cookie ? [["Cookie", cookie]] : []),
-    ...(sendsBody && mediaType ? [["Content-Type", mediaType]] : []),
+    ...(encoded?.contentType ? [["Content-Type", encoded.contentType]] : []),
   ])
 
   return {
     method: operation.method.toUpperCase(),
     url: `${serverUrl.replace(/\/+$/, "")}${path}${query ? `?${query}` : ""}`,
     headers,
-    ...(sendsBody ? { body } : {}),
+    ...(encoded && { body: encoded.body }),
+    ...(encoded?.form && { form: encoded.form }),
   }
 }

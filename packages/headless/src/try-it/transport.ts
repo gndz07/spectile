@@ -33,17 +33,20 @@ export const createController = (): Controller => {
 
 export const globalFetch = () => (globalThis as { fetch?: FetchLike }).fetch
 
+const fetchBody = (body: HttpRequest["body"]) =>
+  Array.isArray(body) ? new Blob(body as unknown as Blob[]) : body
+
 /** Sends the request and settles as `done` or `error`; never rejects. */
 export const fetchResult = async (
   fetchRequest: FetchLike,
-  { url, ...init }: HttpRequest,
+  { url, method, headers, body }: HttpRequest,
   signal?: unknown,
 ): Promise<TryItResult> => {
   const started = Date.now()
   try {
-    const response = await fetchRequest(url, { ...init, signal })
-    const body = await response.text()
-    return { status: "done", response: toResponse(response, body, Date.now() - started) }
+    const response = await fetchRequest(url, { method, headers, body: fetchBody(body), signal })
+    const text = await response.text()
+    return { status: "done", response: toResponse(response, text, Date.now() - started) }
   } catch (error) {
     return { status: "error", error: errorMessage(error) }
   }

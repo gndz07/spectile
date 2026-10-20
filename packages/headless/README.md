@@ -113,6 +113,18 @@ const { draft, request, missing, result } = getPet.getSnapshot()
 
 Parameter inputs are text: list values are separated by commas, and object values are JSON. They're converted to what the schema expects before the request is built.
 
+**Form and multipart bodies** are filled in field by field. The snapshot's `bodyFields` has one entry per property of the body's schema (empty for other bodies, which stay a single text `body`). Typed fields work like parameters; file fields hold the chosen files.
+
+```ts
+const upload = tryIt.forOperation("uploadPhoto")
+upload.setField("caption", "Sunday nap") // draft.fields
+upload.setFiles("photo", [file]) // draft.files; File objects from an <input type="file">
+
+const { bodyFields, missingFields } = upload.getSnapshot()
+```
+
+`send()` also refuses while a required field is empty (`missingFields`). Requests with files are sent as a `Blob`, so the multipart boundary stays correct.
+
 **Servers.** Each operation sends to one of its own `servers` (the operation's, its path's, or the spec's), starting with the first.
 
 ```ts
@@ -136,6 +148,7 @@ The choice is shared by operations with the same server list. Picking a server f
 getPet.getFormProps() // onSubmit sends; data-state: idle | pending | done | error
 getPet.getParameterProps(parameter) // name, value, required, onChange
 getPet.getBodyProps() // name, value, onChange
+upload.getFieldProps(field) // name, value, required, onChange; files: type: "file", multiple, accept, no value
 getPet.getSendProps() // type: "submit", disabled and aria-busy while pending
 getPet.getServerProps() // the server URL: name, inputMode: "url", value, onChange
 getPet.getServerSelectProps() // for a <select> whose option values are server indexes

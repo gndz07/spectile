@@ -108,6 +108,47 @@ export const serversModel = normalize({
   },
 })
 
+export const formModel = normalize({
+  openapi: "3.1.0",
+  info: { title: "Forms", version: "1.0.0" },
+  paths: {
+    "/avatars": {
+      post: {
+        operationId: "upload",
+        requestBody: {
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["photo"],
+                properties: {
+                  photo: { type: "string", contentMediaType: "image/png" },
+                  extras: { type: "array", items: { type: "string", format: "binary" } },
+                  caption: { type: "string", examples: ["Me"] },
+                  tags: { type: "array", items: { type: "string" } },
+                  id: { type: "string", readOnly: true },
+                },
+              },
+              encoding: { extras: { contentType: "image/*" } },
+            },
+            "application/x-www-form-urlencoded": {
+              schema: {
+                type: "object",
+                properties: {
+                  q: { type: "string" },
+                  ids: { type: "array", items: { type: "string" } },
+                },
+              },
+              encoding: { ids: { explode: false } },
+            },
+          },
+        },
+        responses: {},
+      },
+    },
+  },
+})
+
 export const schemaRef = (name: string): SchemaRef => ({
   pointer: `#/components/schemas/${name}`,
   circular: false,

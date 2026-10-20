@@ -1,5 +1,11 @@
-import { type Credential, type Parameter, parameterKey } from "@spectile/core"
-import type { EventLike, InputEventLike } from "../events"
+import {
+  type BodyField,
+  type Credential,
+  type FileLike,
+  type Parameter,
+  parameterKey,
+} from "@spectile/core"
+import type { EventLike, FileInputEventLike, InputEventLike } from "../events"
 import type { OperationTryItSnapshot } from "./types"
 
 export type OperationActions = {
@@ -7,6 +13,8 @@ export type OperationActions = {
   send: () => Promise<void>
   setParameter: (key: string, value: string) => void
   setBody: (body: string) => void
+  setField: (name: string, text: string) => void
+  setFiles: (name: string, files: FileLike[]) => void
   selectServer: (index: number) => void
   setServerVariable: (name: string, value: string) => void
   setServerUrl: (url: string) => void
@@ -19,6 +27,8 @@ export const operationProps = ({
   send,
   setParameter,
   setBody,
+  setField,
+  setFiles,
   selectServer,
   setServerVariable,
   setServerUrl,
@@ -48,6 +58,25 @@ export const operationProps = ({
     value: getSnapshot().draft.body,
     onChange: (event: InputEventLike) => setBody(valueOf(event)),
   })
+
+  /** File inputs can't be given a value, so their props have none. */
+  const getFieldProps = ({ name, required, file, multiple, accept }: BodyField) =>
+    file
+      ? {
+          name: `body.${name}`,
+          type: "file" as const,
+          multiple,
+          accept,
+          required,
+          onChange: (event: FileInputEventLike) =>
+            setFiles(name, Array.from(event.currentTarget.files ?? [])),
+        }
+      : {
+          name: `body.${name}`,
+          value: getSnapshot().draft.fields[name] ?? "",
+          required,
+          onChange: (event: InputEventLike) => setField(name, valueOf(event)),
+        }
 
   const getSendProps = () => ({
     type: "submit" as const,
@@ -80,6 +109,7 @@ export const operationProps = ({
     getFormProps,
     getParameterProps,
     getBodyProps,
+    getFieldProps,
     getSendProps,
     getServerProps,
     getServerSelectProps,

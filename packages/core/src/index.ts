@@ -11,8 +11,22 @@ export {
 } from "./request/build"
 export { absoluteUrl, resolveServerUrl, serverVariableValues } from "./request/servers"
 export type { Credential } from "./request/auth"
+export {
+  type BodyChunk,
+  type FileLike,
+  type FormPart,
+  type RequestBodyValue,
+  isFileLike,
+} from "./request/body"
+export { type BodyField, bodyFields, missingFields } from "./request/fields"
 export { isEmptyValue } from "./request/parameters"
-export { bodyExample, parameterExample, parseParameterInput } from "./request/input"
-export { formatResponseBody, isJsonMediaType } from "./request/media-type"
+export {
+  bodyExample,
+  fieldExamples,
+  parameterExample,
+  parseParameterInput,
+  parseSchemaInput,
+} from "./request/input"
+export { formatResponseBody, isFormMediaType, isJsonMediaType } from "./request/media-type"
 export { toCurl } from "./request/curl"
 export type * from "./model"

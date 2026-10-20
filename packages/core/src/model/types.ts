@@ -64,6 +64,8 @@ export type SchemaNode = SchemaRef & {
   description?: string
   externalDocs?: ExternalDocs
   format?: string
+  contentMediaType?: string
+  contentEncoding?: string
   deprecated: boolean
   readOnly: boolean
   writeOnly: boolean
@@ -91,7 +93,22 @@ export type Example = {
   externalValue?: string
 }
 
-export type MediaType = { mediaType: string; schema?: SchemaRef; examples: Example[] }
+/** How one property of a form or multipart body is sent. */
+export type Encoding = {
+  contentType?: string
+  headers: Header[]
+  style?: string
+  explode?: boolean
+  allowReserved?: boolean
+}
+
+export type MediaType = {
+  mediaType: string
+  schema?: SchemaRef
+  examples: Example[]
+  /** By property name; only form and multipart bodies have one. */
+  encoding?: Record<string, Encoding>
+}
 
 export type ParameterLocation = "query" | "header" | "path" | "cookie"
 

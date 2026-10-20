@@ -1,8 +1,8 @@
 import type { FetchLike } from "@spectile/headless"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { model, serversModel } from "../../headless/test/fixture"
-import { Operation, SpectileProvider, TryIt } from "../src"
+import { formModel, model, serversModel } from "../../headless/test/fixture"
+import { Operation, SpectileProvider, TryIt, useTryItContext } from "../src"
 
 const fetch = vi.fn<FetchLike>(async () => ({
   status: 200,
@@ -115,5 +115,35 @@ describe("TryIt primitives", () => {
     expect(JSON.parse((body as HTMLTextAreaElement).value)).toMatchObject({ name: "string" })
     fireEvent.change(body, { target: { value: '{"name":"Ada"}' } })
     expect(screen.getByTestId("curl").textContent).toContain(`--data '{"name":"Ada"}'`)
+  })
+
+  it("fills in a multipart body field by field", () => {
+    const Fields = () =>
+      useTryItContext().bodyFields.map((field) => (
+        <TryIt.Field key={field.name} field={field} aria-label={field.name} />
+      ))
+    render(
+      <SpectileProvider model={formModel}>
+        <Operation.Root operation={formModel.operations[0]!}>
+          <TryIt.Root>
+            <Fields />
+            <TryIt.Body aria-label="Body" />
+            <TryIt.Curl data-testid="curl" />
+          </TryIt.Root>
+        </Operation.Root>
+      </SpectileProvider>,
+    )
+    expect(screen.queryByLabelText("Body")).toBeNull()
+    const photo = screen.getByLabelText("photo")
+    expect(photo).toMatchObject({ type: "file", accept: "image/png", required: true })
+    expect(screen.getByLabelText("extras")).toHaveProperty("multiple", true)
+
+    fireEvent.change(screen.getByLabelText("caption"), { target: { value: "Hi" } })
+    fireEvent.change(photo, {
+      target: { files: [new File(["PNG"], "me.png", { type: "image/png" })] },
+    })
+    const curl = screen.getByTestId("curl").textContent
+    expect(curl).toContain(`-F 'photo=@"me.png";type=image/png'`)
+    expect(curl).toContain(`--form-string 'caption=Hi'`)
   })
 })

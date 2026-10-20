@@ -244,6 +244,7 @@ Send real requests from the docs, like Swagger's "Try it out". Place it inside `
         {parameter.name} <TryIt.Parameter parameter={parameter} />
       </label>
     ))}
+    <BodyFields />
     <TryIt.Body />
     <TryIt.Send>Send</TryIt.Send>
 
@@ -263,7 +264,8 @@ Send real requests from the docs, like Swagger's "Try it out". Place it inside `
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TryIt.Root`           | a `<form>`; submitting it sends the request                                                                                                                                 |
 | `TryIt.Parameter`      | an `<input>` for one parameter (prop `parameter`), pre-filled from examples                                                                                                 |
-| `TryIt.Body`           | a `<textarea>` with an example body. Nothing when the operation takes no body.                                                                                              |
+| `TryIt.Body`           | a `<textarea>` with an example body. Nothing when the operation takes no body, or when the body is filled in with `TryIt.Field`s.                                          |
+| `TryIt.Field`          | an `<input>` for one property of a form or multipart body (prop `field`): `type="file"` with `accept` and `multiple` for files, else text pre-filled from examples          |
 | `TryIt.Send`           | a submit `<button>`, disabled while sending                                                                                                                                 |
 | `TryIt.Status`         | `200 OK`, once a response arrives                                                                                                                                           |
 | `TryIt.ResponseBody`   | the response body, pretty-printed when it's JSON                                                                                                                            |
@@ -284,6 +286,17 @@ To show every variable of the chosen server, map over `useTryItContext().serverV
     </label>
   ))
 }
+```
+
+Form and multipart bodies are filled in one field per property. Map over `useTryItContext().bodyFields` (empty for other bodies):
+
+```tsx
+const BodyFields = () =>
+  useTryItContext().bodyFields.map((field) => (
+    <label key={field.name}>
+      {field.name} <TryIt.Field field={field} />
+    </label>
+  ))
 ```
 
 Credentials are shared by every operation. The chosen server is shared by operations with the same server list, so an endpoint with its own servers keeps its own choice. What's typed into an operation's form is kept when you switch to another one and back. Required parameters get the `required` attribute, so the browser asks for them before sending.

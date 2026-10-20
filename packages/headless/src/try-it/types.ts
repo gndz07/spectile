@@ -1,4 +1,4 @@
-import type { Credential, HttpRequest, Parameter } from "@spectile/core"
+import type { BodyField, Credential, FileLike, HttpRequest, Parameter } from "@spectile/core"
 
 export type HttpResponse = {
   status: number
@@ -16,7 +16,16 @@ export type TryItResult =
   | { status: "error"; error: string }
 
 /** What the user typed for one operation. Parameter values are text, keyed by `parameterKey`. */
-export type RequestDraft = { parameters: Record<string, string>; body: string; mediaType?: string }
+export type RequestDraft = {
+  parameters: Record<string, string>
+  /** The body as text, sent when it isn't filled in field by field. */
+  body: string
+  mediaType?: string
+  /** Text for each typed body field, by property name. */
+  fields: Record<string, string>
+  /** The files chosen for each file field. */
+  files: Record<string, FileLike[]>
+}
 
 export type ResponseLike = {
   status: number
@@ -27,7 +36,7 @@ export type ResponseLike = {
 
 export type FetchLike = (
   url: string,
-  init: { method: string; headers: Record<string, string>; body?: string; signal?: unknown },
+  init: { method: string; headers: Record<string, string>; body?: string | Blob; signal?: unknown },
 ) => Promise<ResponseLike>
 
 export type TryItOptions = {
@@ -52,6 +61,9 @@ export type OperationTryItSnapshot = {
   result: TryItResult
   request: HttpRequest
   missing: Parameter[]
+  /** One per property of a form or multipart body; empty when the body is edited as text. */
+  bodyFields: BodyField[]
+  missingFields: BodyField[]
   /** Index into the operation's `servers`. */
   serverIndex: number
   /** The chosen server's variables with their current values. */

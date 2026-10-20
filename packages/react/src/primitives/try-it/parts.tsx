@@ -1,4 +1,4 @@
-import { type Parameter as ParameterModel, toCurl } from "@spectile/core"
+import { type BodyField, type Parameter as ParameterModel, toCurl } from "@spectile/core"
 import { useTryIt, useTryItSettings } from "../../hooks"
 import { Primitive, type PrimitiveProps, Text, type TextProps, mergeProps } from "../../primitive"
 import { useOperationContext } from "../operation/context"
@@ -24,13 +24,20 @@ export const Parameter = ({ parameter, ...props }: ParameterProps) => (
 
 export type BodyProps = PrimitiveProps<"textarea">
 
-/** Renders nothing when the operation takes no request body. */
+/** Renders nothing when the operation takes no request body, or when it's filled in with `Field`s. */
 export const Body = (props: BodyProps) => {
   const { requestBody } = useOperationContext()
   const tryIt = useTryItContext()
-  if (!requestBody) return null
+  if (!requestBody || tryIt.bodyFields.length > 0) return null
   return <Primitive as="textarea" {...mergeProps(tryIt.getBodyProps(), props)} />
 }
+
+export type FieldProps = PrimitiveProps<"input"> & { field: BodyField }
+
+/** One property of a form or multipart body: a file input for files, else a text input. */
+export const Field = ({ field, ...props }: FieldProps) => (
+  <Primitive as="input" {...mergeProps(useTryItContext().getFieldProps(field), props)} />
+)
 
 export type SendProps = PrimitiveProps<"button">
 

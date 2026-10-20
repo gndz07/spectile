@@ -114,6 +114,41 @@ describe("buildRequest", () => {
     expect(buildRequest(model, operation("open"), { body: "{}" })).not.toHaveProperty("body")
   })
 
+  it("encodes a JSON object for form bodies, and sends anything else as typed", () => {
+    const fields = JSON.stringify({ name: "a b", tags: ["x", "y"], meta: { k: 1 }, gone: null })
+    const send = (body: string, mediaType: string) =>
+      buildRequest(model, update, { body, mediaType })
+    expect(send(fields, "application/x-www-form-urlencoded")).toMatchObject({
+      body: "name=a%20b&tags=x&tags=y&k=1",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    })
+    expect(send("a=1", "application/x-www-form-urlencoded").body).toBe("a=1")
+
+    const request = send(fields, "multipart/form-data")
+    const part = (name: string, value: string) =>
+      `--spectile-boundary\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`
+    expect(request).toMatchObject({
+      headers: { "Content-Type": "multipart/form-data; boundary=spectile-boundary" },
+      body: `${part("name", "a b")}${part("tags", "x")}${part("tags", "y")}${part("meta", '{"k":1}')}--spectile-boundary--\r\n`,
+      form: [
+        { name: "name", value: "a b" },
+        { name: "tags", value: "x" },
+        { name: "tags", value: "y" },
+        { name: "meta", value: '{"k":1}' },
+      ],
+    })
+    expect(toCurl(request)).toBe(
+      `curl -X POST '/items/{id}' \\\n  --form-string 'name=a b' \\\n  --form-string 'tags=x' \\\n  --form-string 'tags=y' \\\n  --form-string 'meta={"k":1}'`,
+    )
+  })
+
+  it("picks a multipart boundary that no value contains", () => {
+    const body = JSON.stringify({ note: "--spectile-boundary" })
+    expect(buildRequest(model, update, { body, mediaType: "multipart/form-data" }).headers).toEqual({
+      "Content-Type": "multipart/form-data; boundary=spectile-boundary-1",
+    })
+  })
+
   it("applies the first security requirement that has credentials", () => {
     const headers = (credentials: Record<string, string>) =>
       buildRequest(model, update, { credentials }).headers

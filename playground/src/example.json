@@ -102,6 +102,34 @@
         }
       }
     },
+    "/pets/{id}/photos": {
+      "post": {
+        "operationId": "uploadPetPhoto",
+        "summary": "Upload a pet photo",
+        "tags": ["pets"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["photo"],
+                "properties": {
+                  "photo": { "type": "string", "contentMediaType": "image/*" },
+                  "caption": { "type": "string", "examples": ["Sunday nap"] },
+                  "tags": { "type": "array", "items": { "type": "string" } }
+                }
+              },
+              "encoding": { "photo": { "contentType": "image/png, image/jpeg" } }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Uploaded" } }
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health",

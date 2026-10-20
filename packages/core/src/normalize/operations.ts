@@ -10,6 +10,7 @@ import {
 } from "../json/read"
 import { issue } from "../json/refs"
 import {
+  type Encoding,
   type Example,
   type Header,
   type HttpMethod,
@@ -67,15 +68,34 @@ const examplesOf = (context: Context, owner: Located): Example[] => {
   })
 }
 
+const encodingOf = (context: Context, media: Located) => {
+  const encoding = entries(media.value.encoding).flatMap(([name]) => {
+    const located = resolveObject(context, appendPointer(media.pointer, "encoding", name))
+    if (!located) return []
+    const { value } = located
+    const fields: Encoding = {
+      contentType: asString(value.contentType),
+      headers: headers(context, located),
+      style: asString(value.style),
+      explode: asOptionalBoolean(value.explode),
+      allowReserved: asOptionalBoolean(value.allowReserved),
+    }
+    return [[name, fields] as const]
+  })
+  return encoding.length > 0 ? Object.fromEntries(encoding) : undefined
+}
+
 const mediaTypes = (context: Context, owner: Located): MediaType[] =>
   entries(owner.value.content).flatMap(([mediaType]) => {
     const located = resolveObject(context, appendPointer(owner.pointer, "content", mediaType))
     if (!located) return []
+    const encoding = encodingOf(context, located)
     return [
       {
         mediaType,
         schema: schemaAt(context, located),
         examples: examplesOf(context, located),
+        ...(encoding && { encoding }),
       },
     ]
   })

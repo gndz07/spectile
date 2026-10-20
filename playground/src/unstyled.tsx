@@ -6,6 +6,7 @@ import {
   TryIt,
   useNavigation,
   useOperation,
+  useTryItContext,
 } from "@spectile/react"
 import example from "./example.json"
 import { mount } from "./mount"
@@ -47,6 +48,13 @@ const SchemaView = ({ media }: { media: MediaType }) =>
     </Schema.Root>
   ) : null
 
+const BodyFields = () =>
+  useTryItContext().bodyFields.map((field) => (
+    <label key={field.name}>
+      {field.name} <TryIt.Field field={field} />
+    </label>
+  ))
+
 const OperationView = () => {
   const operation = useOperation()
   if (!operation) return null
@@ -76,6 +84,7 @@ const OperationView = () => {
             {parameter.name} <TryIt.Parameter parameter={parameter} />
           </label>
         ))}
+        <BodyFields />
         <TryIt.Body />
         <TryIt.Send>Send</TryIt.Send>
         <TryIt.Curl asChild>

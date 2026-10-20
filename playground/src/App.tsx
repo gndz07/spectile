@@ -195,6 +195,17 @@ const ServerFields = () => {
   )
 }
 
+const BodyFields = () => (
+  <div className="fields">
+    {useTryItContext().bodyFields.map((field) => (
+      <label key={field.name}>
+        {field.name} <span className="muted">{field.file ? "file" : "body"}</span>
+        <TryIt.Field field={field} />
+      </label>
+    ))}
+  </div>
+)
+
 const TryItPanel = ({ operation }: { operation: NormalizedOperation }) => {
   const { model } = useSpectile()
   return (
@@ -215,6 +226,7 @@ const TryItPanel = ({ operation }: { operation: NormalizedOperation }) => {
             </label>
           ))}
         </div>
+        <BodyFields />
         <TryIt.Body className="body-input" rows={10} spellCheck={false} aria-label="Request body" />
         <TryIt.Send className="send">Send</TryIt.Send>
         <TryIt.Curl asChild>

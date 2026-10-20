@@ -1,16 +1,23 @@
 import {
   type Credential,
+  type FileLike,
   type NormalizedOperation,
   type SpecModel,
+  bodyFields,
   buildRequest,
+  missingFields,
   missingParameters,
   serverVariableValues,
 } from "@spectile/core"
 import { type Store, memoizeLast } from "../store"
 import {
   type createInitialDrafts,
+  parseDraftFields,
   parseDraftParameters,
+  requestMedia,
   withBody,
+  withField,
+  withFiles,
   withMediaType,
   withParameter,
 } from "./draft"
@@ -46,6 +53,11 @@ export type SessionContext = {
 const IDLE: TryItResult = { status: "idle" }
 const PENDING: TryItResult = { status: "pending" }
 
+const missingMessage = (kind: string, missing: { name: string }[]) =>
+  missing.length === 0
+    ? []
+    : [`Missing required ${kind}: ${missing.map(({ name }) => name).join(", ")}`]
+
 export const createSession = (
   { model, options, store, controllers, initialDrafts }: SessionContext,
   operation: NormalizedOperation,
@@ -54,6 +66,10 @@ export const createSession = (
   const serverKey = serverListKey(servers)
   const selectionOf = (state: TryItState) => state.servers[serverKey] ?? FIRST_SERVER
   const draftOf = (state: TryItState) => state.drafts[id] ?? initialDrafts.get(operation)
+  const fieldsFor = memoizeLast((mediaType?: string) => {
+    const media = requestMedia(operation, mediaType)
+    return media ? bodyFields(model, media) : []
+  })
 
   const snapshotFor = memoizeLast(
     (
@@ -63,6 +79,8 @@ export const createSession = (
       credentials: Record<string, Credential>,
     ): OperationTryItSnapshot => {
       const parameters = parseDraftParameters(model, operation, draft.parameters)
+      const fields = fieldsFor(draft.mediaType)
+      const fieldValues = parseDraftFields(model, fields, draft)
       const serverUrl = selectedServerUrl(servers, selection, options.baseUrl)
       return {
         draft,
@@ -71,10 +89,12 @@ export const createSession = (
           serverUrl,
           credentials,
           parameters,
-          body: draft.body,
+          body: fields.length > 0 ? fieldValues : draft.body,
           mediaType: draft.mediaType,
         }),
         missing: missingParameters(operation, parameters),
+        bodyFields: fields,
+        missingFields: missingFields(fields, fieldValues),
         serverIndex: selection.index,
         serverVariables: serverVariableValues(servers[selection.index], selection.variables),
         serverUrl,
@@ -114,6 +134,12 @@ export const createSession = (
 
   const setBody = (body: string) => updateDraft((draft) => withBody(draft, body))
 
+  const setField = (name: string, text: string) =>
+    updateDraft((draft) => withField(draft, name, text))
+
+  const setFiles = (name: string, files: FileLike[]) =>
+    updateDraft((draft) => withFiles(draft, name, files))
+
   const setMediaType = (mediaType: string) =>
     updateDraft((draft) => withMediaType(model, operation, draft, mediaType))
 
@@ -126,11 +152,12 @@ export const createSession = (
   }
 
   const send = async () => {
-    const { request, missing } = getSnapshot()
-    if (missing.length > 0) {
-      const names = missing.map((parameter) => parameter.name).join(", ")
-      return setResult({ status: "error", error: `Missing required parameters: ${names}` })
-    }
+    const { request, missing, missingFields } = getSnapshot()
+    const problems = [
+      ...missingMessage("parameters", missing),
+      ...missingMessage("fields", missingFields),
+    ]
+    if (problems.length > 0) return setResult({ status: "error", error: problems.join(". ") })
     const fetchRequest = options.fetch ?? globalFetch()
     if (!fetchRequest) return setResult({ status: "error", error: "fetch is not available" })
 
@@ -154,6 +181,8 @@ export const createSession = (
     getSnapshot,
     setParameter,
     setBody,
+    setField,
+    setFiles,
     setMediaType,
     selectServer,
     setServerVariable,

@@ -63,7 +63,7 @@ Each operation is complete on its own, so you don't need to look anything up:
 - `id`: the `operationId`, or a slug like `get-users-id` when there isn't one. Always unique.
 - `method`, `path`, `summary`, `description`, `externalDocs`, `tags`, `deprecated`
 - `parameters`: path-level and operation-level parameters, merged (the operation's win).
-- `requestBody`, `responses`: each with its content types, schemas and examples.
+- `requestBody`, `responses`: each with its content types, schemas and examples, and for form bodies, the `encoding` of each property.
 - `security`, `servers`: inherited from the top level when the operation doesn't set its own. `security: []` means "no auth".
 
 The model is plain JSON. You can `JSON.stringify` it, cache it, or send it from a server to the browser.
@@ -114,6 +114,9 @@ toCurl(request) // curl -X POST 'https://…' -H '…' --data '…'
 ```
 
 - **Parameters** are keyed by `parameterKey(parameter)`, which is `"<in>.<name>"`. Arrays and objects follow the parameter's `style` and `explode`, as the OpenAPI spec says. Empty values are left out.
+- **Body** is text, sent as is, except for form bodies. For `application/x-www-form-urlencoded` and `multipart/form-data`, pass an object of values (or JSON text) and it's encoded for you, following the media type's `encoding` (`contentType`, `style`, `explode`, `allowReserved`). Arrays become repeated fields; objects become JSON.
+- **Files**: in a multipart body, a value can be a `File` (or an array of them). Without files, `request.body` is text. With files, it's a list of text and files: send `new Blob(request.body)`, which keeps the boundary in the `Content-Type` header correct. Multipart requests also list their parts in `request.form`, which `toCurl` turns into `-F` / `--form-string` arguments.
+- **One input per field**: `bodyFields(model, media)` lists a form or multipart body's properties: `{ name, required, schema, file, multiple, accept }`. A field is a file when its schema is binary (`format: binary`, `contentMediaType`…) or its encoding names a non-text type. `fieldExamples(model, media)` gives starting text for the typed ones, `parseSchemaInput(model, field.schema, text)` turns text back into a value, and `missingFields(fields, values)` lists required ones still empty.
 - **Credentials** are keyed by security scheme name. A token or API key is a string; HTTP Basic is `{ username, password }`. The first security requirement with every credential filled in is used.
 - `missingParameters(operation, values)` lists required parameters that have no value.
 
