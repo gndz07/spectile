@@ -2,10 +2,13 @@ import {
   type BodyField,
   type FileLike,
   type Parameter as ParameterModel,
-  toCurl,
+  toCurlTokens,
 } from "@spectile/core"
+import { formatBytes, formatDuration } from "@spectile/headless"
 import { useLayoutEffect, useRef } from "react"
 import { useTryIt, useTryItSettings } from "../../hooks"
+import { type DescriptionProps, Markdown } from "../../markdown"
+import { useSpectile } from "../../provider"
 import {
   Primitive,
   type PrimitiveProps,
@@ -86,6 +89,7 @@ export const Status = (props: TextProps) => {
   return (
     <Text
       value={response && `${response.status} ${response.statusText}`.trim()}
+      aria-live="polite"
       data-status={response?.status}
       data-ok={response && response.status >= 200 && response.status < 300 ? "" : undefined}
       {...props}
@@ -93,18 +97,61 @@ export const Status = (props: TextProps) => {
   )
 }
 
+/** How long the response took, e.g. `85 ms`. */
+export const Duration = (props: TextProps) => {
+  const response = useResponse()
+  return <Text value={response && formatDuration(response.duration)} {...props} />
+}
+
+/** The size of the response body, e.g. `1.5 KB`. */
+export const Size = (props: TextProps) => {
+  const response = useResponse()
+  return <Text value={response && formatBytes(response.size)} {...props} />
+}
+
 export const ResponseBody = (props: TextProps) => <Text value={useResponse()?.body} {...props} />
 
+/** `data-network` when no response came back, e.g. the browser blocked the request. */
 export const Error = (props: TextProps) => {
   const { result } = useTryItContext()
+  const error = result.status === "error" ? result : undefined
   return (
-    <Text value={result.status === "error" ? result.error : undefined} role="alert" {...props} />
+    <Text
+      value={error?.error}
+      role="alert"
+      data-network={error?.network ? "" : undefined}
+      {...props}
+    />
   )
 }
 
-export const Curl = (props: TextProps) => (
-  <Text value={toCurl(useTryItContext().request)} {...props} />
-)
+/** The request as curl. Placeholders for missing required values are `<span data-missing>`s. */
+export const Curl = (props: TextProps) => {
+  const tokens = toCurlTokens(useTryItContext().request)
+  return (
+    <Text
+      value={tokens.map((token, index) =>
+        token.missing ? (
+          <span key={index} data-missing="">
+            {token.text}
+          </span>
+        ) : (
+          token.text
+        ),
+      )}
+      {...props}
+    />
+  )
+}
+
+export type CancelProps = PrimitiveProps<"button">
+
+/** Stops the pending request. Renders only while one is pending. */
+export const Cancel = (props: CancelProps) => {
+  const { result, cancel } = useTryItContext()
+  if (result.status !== "pending") return null
+  return <Primitive as="button" {...mergeProps({ type: "button" as const, onClick: cancel }, props)} />
+}
 
 export type ServerProps = PrimitiveProps<"input">
 
@@ -162,6 +209,15 @@ export type CredentialProps = PrimitiveProps<"input"> & {
   scheme: string
   /** For HTTP Basic: which half of the credential this input edits. */
   field?: "username" | "password"
+}
+
+export type CredentialDescriptionProps = DescriptionProps & { scheme: string }
+
+/** The security scheme's description, shown under its credential field. */
+export const CredentialDescription = ({ scheme, ...props }: CredentialDescriptionProps) => {
+  const { securitySchemes } = useSpectile().model
+  const { description } = securitySchemes.find(({ name }) => name === scheme) ?? {}
+  return <Markdown source={description} {...props} />
 }
 
 /** A token, API key, username or password. Works anywhere inside `SpectileProvider`. */

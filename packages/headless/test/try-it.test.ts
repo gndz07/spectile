@@ -5,6 +5,8 @@ import {
   type ResponseLike,
   createTryIt,
   defaultExampleResponse,
+  formatBytes,
+  formatDuration,
 } from "../src"
 import { formModel, model, serversModel } from "./fixture"
 
@@ -160,6 +162,16 @@ describe("createTryIt", () => {
     getPet.setParameter("path.id", "7")
     await getPet.send()
     expect(getPet.getSnapshot().result).toMatchObject({ response: { size: 15 } })
+  })
+
+  it("formats sizes and durations", () => {
+    expect([0, 512, 1536, 2 * 1024 ** 2].map(formatBytes)).toEqual([
+      "0 B",
+      "512 B",
+      "1.5 KB",
+      "2 MB",
+    ])
+    expect([85.4, 1234].map(formatDuration)).toEqual(["85 ms", "1.2 s"])
   })
 
   it("switches the content type through select props", () => {

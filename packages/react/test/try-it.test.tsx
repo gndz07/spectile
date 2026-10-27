@@ -1,7 +1,7 @@
 import type { FetchLike } from "@spectile/headless"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { formModel, model, serversModel } from "../../headless/test/fixture"
+import { formModel, model, operation, serversModel } from "../../headless/test/fixture"
 import { Operation, SpectileProvider, TryIt, useTryItContext } from "../src"
 
 const fetch = vi.fn<FetchLike>(async () => ({
@@ -56,6 +56,77 @@ describe("TryIt primitives", () => {
       "https://api.example.com/v1/pets/7?fields=name&fields=age",
       expect.objectContaining({ headers: { "X-API-Key": "k1" } }),
     )
+  })
+
+  it("marks missing values in curl and shows the response's time and size", async () => {
+    render(
+      <SpectileProvider model={model} tryItOptions={{ fetch }}>
+        <Operation.Root operation={operation("getPet")}>
+          <TryIt.Root>
+            <TryIt.Parameter parameter={operation("getPet").parameters[0]!} aria-label="id" />
+            <TryIt.Curl data-testid="curl" />
+            <TryIt.Send>Send</TryIt.Send>
+            <TryIt.Duration data-testid="duration" />
+            <TryIt.Size data-testid="size" />
+          </TryIt.Root>
+        </Operation.Root>
+      </SpectileProvider>,
+    )
+    const missing = screen.getByTestId("curl").querySelector("[data-missing]")
+    expect(missing?.textContent).toBe("{id}")
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "7" } })
+    expect(screen.getByTestId("curl").querySelector("[data-missing]")).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Send" }))
+    expect((await screen.findByTestId("size")).textContent).toBe("14 B")
+    expect(screen.getByTestId("duration").textContent).toMatch(/^\d+ ms$/)
+  })
+
+  it("cancels a pending request and flags network failures", async () => {
+    let fail: (error: Error) => void = () => {}
+    const pending = vi.fn<FetchLike>(
+      () =>
+        new Promise((_, reject) => {
+          fail = reject
+        }),
+    )
+    render(
+      <SpectileProvider model={model} tryItOptions={{ fetch: pending }}>
+        <Operation.Root operation={operation("health")}>
+          <TryIt.Root>
+            <TryIt.Send>Send</TryIt.Send>
+            <TryIt.Cancel>Cancel</TryIt.Cancel>
+            <TryIt.Error data-testid="error" />
+          </TryIt.Root>
+        </Operation.Root>
+      </SpectileProvider>,
+    )
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Send" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }))
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Send" }))
+    await screen.findByRole("button", { name: "Cancel" })
+    await act(async () => fail(new TypeError("Failed to fetch")))
+    expect(screen.getByTestId("error").dataset.network).toBe("")
+  })
+
+  it("shows a security scheme's description", () => {
+    const described = {
+      ...model,
+      securitySchemes: model.securitySchemes.map((scheme) => ({
+        ...scheme,
+        description: "Your _key_",
+      })),
+    }
+    render(
+      <SpectileProvider model={described}>
+        <TryIt.CredentialDescription scheme="apiKey" data-testid="description" />
+        <TryIt.CredentialDescription scheme="missing" data-testid="none" />
+      </SpectileProvider>,
+    )
+    expect(screen.getByTestId("description").textContent).toBe("Your _key_")
+    expect(screen.queryByTestId("none")).toBeNull()
   })
 
   it("leaves required parameters to form validation", () => {

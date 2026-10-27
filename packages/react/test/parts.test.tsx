@@ -1,7 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import type { MediaType } from "@spectile/core"
+import { act, fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { model, operation } from "../../headless/test/fixture"
+import { formModel, model, operation, schemaRef } from "../../headless/test/fixture"
 import {
+  Example,
   ExternalDocs,
   Info,
   Navigation,
@@ -10,6 +12,7 @@ import {
   RequestBody,
   Response,
   SpectileProvider,
+  useRequestBodyMedia,
 } from "../src"
 
 const Parameters = ({ id }: { id: string }) =>
@@ -186,5 +189,143 @@ describe("Navigation", () => {
     expect(item.getAttribute("aria-current")).toBe("page")
     expect(item.dataset.state).toBe("active")
     expect(screen.getByTestId("active").textContent).toBe("/pets/{id}")
+  })
+
+  const TreeNavigation = () => (
+    <SpectileProvider model={model} defaultActiveId="getPet">
+      <Navigation.Search aria-label="Search" />
+      <Navigation.ResultCount data-testid="count" />
+      <Navigation.Tree aria-label="Operations">
+        <Navigation.Groups>
+          {(group) => (
+            <Navigation.Group group={group} aria-label={group.tag?.name ?? group.kind}>
+              <Navigation.GroupToggle>
+                <Navigation.GroupName />
+              </Navigation.GroupToggle>
+              <Navigation.GroupItems>
+                {group.operations.map((each) => (
+                  <Navigation.Item key={each.id} operation={each}>
+                    <Navigation.Highlight text={each.summary ?? each.path} />
+                  </Navigation.Item>
+                ))}
+              </Navigation.GroupItems>
+            </Navigation.Group>
+          )}
+        </Navigation.Groups>
+      </Navigation.Tree>
+    </SpectileProvider>
+  )
+
+  it("moves through groups and items with the keyboard", () => {
+    render(<TreeNavigation />)
+    const item = (name: string) => screen.getByRole("treeitem", { name })
+    const pets = item("pets")
+    const pet = item("Fetch a pet")
+    expect(pet.tabIndex).toBe(0)
+    act(() => pet.focus())
+    fireEvent.keyDown(pet, { key: "ArrowLeft" })
+    expect(document.activeElement).toBe(pets)
+    fireEvent.keyDown(pets, { key: "ArrowLeft" })
+    expect(pets.getAttribute("aria-expanded")).toBe("false")
+    expect(screen.queryByRole("treeitem", { name: "Fetch a pet" })).toBeNull()
+    fireEvent.keyDown(pets, { key: "ArrowUp" })
+    expect(document.activeElement).toBe(
+      screen.getAllByRole("treeitem", { name: "Create a user" })[0],
+    )
+    fireEvent.click(screen.getByText("pets"))
+    expect(item("Fetch a pet")).toBeDefined()
+  })
+
+  it("highlights search matches and announces the result count", () => {
+    render(<TreeNavigation />)
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), {
+      target: { value: "pet" },
+    })
+    expect(screen.getByTestId("count").textContent).toBe("1")
+    expect(screen.getByTestId("count").getAttribute("aria-live")).toBe("polite")
+    const marks = [...document.querySelectorAll("mark")].map((mark) => mark.textContent)
+    expect(marks).toEqual(["pet"])
+    expect(screen.getByRole("treeitem", { name: "Fetch a pet" }).textContent).toBe("Fetch a pet")
+  })
+})
+
+describe("Example", () => {
+  const media = (examples: MediaType["examples"]): MediaType => ({
+    mediaType: "application/json",
+    schema: schemaRef("Profile"),
+    examples,
+  })
+
+  it("shows a value built from the schema when there are no examples", () => {
+    render(
+      <SpectileProvider model={model}>
+        <Example.Root media={media([])} data-testid="example">
+          <Example.Select aria-label="Example" />
+          <Example.Value />
+        </Example.Root>
+      </SpectileProvider>,
+    )
+    expect(screen.getByTestId("example").textContent).toBe('{\n  "bio": "string"\n}')
+    expect(screen.queryByRole("combobox")).toBeNull()
+  })
+
+  it("picks between named examples", () => {
+    render(
+      <SpectileProvider model={model}>
+        <Example.Root media={media([
+          { name: "short", summary: "Short", value: { bio: "Hi" } },
+          { name: "text", description: "Plain _text_", value: "hello" },
+        ])}>
+          <Example.Select aria-label="Example" />
+          <Example.Summary data-testid="summary" />
+          <Example.Description data-testid="description" />
+          <Example.Value data-testid="value" />
+        </Example.Root>
+      </SpectileProvider>,
+    )
+    const select = screen.getByRole("combobox", { name: "Example" })
+    expect([...select.querySelectorAll("option")].map((option) => option.textContent)).toEqual([
+      "Short",
+      "text",
+    ])
+    expect(screen.getByTestId("summary").textContent).toBe("Short")
+    fireEvent.change(select, { target: { value: "1" } })
+    expect(screen.getByTestId("value").textContent).toBe("hello")
+    expect(screen.getByTestId("description").textContent).toBe("Plain _text_")
+    expect(screen.queryByTestId("summary")).toBeNull()
+  })
+})
+
+describe("RequestBody.MediaSelect", () => {
+  it("switches the content type for the docs and the try-it form", () => {
+    const Media = () => <span data-testid="media">{useRequestBodyMedia()?.mediaType}</span>
+    render(
+      <SpectileProvider model={formModel}>
+        <Operation.Root operation={formModel.operations[0]!}>
+          <RequestBody.Root>
+            <RequestBody.MediaSelect aria-label="Content type" />
+            <Media />
+          </RequestBody.Root>
+        </Operation.Root>
+      </SpectileProvider>,
+    )
+    expect(screen.getByTestId("media").textContent).toBe("multipart/form-data")
+    fireEvent.change(screen.getByRole("combobox", { name: "Content type" }), {
+      target: { value: "application/x-www-form-urlencoded" },
+    })
+    expect(screen.getByTestId("media").textContent).toBe("application/x-www-form-urlencoded")
+  })
+
+  it("renders nothing for a single content type, and works for webhooks", () => {
+    render(
+      <SpectileProvider model={model}>
+        <Operation.Root operation={model.webhooks[0]!}>
+          <RequestBody.Root>
+            <RequestBody.MediaSelect aria-label="Content type" />
+          </RequestBody.Root>
+        </Operation.Root>
+      </SpectileProvider>,
+    )
+    expect(screen.queryByRole("combobox")).toBeNull()
   })
 })

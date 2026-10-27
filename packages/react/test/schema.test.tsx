@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import type { KeyboardEvent } from "react"
+import { normalize } from "@spectile/core"
 import { describe, expect, it } from "vitest"
 import { model, schemaRef } from "../../headless/test/fixture"
 import { Schema, SpectileProvider } from "../src"
@@ -99,6 +100,95 @@ describe("Schema primitives", () => {
     expect(profile.getAttribute("aria-expanded")).toBe("false")
     press("Enter")
     expect(profile.getAttribute("aria-expanded")).toBe("true")
+  })
+
+  it("picks a oneOf variant with a select that arrow keys leave alone", () => {
+    render(
+      <SpectileProvider model={model}>
+        <Schema.Root schema={schemaRef("Pet")}>
+          <Schema.Tree>
+            <Schema.Rows>
+              {(row) => (
+                <Schema.Row row={row}>
+                  <Schema.Name />
+                  <Schema.VariantSelect aria-label="Variant" />
+                </Schema.Row>
+              )}
+            </Schema.Rows>
+          </Schema.Tree>
+        </Schema.Root>
+      </SpectileProvider>,
+    )
+    const select = screen.getByRole("combobox", { name: "Variant" })
+    expect([...select.querySelectorAll("option")].map((option) => option.textContent)).toEqual([
+      "Cat",
+      "Dog",
+    ])
+    expect(rows().map((element) => element.textContent)).toEqual(["PetCatDog", "meows"])
+    focus(select)
+    press("ArrowDown")
+    expect(document.activeElement).toBe(select)
+    fireEvent.change(select, { target: { value: "1" } })
+    expect(rows()[1]!.textContent).toBe("barks")
+  })
+
+  it("links a recursive row back to its ancestor", () => {
+    render(
+      <SpectileProvider model={model}>
+        <Schema.Root schema={schemaRef("User")}>
+          <Schema.ExpandToggle />
+          <Schema.Tree>
+            <Schema.Rows>
+              {(row) => (
+                <Schema.Row row={row}>
+                  <Schema.Name /> <Schema.Link />
+                </Schema.Row>
+              )}
+            </Schema.Rows>
+          </Schema.Tree>
+        </Schema.Root>
+      </SpectileProvider>,
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Expand all" }))
+    expect(screen.queryByRole("button", { name: "Expand all" })).toBeNull()
+    fireEvent.click(screen.getByRole("treeitem", { name: "User" }))
+    const link = screen.getByRole("button", { name: "friends" })
+    expect(link.dataset.target).toBe("#/properties/friends")
+    focus(link)
+    fireEvent.click(link)
+    expect(document.activeElement).toBe(rows()[1])
+    fireEvent.click(screen.getByRole("button", { name: "Expand all" }))
+    fireEvent.click(screen.getByRole("button", { name: "Collapse all" }))
+    expect(rows()).toHaveLength(3)
+  })
+
+  it("shows defaults and constraints", () => {
+    const limits = normalize({
+      openapi: "3.1.0",
+      info: { title: "Limits", version: "1.0.0" },
+      components: {
+        schemas: {
+          Query: {
+            type: "object",
+            properties: { limit: { type: "integer", default: 20, minimum: 1, maximum: 100 } },
+          },
+        },
+      },
+    })
+    render(
+      <SpectileProvider model={limits}>
+        <Schema.Root schema={{ pointer: "#/components/schemas/Query", circular: false }}>
+          <Schema.Rows>
+            {(row) => (
+              <Schema.Row row={row}>
+                <Schema.Type /> <Schema.Default /> <Schema.Constraints />
+              </Schema.Row>
+            )}
+          </Schema.Rows>
+        </Schema.Root>
+      </SpectileProvider>,
+    )
+    expect(rows()[0]!.textContent).toBe("integer = 20 ≥ 1 · ≤ 100")
   })
 
   it("throws a clear error outside its root", () => {

@@ -117,6 +117,8 @@ const SchemaView = ({ media }: { media: MediaType }) =>
               <Schema.Indicator className="chevron">▸</Schema.Indicator>
               <Schema.Name className="name" />
               <Schema.Type className="type" />
+              <Schema.VariantSelect aria-label="Variant" />
+              <Schema.Link className="muted" />
               <Schema.Required className="required" />
               <Schema.Description className="description" />
             </Schema.Row>

@@ -1,7 +1,8 @@
 import { createStore } from "./store"
 
+/** `text` is a line of a body that isn't JSON. */
 export type JsonTokenKind =
-  "key" | "string" | "number" | "boolean" | "null" | "punctuation" | "ellipsis"
+  "key" | "string" | "number" | "boolean" | "null" | "punctuation" | "ellipsis" | "text"
 
 export type JsonToken = { kind: JsonTokenKind; text: string }
 
@@ -101,6 +102,11 @@ export const jsonLines = (text: string): JsonLine[] | undefined => {
   endLine(0)
   return lines
 }
+
+/** `jsonLines`, or for other text one plain line per line. */
+export const codeLines = (text: string): JsonLine[] =>
+  jsonLines(text) ??
+  text.split("\n").map((line) => ({ depth: 0, tokens: [{ kind: "text", text: line }] }))
 
 /** Folded lines show `{ … }` or `[ … ]` and hide the lines up to their closing one. */
 export const visibleJsonLines = (

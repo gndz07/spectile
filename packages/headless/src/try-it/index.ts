@@ -1,4 +1,4 @@
-import type { Credential, SpecModel } from "@spectile/core"
+import { type Credential, type SpecModel, findOperation } from "@spectile/core"
 import { createStore, memoizeLast } from "../store"
 import { createInitialDrafts } from "./draft"
 import { credentialProps } from "./props"
@@ -20,6 +20,7 @@ export type {
   TryItSettings,
 } from "./types"
 export { initialDraft } from "./draft"
+export { formatBytes, formatDuration } from "./format"
 export { selectedServerUrl, serverListKey } from "./servers"
 
 export type OperationTryIt = ReturnType<typeof createSession>
@@ -61,7 +62,7 @@ export const createTryIt = (model: SpecModel, options: TryItOptions = {}) => {
   const forOperation = (id: string) => {
     const existing = sessions.get(id)
     if (existing) return existing
-    const operation = model.operations.find((candidate) => candidate.id === id)
+    const operation = findOperation(model, id)
     if (!operation) throw new Error(`Unknown operation ${id}`)
     const session = createSession(context, operation)
     sessions.set(id, session)

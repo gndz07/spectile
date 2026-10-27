@@ -1,3 +1,4 @@
+import { useTryIt } from "../../hooks"
 import { type DescriptionProps, Markdown } from "../../markdown"
 import {
   Primitive,
@@ -30,3 +31,22 @@ export const Required = (props: TextProps) => (
 export const Description = (props: DescriptionProps) => (
   <Markdown source={useRequestBody().description} {...props} />
 )
+
+export type MediaSelectProps = PrimitiveProps<"select">
+
+/** Picks the content type when the body has several; nothing otherwise. */
+export const MediaSelect = ({ children, ...props }: MediaSelectProps) => {
+  const { content } = useRequestBody()
+  const tryIt = useTryIt(useOperationContext().id)
+  if (content.length < 2) return null
+  return (
+    <Primitive as="select" {...mergeProps(tryIt.getMediaTypeSelectProps(), props)}>
+      {children ??
+        content.map(({ mediaType }) => (
+          <option key={mediaType} value={mediaType}>
+            {mediaType}
+          </option>
+        ))}
+    </Primitive>
+  )
+}

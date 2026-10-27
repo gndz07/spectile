@@ -2,10 +2,13 @@ import type { SchemaRef } from "@spectile/core"
 import {
   type SchemaRow,
   type SchemaTreeOptions,
+  schemaConstraintsLabel,
+  schemaDefaultLabel,
   schemaRowLabel,
   schemaTypeLabel,
 } from "@spectile/headless"
-import { type CSSProperties, Fragment, type ReactNode, useEffect, useRef } from "react"
+import { type CSSProperties, Fragment, type ReactNode } from "react"
+import { useFollowFocus } from "../../focus"
 import { useSchemaTree } from "../../hooks"
 import { type DescriptionProps, Markdown } from "../../markdown"
 import { useSpectile } from "../../provider"
@@ -36,23 +39,6 @@ export type RowsProps = { children: (row: SchemaRow) => ReactNode }
 
 export const Rows = ({ children }: RowsProps) =>
   useSchema().rows.map((row) => <Fragment key={row.id}>{children(row)}</Fragment>)
-
-/** Moves DOM focus to the row the tree says is focused, unless focus is already in it or outside the tree. */
-const useFollowFocus = <T extends HTMLElement>(focused: boolean) => {
-  const ref = useRef<T>(null)
-  useEffect(() => {
-    const element = ref.current
-    if (!focused || !element) return
-    const { activeElement, body } = element.ownerDocument
-    if (activeElement && element.contains(activeElement)) return
-    const focusInTree =
-      !activeElement ||
-      activeElement === body ||
-      element.closest('[role="tree"]')?.contains(activeElement)
-    if (focusInTree) element.focus()
-  }, [focused])
-  return ref
-}
 
 export type RowProps = PrimitiveProps<"div"> & { row: SchemaRow }
 
@@ -85,6 +71,77 @@ export const Description = (props: DescriptionProps) => (
 export const Required = (props: TextProps) => (
   <RequiredText required={useSchemaRow().required} {...props} />
 )
+
+/** The default value after the type, e.g. `= true`. */
+export const Default = (props: TextProps) => (
+  <Text value={schemaDefaultLabel(useSchemaRow().node)} {...props} />
+)
+
+/** Allowed values and limits, e.g. `≥ 1 · ≤ 100`. */
+export const Constraints = (props: TextProps) => (
+  <Text value={schemaConstraintsLabel(useSchemaRow().node)} {...props} />
+)
+
+export type VariantSelectProps = PrimitiveProps<"select">
+
+/** Picks the oneOf/anyOf variant whose fields show under the row. Nothing on other rows. */
+export const VariantSelect = ({ children, ...props }: VariantSelectProps) => {
+  const schema = useSchema()
+  const row = useSchemaRow()
+  if (!row.variants) return null
+  const ours = { "data-kind": row.variants.kind, ...schema.getVariantSelectProps(row) }
+  return (
+    <Primitive as="select" {...mergeProps(ours, props)}>
+      {children ??
+        row.variants.labels.map((label, index) => (
+          <option key={index} value={index}>
+            {label}
+          </option>
+        ))}
+    </Primitive>
+  )
+}
+
+export type LinkProps = PrimitiveProps<"button">
+
+/**
+ * On a recursive row that no longer expands, a button that moves focus to the ancestor row with
+ * the same schema. Its text defaults to that row's label.
+ */
+export const Link = ({ children, ...props }: LinkProps) => {
+  const { rows, root, focus } = useSchema()
+  const { recursiveTarget, expandable } = useSchemaRow()
+  if (recursiveTarget === undefined || expandable) return null
+  const target = rows.find((candidate) => candidate.id === recursiveTarget) ?? rows[0]
+  const ours = {
+    type: "button" as const,
+    "data-target": recursiveTarget,
+    onClick: () => target && focus(target.id),
+  }
+  return (
+    <Primitive as="button" {...mergeProps(ours, props)}>
+      {children ??
+        (target?.id === recursiveTarget ? schemaRowLabel(target) : (root.refName ?? "root"))}
+    </Primitive>
+  )
+}
+
+export type ExpandToggleProps = PrimitiveProps<"button">
+
+/** Expands every row, or collapses them all once they're all open. Defaults to "Expand all" / "Collapse all". */
+export const ExpandToggle = ({ children, ...props }: ExpandToggleProps) => {
+  const { allExpanded, expandAll, collapseAll } = useSchema()
+  const ours = {
+    type: "button" as const,
+    "data-state": allExpanded ? "open" : "closed",
+    onClick: allExpanded ? collapseAll : expandAll,
+  }
+  return (
+    <Primitive as="button" {...mergeProps(ours, props)}>
+      {children ?? (allExpanded ? "Collapse all" : "Expand all")}
+    </Primitive>
+  )
+}
 
 export const Indicator = (props: TextProps) => {
   const { expandable, expanded } = useSchemaRow()
