@@ -1,0 +1,136 @@
+/*
+ * Spectile design tokens. Colors are light-dark() pairs: dark follows prefers-color-scheme
+ * unless data-theme="light" is set on the Spectile root or an ancestor, and data-theme="dark"
+ * always means dark. Pairs are `name` (text) and `name-bg` (background).
+ * Tokens have zero specificity, so any host rule overrides them.
+ */
+
+:where(:root) {
+  --spectile-color-bg: light-dark(#fbfbf9, #131615);
+  --spectile-color-surface-raised: light-dark(#ffffff, #1b1f1e);
+  --spectile-color-surface-sunken: light-dark(#f1f1ee, #0f1211);
+  --spectile-color-divider: light-dark(#e6e6e2, #2a2f2e);
+  --spectile-color-border: light-dark(#cfcfca, #3a4140);
+  --spectile-color-border-control: light-dark(#8a8a84, #6b7471);
+  --spectile-color-text: light-dark(#1c1c1a, #e7ebe9);
+  --spectile-color-text-secondary: light-dark(#5c5c57, #a3aca9);
+  --spectile-color-text-disabled: light-dark(#8f8f89, #6b7471);
+  --spectile-color-link: light-dark(#0b6e7f, #6cc8d6);
+  --spectile-color-text-on-accent: light-dark(#ffffff, #0b2328);
+  --spectile-color-accent: light-dark(#0b6e7f, #6cc8d6);
+  --spectile-color-accent-hover: light-dark(#08515d, #9adbe5);
+  --spectile-color-accent-subtle: light-dark(#08515d, #e7ebe9);
+  --spectile-color-accent-subtle-bg: light-dark(#dcebed, #1d3a3e);
+  --spectile-color-focus-ring: light-dark(#0b6e7f, #6cc8d6);
+
+  --spectile-color-method-get: light-dark(#1f7a3d, #7fd99a);
+  --spectile-color-method-get-bg: light-dark(#e6f2e9, #1d3324);
+  --spectile-color-method-post: light-dark(#2456b8, #93b4f5);
+  --spectile-color-method-post-bg: light-dark(#e6edf9, #1e2a44);
+  --spectile-color-method-put: light-dark(#a3520c, #f0a565);
+  --spectile-color-method-put-bg: light-dark(#f8ece1, #3a2716);
+  --spectile-color-method-patch: light-dark(#7a3a9e, #cf9cf0);
+  --spectile-color-method-patch-bg: light-dark(#f1e8f6, #2f2140);
+  --spectile-color-method-delete: light-dark(#b3302d, #f39490);
+  --spectile-color-method-delete-bg: light-dark(#f8e6e5, #3d1d1c);
+  --spectile-color-method-other: light-dark(#5c5c57, #a3aca9);
+  --spectile-color-method-other-bg: light-dark(#ededea, #262b2a);
+
+  --spectile-color-status-success: light-dark(#1d6a35, #7fd99a);
+  --spectile-color-status-success-bg: light-dark(#e3f1e6, #1d3324);
+  --spectile-color-status-redirect: light-dark(#2456b8, #93b4f5);
+  --spectile-color-status-redirect-bg: light-dark(#e6edf9, #1e2a44);
+  --spectile-color-status-client-error: light-dark(#a3460f, #f0a565);
+  --spectile-color-status-client-error-bg: light-dark(#f8ece1, #3a2716);
+  --spectile-color-status-server-error: light-dark(#a3262a, #f39490);
+  --spectile-color-status-server-error-bg: light-dark(#f8e6e5, #3d1d1c);
+  --spectile-color-status-warning: light-dark(#7d5700, #e8c35a);
+  --spectile-color-status-warning-bg: light-dark(#fbf1d6, #3a3014);
+  --spectile-color-deprecated: light-dark(#62625c, #a3aca9);
+  --spectile-color-deprecated-bg: light-dark(#ededea, #262b2a);
+  --spectile-color-required: light-dark(#8f3c12, #f0a58a);
+  --spectile-color-required-bg: light-dark(#fbe9e0, #3a2218);
+
+  /* Code blocks are dark in both themes. */
+  --spectile-color-code-bg: light-dark(#17191a, #0f1211);
+  --spectile-color-code-text: #cdd3d0;
+  --spectile-color-code-key: #8fd1dc;
+  --spectile-color-code-string: #c9e29a;
+  --spectile-color-code-number: #f0b98a;
+  --spectile-color-code-muted: #8f9895;
+  --spectile-color-code-missing: #e8c35a;
+
+  --spectile-font-system-sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial,
+    sans-serif;
+  --spectile-font-system-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --spectile-font-sans: var(--spectile-font-system-sans);
+  --spectile-font-mono: var(--spectile-font-system-mono);
+  --spectile-font-size-xs: 12px;
+  --spectile-font-size-sm: 13px;
+  --spectile-font-size-md: 14px;
+  --spectile-font-size-lg: 16px;
+  --spectile-font-size-xl: 20px;
+  --spectile-font-size-2xl: 28px;
+  --spectile-font-weight-regular: 400;
+  --spectile-font-weight-strong: 600;
+  --spectile-line-height-tight: 1.25;
+  --spectile-line-height-ui: 1.5;
+  --spectile-line-height-prose: 1.65;
+
+  --spectile-space-1: 2px;
+  --spectile-space-2: 4px;
+  --spectile-space-3: 8px;
+  --spectile-space-4: 12px;
+  --spectile-space-5: 16px;
+  --spectile-space-6: 24px;
+  --spectile-space-7: 32px;
+  --spectile-space-8: 48px;
+  --spectile-schema-indent: 18px;
+  --spectile-row-height: 36px;
+
+  --spectile-sidebar-width: 264px;
+  --spectile-content-max-width: 760px;
+  --spectile-panel-width: 440px;
+  --spectile-drawer-width: 480px;
+  /* For reference only: container queries can't read variables, so styles.css repeats these. */
+  --spectile-bp-panel: 1280px;
+  --spectile-bp-sidebar: 960px;
+  --spectile-bp-phone: 600px;
+
+  --spectile-radius-sm: 3px;
+  --spectile-radius-md: 6px;
+  --spectile-radius-lg: 12px;
+  --spectile-border-width: 1px;
+  --spectile-focus-width: 2px;
+  --spectile-focus-offset: 2px;
+  --spectile-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.18);
+  --spectile-duration: 160ms;
+  --spectile-easing: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (pointer: coarse) {
+  :where(:root) {
+    --spectile-row-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root) {
+    --spectile-duration: 0ms;
+  }
+}
+
+.spectile {
+  color-scheme: light dark;
+}
+
+[data-theme="light"] .spectile,
+.spectile[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] .spectile,
+.spectile[data-theme="dark"] {
+  color-scheme: dark;
+}

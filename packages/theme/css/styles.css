@@ -1,0 +1,22 @@
+@import "./tokens.css";
+
+.spectile {
+  container-type: inline-size;
+  background: var(--spectile-color-bg);
+  color: var(--spectile-color-text);
+  font-family: var(--spectile-font-sans);
+  font-size: var(--spectile-font-size-md);
+  font-weight: var(--spectile-font-weight-regular);
+  line-height: var(--spectile-line-height-ui);
+}
+
+.spectile *,
+.spectile *::before,
+.spectile *::after {
+  box-sizing: border-box;
+}
+
+.spectile :focus-visible {
+  outline: var(--spectile-focus-width) solid var(--spectile-color-focus-ring);
+  outline-offset: var(--spectile-focus-offset);
+}
