@@ -1,5 +1,6 @@
-import type { MediaType, SchemaNode, SchemaProperty, SchemaRef, SpecModel } from "../model"
+import type { MediaType, SchemaNode, SchemaRef, SpecModel } from "../model"
 import { getSchema } from "../schema/get"
+import { getMergedSchema } from "../schema/merge"
 import { isFormMediaType, isMultipart } from "./media-type"
 import { isEmptyValue } from "./parameters"
 
@@ -30,27 +31,14 @@ const isFile = (node: SchemaNode, contentType?: string) =>
   isBinary(node) ||
   (node.types.length === 0 && contentType !== undefined && !isTextType(contentType))
 
-/** Own properties after those of `allOf` parts, so own ones win. */
-const propertiesOf = (
-  model: SpecModel,
-  ref: SchemaRef,
-  ancestors: ReadonlySet<string> = new Set(),
-): SchemaProperty[] => {
-  if (ancestors.has(ref.pointer)) return []
-  const node = getSchema(model, ref)
-  const inner = new Set([...ancestors, ref.pointer])
-  return [...node.allOf.flatMap((part) => propertiesOf(model, part, inner)), ...node.properties]
-}
-
 /** The fields of a form or multipart body with an object schema; empty for any other body. */
 export const bodyFields = (
   model: SpecModel,
   { mediaType, schema, encoding = {} }: MediaType,
 ): BodyField[] => {
   if (!schema || !isFormMediaType(mediaType)) return []
-  const properties = new Map(propertiesOf(model, schema).map((property) => [property.name, property]))
-  return [...properties.values()].flatMap(({ name, required, schema: property }) => {
-    const node = getSchema(model, property)
+  return getMergedSchema(model, schema).properties.flatMap(({ name, required, schema: property }) => {
+    const node = getMergedSchema(model, property)
     if (node.readOnly) return []
     const items = node.types.includes("array") && node.items ? getSchema(model, node.items) : undefined
     const value = items ?? node

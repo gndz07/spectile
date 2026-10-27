@@ -1,15 +1,32 @@
-import { type SchemaNode, type SchemaRef, type SpecModel, getSchema } from "@spectile/core"
-import { type KeyboardEventLike, type TargetEventLike, fromNestedControl } from "../events"
+import { type SchemaNode, type SchemaRef, type SpecModel, getMergedSchema } from "@spectile/core"
+import {
+  type InputEventLike,
+  type KeyboardEventLike,
+  type TargetEventLike,
+  fromNestedControl,
+} from "../events"
 import { createStore, memoizeLast, select } from "../store"
-import type { GetNode } from "./children"
+import type { GetNode, SelectedVariant } from "./children"
 import { type TreeAction, treeKeyAction } from "./keyboard"
-import { type SchemaRow, buildRows, expandedToDepth } from "./rows"
-import { type TreeState, collapsedAll, withExpanded } from "./state"
+import { ROOT_ID, type SchemaRow, buildRows, expandedToDepth, hasRootRow } from "./rows"
+import { type TreeState, withExpanded, withFocusShown, withVariant } from "./state"
 
-export { type SchemaChild, type SchemaRowKind, schemaChildren } from "./children"
+export {
+  type SchemaChild,
+  type SchemaRowKind,
+  type VariantKind,
+  schemaChildren,
+  variantsOf,
+} from "./children"
 export { type TreeAction, type TreeRow, treeKeyAction } from "./keyboard"
-export { schemaRowLabel, schemaTypeLabel } from "./labels"
-export type { SchemaRow } from "./rows"
+export {
+  schemaConstraintsLabel,
+  schemaDefaultLabel,
+  schemaRowLabel,
+  schemaTypeLabel,
+} from "./labels"
+export type { SchemaRow, SchemaRowVariants } from "./rows"
+export { variantLabel } from "./variants"
 
 export type SchemaTreeOptions = { defaultExpandedDepth?: number }
 
@@ -18,6 +35,8 @@ export type SchemaTreeSnapshot = {
   rows: SchemaRow[]
   focusedId?: string
   tabStopId?: string
+  /** Every row that can open is open, so an Expand all control shows Collapse all. */
+  allExpanded: boolean
 }
 
 export const createSchemaTree = (
@@ -29,34 +48,62 @@ export const createSchemaTree = (
   const getNode: GetNode = (ref) => {
     const cached = nodes.get(ref)
     if (cached) return cached
-    const node = getSchema(model, ref)
+    const node = getMergedSchema(model, ref)
     nodes.set(ref, node)
     return node
   }
 
   const root = getNode(rootRef)
+  const collapsed: ReadonlySet<string> = new Set(hasRootRow(root) ? [ROOT_ID] : [])
+  const selectedIn =
+    (variants: TreeState["variants"]): SelectedVariant =>
+    (id) =>
+      variants[id] ?? 0
+
+  const expandedTo = (depth: number, variants: TreeState["variants"]) =>
+    new Set([...collapsed, ...expandedToDepth(getNode, root, depth, selectedIn(variants))])
+
   const store = createStore<TreeState>({
-    expanded: expandedToDepth(getNode, root, defaultExpandedDepth),
+    expanded: expandedTo(defaultExpandedDepth, {}),
+    variants: {},
   })
-  const rowsFor = memoizeLast((expanded: ReadonlySet<string>) => buildRows(getNode, root, expanded))
-  const view = select(store, ({ expanded, focusedId }): SchemaTreeSnapshot => {
-    const rows = rowsFor(expanded)
+  const rowsFor = memoizeLast((expanded: ReadonlySet<string>, variants: TreeState["variants"]) =>
+    buildRows(getNode, root, expanded, selectedIn(variants)),
+  )
+  const view = select(store, ({ expanded, variants, focusedId }): SchemaTreeSnapshot => {
+    const rows = rowsFor(expanded, variants)
     const focusVisible = rows.some((row) => row.id === focusedId)
-    return { root, rows, focusedId, tabStopId: focusVisible ? focusedId : rows[0]?.id }
+    return {
+      root,
+      rows,
+      focusedId,
+      tabStopId: focusVisible ? focusedId : rows[0]?.id,
+      allExpanded: !rows.some((row) => row.expandable && !row.expanded && !row.recursive),
+    }
   })
+
+  const update = (change: (state: TreeState) => TreeState) =>
+    store.setState((state) => {
+      const next = change(state)
+      return next === state ? state : withFocusShown(next, rowsFor(next.expanded, next.variants))
+    })
 
   const focus = (id: string) => store.setState({ focusedId: id })
 
   const setExpanded = (id: string, open: boolean) =>
-    store.setState((state) => withExpanded(state, id, open))
+    update((state) => withExpanded(state, id, open))
 
   const expand = (id: string) => setExpanded(id, true)
   const collapse = (id: string) => setExpanded(id, false)
   const toggle = (id: string) => setExpanded(id, !store.getSnapshot().expanded.has(id))
 
-  const expandAll = () => store.setState({ expanded: expandedToDepth(getNode, root, Infinity) })
+  const expandAll = () =>
+    update((state) => ({ ...state, expanded: expandedTo(Infinity, state.variants) }))
 
-  const collapseAll = () => store.setState((state) => collapsedAll(state, view.getSnapshot().rows))
+  const collapseAll = () => update((state) => ({ ...state, expanded: collapsed }))
+
+  const selectVariant = (id: string, index: number) =>
+    update((state) => withVariant(state, id, index))
 
   const actions: Record<TreeAction["type"], (id: string) => void> = {
     focus,
@@ -97,6 +144,12 @@ export const createSchemaTree = (
     },
   })
 
+  /** Options come from `row.variants.labels`, valued by index. */
+  const getVariantSelectProps = (row: SchemaRow) => ({
+    value: String(row.variants?.selected ?? 0),
+    onChange: (event: InputEventLike) => selectVariant(row.id, Number(event.currentTarget.value)),
+  })
+
   return {
     getSnapshot: view.getSnapshot,
     subscribe: view.subscribe,
@@ -106,8 +159,10 @@ export const createSchemaTree = (
     toggle,
     expandAll,
     collapseAll,
+    selectVariant,
     getTreeProps,
     getRowProps,
+    getVariantSelectProps,
   }
 }
 

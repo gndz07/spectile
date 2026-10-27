@@ -16,7 +16,7 @@ export type SpectileProviderProps = {
   model: SpecModel
   defaultActiveId?: string
   /** Read once when the model changes. */
-  tryIt?: TryItOptions
+  tryItOptions?: TryItOptions
   /** Turns description Markdown into elements. Without it, descriptions are plain text. */
   renderMarkdown?: RenderMarkdown
   children?: ReactNode
@@ -30,7 +30,7 @@ export { useSpectile }
 export const SpectileProvider = ({
   model,
   defaultActiveId,
-  tryIt,
+  tryItOptions,
   renderMarkdown = plainText,
   children,
 }: SpectileProviderProps) => {
@@ -38,7 +38,7 @@ export const SpectileProvider = ({
     () => ({
       model,
       navigation: createNavigation(model, { activeId: defaultActiveId }),
-      tryIt: createTryIt(model, tryIt),
+      tryIt: createTryIt(model, tryItOptions),
     }),
     [model],
   )

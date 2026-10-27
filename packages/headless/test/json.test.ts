@@ -1,0 +1,68 @@
+import { describe, expect, it, vi } from "vitest"
+import { type JsonLine, createJsonFolds, jsonLines, visibleJsonLines } from "../src"
+
+const text = (lines: readonly JsonLine[]) =>
+  lines.map(({ depth, tokens }) => "  ".repeat(depth) + tokens.map((token) => token.text).join(""))
+
+const BODY = '{"id":12345678901234567890,"tags":["a",{}],"owner":{"a/b":null},"ok":true}'
+
+describe("jsonLines", () => {
+  it("lays out JSON one value per line, keeping number text", () => {
+    expect(text(jsonLines(BODY)!)).toEqual([
+      "{",
+      '  "id": 12345678901234567890,',
+      '  "tags": [',
+      '    "a",',
+      "    {}",
+      "  ],",
+      '  "owner": {',
+      '    "a/b": null',
+      "  },",
+      '  "ok": true',
+      "}",
+    ])
+  })
+
+  it("tags tokens by kind and marks folds with their path and closing line", () => {
+    const lines = jsonLines(BODY)!
+    expect(lines[1]!.tokens).toEqual([
+      { kind: "key", text: '"id"' },
+      { kind: "punctuation", text: ": " },
+      { kind: "number", text: "12345678901234567890" },
+      { kind: "punctuation", text: "," },
+    ])
+    expect(lines.flatMap(({ fold }) => (fold ? [fold] : []))).toEqual([
+      { path: "", end: 10 },
+      { path: "/tags", end: 5 },
+      { path: "/owner", end: 8 },
+    ])
+  })
+
+  it("is undefined for text that isn't JSON", () => {
+    expect(jsonLines("<html>")).toBeUndefined()
+    expect(text(jsonLines('"hi"')!)).toEqual(['"hi"'])
+  })
+})
+
+describe("visibleJsonLines", () => {
+  it("collapses folded objects and arrays to one line", () => {
+    const lines = jsonLines(BODY)!
+    expect(text(visibleJsonLines(lines, new Set(["/tags"])))).toContain('  "tags": [ … ],')
+    expect(text(visibleJsonLines(lines, new Set([""])))).toEqual(["{ … }"])
+  })
+})
+
+describe("createJsonFolds", () => {
+  it("toggles folds by path", () => {
+    const folds = createJsonFolds()
+    const listener = vi.fn()
+    folds.subscribe(listener)
+    expect(folds.getToggleProps("/tags")).toMatchObject({ "aria-expanded": true })
+    folds.getToggleProps("/tags").onClick()
+    expect(folds.getSnapshot().folded.has("/tags")).toBe(true)
+    expect(folds.getToggleProps("/tags")).toMatchObject({ "data-state": "closed" })
+    folds.toggle("/tags")
+    expect(folds.getSnapshot().folded.size).toBe(0)
+    expect(listener).toHaveBeenCalledTimes(2)
+  })
+})

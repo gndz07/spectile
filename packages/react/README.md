@@ -301,7 +301,7 @@ const BodyFields = () =>
 
 Credentials are shared by every operation. The chosen server is shared by operations with the same server list, so an endpoint with its own servers keeps its own choice. What's typed into an operation's form is kept when you switch to another one and back. Required parameters get the `required` attribute, so the browser asks for them before sending.
 
-Calls to another site's API only work if that API allows browser requests (CORS). If it doesn't, pass a `fetch` that goes through your own proxy: `<SpectileProvider tryIt={{ fetch: proxyFetch }}>`.
+Calls to another site's API only work if that API allows browser requests (CORS). If it doesn't, pass a `fetch` that goes through your own proxy: `<SpectileProvider tryItOptions={{ fetch: proxyFetch }}>`.
 
 ## Styling
 

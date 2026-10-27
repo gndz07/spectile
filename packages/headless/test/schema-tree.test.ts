@@ -1,6 +1,14 @@
 import { getSchema, normalize } from "@spectile/core"
 import { describe, expect, it, vi } from "vitest"
-import { type SchemaTree, createSchemaTree, schemaRowLabel, schemaTypeLabel } from "../src"
+import {
+  type SchemaTree,
+  createSchemaTree,
+  schemaConstraintsLabel,
+  schemaDefaultLabel,
+  schemaRowLabel,
+  schemaTypeLabel,
+  variantLabel,
+} from "../src"
 import { model, schemaRef } from "./fixture"
 
 const userTree = (options?: { defaultExpandedDepth?: number }) =>
@@ -53,11 +61,25 @@ describe("createSchemaTree", () => {
     expect(ids(tree)).toEqual([NAME, FRIENDS, PROFILE])
   })
 
-  it("lets recursive rows be expanded by hand", () => {
+  it("expands a recursive row one level, then links back to the ancestor row", () => {
     const tree = userTree()
     tree.expand(FRIENDS)
+    expect(rowOf(tree, FRIEND)).toMatchObject({ recursiveTarget: "#", expandable: true })
     tree.expand(FRIEND)
-    expect(ids(tree)).toContain(`${FRIEND}/properties/friends`)
+    expect(rowOf(tree, `${FRIEND}/properties/friends`)).toMatchObject({
+      recursive: true,
+      recursiveTarget: FRIENDS,
+      expandable: false,
+    })
+  })
+
+  it("reports whether every row is expanded", () => {
+    const tree = userTree()
+    expect(tree.getSnapshot().allExpanded).toBe(false)
+    tree.expandAll()
+    expect(tree.getSnapshot().allExpanded).toBe(true)
+    tree.collapse(PROFILE)
+    expect(tree.getSnapshot().allExpanded).toBe(false)
   })
 
   it("expands to a depth without following recursive schemas", () => {
@@ -70,25 +92,62 @@ describe("createSchemaTree", () => {
     expect(ids(tree)).toEqual([NAME, FRIENDS, PROFILE])
   })
 
-  it("lists composition variants", () => {
+  it("holds a oneOf root's variant select in a root row, showing the selected variant", () => {
     const tree = createSchemaTree(model, schemaRef("Pet"))
     expect(tree.getSnapshot().rows).toMatchObject([
       {
-        id: "#/oneOf/0",
-        kind: "oneOf",
-        index: 0,
-        position: 1,
-        setSize: 2,
-        node: { refName: "Cat" },
+        id: "#",
+        kind: "root",
+        depth: 0,
+        expanded: true,
+        variants: { kind: "oneOf", labels: ["Cat", "Dog"], selected: 0 },
       },
-      {
-        id: "#/oneOf/1",
-        kind: "oneOf",
-        index: 1,
-        position: 2,
-        setSize: 2,
-        node: { refName: "Dog" },
+      { id: "#/oneOf/0/properties/meows", parentId: "#", depth: 1, name: "meows" },
+    ])
+    tree.getVariantSelectProps(rowOf(tree, "#")).onChange({ currentTarget: { value: "1" } })
+    expect(ids(tree)).toEqual(["#", "#/oneOf/1/properties/barks"])
+    tree.collapseAll()
+    expect(ids(tree)).toEqual(["#", "#/oneOf/1/properties/barks"])
+  })
+
+  it("moves focus out of a variant that is no longer selected", () => {
+    const tree = createSchemaTree(model, schemaRef("Pet"))
+    tree.focus("#/oneOf/0/properties/meows")
+    tree.selectVariant("#", 1)
+    expect(tree.getSnapshot().focusedId).toBe("#")
+  })
+
+  it("labels variants by title, discriminator value, schema name, then position", () => {
+    const variants = normalize({
+      openapi: "3.1.0",
+      info: { title: "Variants", version: "1.0.0" },
+      components: {
+        schemas: {
+          Shape: {
+            oneOf: [
+              { title: "Round", type: "object" },
+              { $ref: "#/components/schemas/Square" },
+              { type: "object", properties: { kind: { const: "line" } } },
+              { $ref: "#/components/schemas/Dot" },
+              { type: "string" },
+            ],
+            discriminator: {
+              propertyName: "kind",
+              mapping: { square: "#/components/schemas/Square" },
+            },
+          },
+          Square: { type: "object" },
+          Dot: { type: "object" },
+        },
       },
+    })
+    const shape = getSchema(variants, "#/components/schemas/Shape")
+    expect([0, 1, 2, 3, 4].map((index) => variantLabel(variants, shape, index))).toEqual([
+      "Round",
+      "square",
+      "line",
+      "Dot",
+      "Option 5",
     ])
   })
 
@@ -149,7 +208,59 @@ describe("createSchemaTree", () => {
       "profile",
     ])
     const pet = createSchemaTree(model, schemaRef("Pet"))
-    expect(pet.getSnapshot().rows.map(schemaRowLabel)).toEqual(["Cat", "Dog"])
+    expect(pet.getSnapshot().rows.map(schemaRowLabel)).toEqual(["Pet", "meows"])
+  })
+
+  it("labels formats, defaults and constraints", () => {
+    const labels = normalize({
+      openapi: "3.1.0",
+      info: { title: "Labels", version: "1.0.0" },
+      components: {
+        schemas: {
+          Id: { type: "string", format: "uuid" },
+          Ids: { type: "array", items: { type: "string", format: "uuid" } },
+          Flag: { type: "boolean", default: true },
+          Limit: { type: "integer", minimum: 1, exclusiveMaximum: 100, multipleOf: 5 },
+          Sort: { type: "string", enum: ["asc", "desc"], minLength: 3, pattern: "^[a-z]+$" },
+          Tags: { type: "array", maxItems: 5, uniqueItems: true },
+        },
+      },
+    })
+    const node = (name: string) => ({
+      ...getSchema(labels, `#/components/schemas/${name}`),
+      refName: undefined,
+    })
+    expect(schemaTypeLabel(node("Id"))).toBe("string · uuid")
+    expect(schemaTypeLabel(node("Ids"), labels)).toBe("(string · uuid)[]")
+    expect(schemaDefaultLabel(node("Flag"))).toBe("= true")
+    expect(schemaDefaultLabel(node("Id"))).toBeUndefined()
+    expect(schemaConstraintsLabel(node("Limit"))).toBe("≥ 1 · < 100 · multiple of 5")
+    expect(schemaConstraintsLabel(node("Sort"))).toBe(
+      'one of "asc", "desc" · at least 3 characters · matches ^[a-z]+$',
+    )
+    expect(schemaConstraintsLabel(node("Tags"))).toBe("at most 5 items · unique items")
+    expect(schemaConstraintsLabel(node("Id"))).toBeUndefined()
+  })
+
+  it("merges allOf parts into one list", () => {
+    const merged = normalize({
+      openapi: "3.1.0",
+      info: { title: "Merged", version: "1.0.0" },
+      components: {
+        schemas: {
+          Base: { type: "object", properties: { id: { type: "string" } } },
+          Admin: {
+            allOf: [{ $ref: "#/components/schemas/Base" }, { required: ["id"] }],
+            properties: { role: { type: "string" } },
+          },
+        },
+      },
+    })
+    const tree = createSchemaTree(merged, { pointer: "#/components/schemas/Admin", circular: false })
+    expect(tree.getSnapshot().rows).toMatchObject([
+      { name: "id", required: true },
+      { name: "role", required: false },
+    ])
   })
 
   it("produces serializable snapshots", () => {

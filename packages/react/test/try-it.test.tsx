@@ -14,7 +14,7 @@ const fetch = vi.fn<FetchLike>(async () => ({
 const renderTryIt = (operationId: string) => {
   const operation = model.operations.find((candidate) => candidate.id === operationId)!
   return render(
-    <SpectileProvider model={model} tryIt={{ fetch }}>
+    <SpectileProvider model={model} tryItOptions={{ fetch }}>
       <TryIt.Credential scheme="apiKey" aria-label="API key" />
       <Operation.Root operation={operation}>
         <TryIt.Root data-testid="form">

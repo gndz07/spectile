@@ -16,6 +16,7 @@ export type OperationActions = {
   setBody: (body: string) => void
   setField: (name: string, text: string) => void
   setFiles: (name: string, files: FileLike[]) => void
+  setMediaType: (mediaType: string) => void
   selectServer: (index: number) => void
   setServerVariable: (name: string, value: string) => void
   setServerUrl: (url: string) => void
@@ -30,6 +31,7 @@ export const operationProps = ({
   setBody,
   setField,
   setFiles,
+  setMediaType,
   selectServer,
   setServerVariable,
   setServerUrl,
@@ -79,6 +81,13 @@ export const operationProps = ({
           onChange: (event: InputEventLike) => setField(name, valueOf(event)),
         }
 
+  /** Option values are the request body's media types. */
+  const getMediaTypeSelectProps = () => ({
+    name: "mediaType",
+    value: getSnapshot().draft.mediaType ?? "",
+    onChange: (event: InputEventLike) => setMediaType(valueOf(event)),
+  })
+
   const getSendProps = () => ({
     type: "submit" as const,
     disabled: isPending(),
@@ -111,6 +120,7 @@ export const operationProps = ({
     getParameterProps,
     getBodyProps,
     getFieldProps,
+    getMediaTypeSelectProps,
     getSendProps,
     getServerProps,
     getServerSelectProps,

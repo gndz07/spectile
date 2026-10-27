@@ -74,6 +74,8 @@ export type SchemaNode = SchemaRef & {
   default?: unknown
   examples: unknown[]
   constraints: Constraints
+  /** Names from `required`, including ones whose property comes from another `allOf` part. */
+  required: string[]
   properties: SchemaProperty[]
   additionalProperties?: SchemaRef | boolean
   items?: SchemaRef

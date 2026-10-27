@@ -1,21 +1,30 @@
+import { withEntry } from "../store"
 import { type SchemaRow, isWithin } from "./rows"
 
-export type TreeState = { expanded: ReadonlySet<string>; focusedId?: string }
+export type TreeState = {
+  expanded: ReadonlySet<string>
+  /** The selected variant by row id; 0 when missing. */
+  variants: Readonly<Record<string, number>>
+  focusedId?: string
+}
 
-/** Collapsing a row that hides the focused one moves focus to that row. */
 export const withExpanded = (state: TreeState, id: string, open: boolean): TreeState => {
   if (state.expanded.has(id) === open) return state
   const expanded = new Set(state.expanded)
   if (open) expanded.add(id)
   else expanded.delete(id)
-  const hidesFocus = !open && state.focusedId !== undefined && isWithin(state.focusedId, id)
-  return { expanded, focusedId: hidesFocus ? id : state.focusedId }
+  return { ...state, expanded }
 }
 
-/** Focus moves to the top-level row that contained it. */
-export const collapsedAll = ({ focusedId }: TreeState, rows: readonly SchemaRow[]): TreeState => {
-  const containsFocus = (row: SchemaRow) =>
-    focusedId !== undefined && (row.id === focusedId || isWithin(focusedId, row.id))
-  const topLevel = rows.find((row) => row.depth === 0 && containsFocus(row))
-  return { expanded: new Set(), focusedId: topLevel?.id ?? focusedId }
+export const withVariant = (state: TreeState, id: string, index: number): TreeState => {
+  const variants = withEntry(state.variants, id, index)
+  return variants === state.variants ? state : { ...state, variants }
+}
+
+/** When the focused row gets hidden, focus moves to the closest row still shown that held it. */
+export const withFocusShown = (state: TreeState, rows: readonly SchemaRow[]): TreeState => {
+  const { focusedId } = state
+  if (focusedId === undefined || rows.some((row) => row.id === focusedId)) return state
+  const holder = rows.findLast((row) => isWithin(focusedId, row.id))
+  return { ...state, focusedId: holder?.id }
 }

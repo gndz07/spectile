@@ -18,10 +18,17 @@ const readHeaders = (response: ResponseLike) => {
   return headers
 }
 
-const readBody = async (response: ResponseLike, contentType?: string) =>
-  !isTextMediaType(contentType) && response.blob
-    ? { body: "", blob: await response.blob() }
-    : { body: formatResponseBody(await response.text(), contentType) }
+const readBody = async (response: ResponseLike, contentType?: string) => {
+  if (!isTextMediaType(contentType) && response.blob) {
+    const blob = await response.blob()
+    return { body: "", blob, size: blob.size }
+  }
+  const text = await response.text()
+  return {
+    body: formatResponseBody(text, contentType),
+    size: new TextEncoder().encode(text).byteLength,
+  }
+}
 
 export const createController = (): Controller => {
   const AbortControllerClass = (globalThis as { AbortController?: new () => Controller })
@@ -57,6 +64,10 @@ export const fetchResult = async (
       },
     }
   } catch (error) {
-    return { status: "error", error: errorMessage(error) }
+    return {
+      status: "error",
+      error: errorMessage(error),
+      ...(error instanceof TypeError && { network: true as const }),
+    }
   }
 }

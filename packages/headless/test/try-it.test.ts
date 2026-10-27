@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
-import { type FetchLike, type OperationTryIt, type ResponseLike, createTryIt } from "../src"
+import {
+  type FetchLike,
+  type OperationTryIt,
+  type ResponseLike,
+  createTryIt,
+  defaultExampleResponse,
+} from "../src"
 import { formModel, model, serversModel } from "./fixture"
 
 const response = (
@@ -146,6 +152,35 @@ describe("createTryIt", () => {
     await getPet.send()
     const { result } = getPet.getSnapshot()
     expect(result.status === "error" && result.error).toMatch(/^Failed to fetch\. .*CORS/)
+    expect(result).toMatchObject({ network: true })
+  })
+
+  it("records the body's size in bytes", async () => {
+    const { getPet } = setup(async () => response('{"name":"Rëx"}'))
+    getPet.setParameter("path.id", "7")
+    await getPet.send()
+    expect(getPet.getSnapshot().result).toMatchObject({ response: { size: 15 } })
+  })
+
+  it("switches the content type through select props", () => {
+    const create = setup().tryIt.forOperation("createUser")
+    expect(create.getMediaTypeSelectProps()).toMatchObject({ value: "application/json" })
+    create.getMediaTypeSelectProps().onChange({ currentTarget: { value: "text/plain" } })
+    expect(create.getSnapshot().draft.mediaType).toBe("text/plain")
+  })
+
+  it("shows the first successful response with a body in the example panel", () => {
+    const listUsers = model.operations.find(({ id }) => id === "listUsers")!
+    const health = model.operations.find(({ id }) => id === "health")!
+    expect(defaultExampleResponse(listUsers)?.status).toBe("200")
+    expect(defaultExampleResponse(health)?.status).toBe("204")
+    const empty = { pointer: "", description: "", content: [], headers: [] }
+    const { content } = listUsers.responses[0]!
+    const responses = [
+      { ...empty, status: "201" },
+      { ...empty, status: "4XX", content },
+    ]
+    expect(defaultExampleResponse({ ...listUsers, responses })?.status).toBe("4XX")
   })
 
   it("ignores the response of a cancelled request", async () => {

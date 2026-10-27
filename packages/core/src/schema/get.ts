@@ -4,6 +4,7 @@ import {
   asArray,
   asOptionalBoolean,
   asString,
+  asStrings,
   entries,
   isObject,
   isOneOf,
@@ -127,7 +128,7 @@ export const getSchema = (model: SpecModel, ref: string | SchemaRef): SchemaNode
     schemaRef(document, appendPointer(resolution.pointer, ...segments))
   const optionalChild = (key: string) => (isObject(schema[key]) ? child(key) : undefined)
   const childList = (key: string) => asArray(schema[key]).map((_, index) => child(key, index))
-  const required = new Set(asArray(schema.required))
+  const required = asStrings(schema.required)
 
   return {
     ...refTo(document, resolution.pointer),
@@ -145,9 +146,10 @@ export const getSchema = (model: SpecModel, ref: string | SchemaRef): SchemaNode
     enum: Array.isArray(schema.enum) ? schema.enum : undefined,
     const: schema.const,
     constraints: constraintsOf(schema),
+    required,
     properties: entries(schema.properties).map(([name]) => ({
       name,
-      required: required.has(name),
+      required: required.includes(name),
       schema: child("properties", name),
     })),
     additionalProperties:

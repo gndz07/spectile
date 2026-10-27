@@ -1,6 +1,7 @@
 import { isObject } from "../json/read"
 import type { SchemaNode, SchemaRef, SpecModel } from "../model"
 import { getSchema } from "./get"
+import { getMergedSchema, mergeAllOf } from "./merge"
 
 export type ExampleOptions = {
   /** `request` leaves out readOnly properties, `response` leaves out writeOnly ones. */
@@ -39,7 +40,7 @@ export const exampleFromSchema = (
 
   const build = (ref: SchemaRef, ancestors: ReadonlySet<string>): unknown => {
     if (ancestors.has(ref.pointer)) return undefined
-    const node = getSchema(model, ref)
+    const node = mergeAllOf(model, getSchema(model, ref), ancestors)
     const declared = declaredValue(node)
     if (declared !== undefined) return declared
 
@@ -82,7 +83,7 @@ export const exampleFromSchema = (
   const objectOf = (node: SchemaNode, ancestors: ReadonlySet<string>) =>
     Object.fromEntries(
       node.properties.flatMap(({ name, schema }) => {
-        if (hidden(getSchema(model, schema))) return []
+        if (hidden(getMergedSchema(model, schema))) return []
         const value = build(schema, ancestors)
         return value === undefined ? [] : [[name, value]]
       }),

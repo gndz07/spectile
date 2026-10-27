@@ -1,7 +1,7 @@
 import { type SchemaNode, type SchemaRef, appendPointer } from "@spectile/core"
 
 export type SchemaRowKind =
-  "property" | "additionalProperties" | "items" | "allOf" | "oneOf" | "anyOf" | "not"
+  "root" | "property" | "additionalProperties" | "items" | "allOf" | "oneOf" | "anyOf" | "not"
 
 export type SchemaChild = {
   segments: (string | number)[]
@@ -14,7 +14,22 @@ export type SchemaChild = {
 
 export type GetNode = (ref: SchemaRef) => SchemaNode
 
+/** The selected variant of the oneOf/anyOf row with this id. */
+export type SelectedVariant = (id: string) => number
+
+export type VariantKind = "oneOf" | "anyOf"
+
 export const COMPOSITIONS = ["allOf", "oneOf", "anyOf"] as const
+
+export type Variants = { kind: VariantKind; options: SchemaRef[] }
+
+/** The oneOf, else the anyOf, picked from with a select instead of listed as rows. */
+export const variantsOf = (node: SchemaNode): Variants | undefined =>
+  node.oneOf.length > 0
+    ? { kind: "oneOf", options: node.oneOf }
+    : node.anyOf.length > 0
+      ? { kind: "anyOf", options: node.anyOf }
+      : undefined
 
 const single = (
   kind: "additionalProperties" | "items" | "not",
@@ -22,33 +37,49 @@ const single = (
 ): SchemaChild[] =>
   typeof schema === "object" ? [{ segments: [kind], kind, required: false, schema }] : []
 
-export const schemaChildren = (node: SchemaNode): SchemaChild[] => [
-  ...node.properties.map(({ name, required, schema }): SchemaChild => ({
-    segments: ["properties", name],
-    kind: "property",
-    name,
-    required,
-    schema,
-  })),
-  ...single("additionalProperties", node.additionalProperties),
-  ...single("items", node.items),
-  ...COMPOSITIONS.flatMap((kind) =>
-    node[kind].map((schema, index): SchemaChild => ({
-      segments: [kind, index],
-      kind,
-      index,
-      required: false,
+/** Every child schema except the variants, which `childEntries` replaces with the selected one's children. */
+export const schemaChildren = (node: SchemaNode): SchemaChild[] => {
+  const variants = variantsOf(node)?.kind
+  return [
+    ...node.properties.map(({ name, required, schema }): SchemaChild => ({
+      segments: ["properties", name],
+      kind: "property",
+      name,
+      required,
       schema,
     })),
-  ),
-  ...single("not", node.not),
-]
+    ...single("additionalProperties", node.additionalProperties),
+    ...single("items", node.items),
+    ...COMPOSITIONS.filter((kind) => kind !== variants).flatMap((kind) =>
+      node[kind].map((schema, index): SchemaChild => ({
+        segments: [kind, index],
+        kind,
+        index,
+        required: false,
+        schema,
+      })),
+    ),
+    ...single("not", node.not),
+  ]
+}
 
-export const isExpandable = (node: SchemaNode) => schemaChildren(node).length > 0
+export type ChildEntry = { child: SchemaChild; id: string; node: SchemaNode }
 
-export const childEntries = (getNode: GetNode, parent: SchemaNode, parentId: string) =>
-  schemaChildren(parent).map((child) => ({
+export const childEntries = (
+  getNode: GetNode,
+  parent: SchemaNode,
+  parentId: string,
+  selected: SelectedVariant,
+): ChildEntry[] => {
+  const own = schemaChildren(parent).map((child) => ({
     child,
     id: appendPointer(parentId, ...child.segments),
     node: getNode(child.schema),
   }))
+  const variants = variantsOf(parent)
+  const index = selected(parentId)
+  const option = variants?.options[index]
+  if (!variants || !option) return own
+  const variantId = appendPointer(parentId, variants.kind, index)
+  return [...own, ...childEntries(getNode, getNode(option), variantId, selected)]
+}

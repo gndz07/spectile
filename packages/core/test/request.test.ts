@@ -7,6 +7,7 @@ import {
   normalize,
   resolveServerUrl,
   toCurl,
+  toCurlTokens,
 } from "../src"
 
 const parameter = (name: string, location: string, extra: object = {}) => ({
@@ -118,6 +119,43 @@ describe("buildRequest", () => {
     })
     expect(request.url).toBe("/items/{id}")
     expect(request.headers).toEqual({})
+    expect(request.placeholders).toEqual(["{id}"])
+  })
+
+  it("writes placeholders for missing required parameters and marks them in curl", () => {
+    const operation = normalize({
+      openapi: "3.1.0",
+      info: { title: "Missing", version: "1.0.0" },
+      paths: {
+        "/users/{user_id}": {
+          get: {
+            parameters: [
+              parameter("user_id", "path", { required: true }),
+              parameter("limit", "query", { required: true }),
+              parameter("X-Trace", "header", { required: true }),
+              parameter("page", "query"),
+            ],
+            responses: {},
+          },
+        },
+      },
+    }).operations[0]!
+    const request = buildRequest(model, operation, { parameters: { "header.X-Trace": "t" } })
+    expect(request).toMatchObject({
+      url: "/users/{user_id}?limit={limit}",
+      headers: { "X-Trace": "t" },
+      placeholders: ["{user_id}", "{limit}"],
+    })
+    expect(toCurlTokens(request)).toEqual([
+      { text: "curl -X GET '/users/" },
+      { text: "{user_id}", missing: true },
+      { text: "?limit=" },
+      { text: "{limit}", missing: true },
+      { text: "' \\\n  -H 'X-Trace: t'" },
+    ])
+    expect(toCurlTokens({ method: "GET", url: "/a", headers: {} })).toEqual([
+      { text: "curl -X GET '/a'" },
+    ])
   })
 
   it("sends the body with its content type only when there is one", () => {

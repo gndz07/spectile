@@ -6,13 +6,16 @@ export {
   memoizeLast,
   select,
 } from "./store"
-export type {
-  EventLike,
-  FileInputEventLike,
-  InputEventLike,
-  KeyboardEventLike,
-  TargetEventLike,
+export {
+  type EventLike,
+  type FileInputEventLike,
+  type InputEventLike,
+  type KeyboardEventLike,
+  type ShortcutEventLike,
+  type TargetEventLike,
+  isSearchShortcut,
 } from "./events"
+export { type TextRange, matchRanges } from "./search"
 export {
   type FetchLike,
   type HttpResponse,
@@ -35,25 +38,49 @@ export {
   type SchemaChild,
   type SchemaRow,
   type SchemaRowKind,
+  type SchemaRowVariants,
   type SchemaTree,
   type SchemaTreeOptions,
   type SchemaTreeSnapshot,
   type TreeAction,
   type TreeRow,
+  type VariantKind,
   createSchemaTree,
   schemaChildren,
+  schemaConstraintsLabel,
+  schemaDefaultLabel,
   schemaRowLabel,
   schemaTypeLabel,
   treeKeyAction,
+  variantLabel,
+  variantsOf,
 } from "./schema-tree"
+export { type ParameterGroup, groupParameters } from "./parameters"
+export { defaultExampleResponse } from "./examples"
+export {
+  type JsonFold,
+  type JsonFolds,
+  type JsonLine,
+  type JsonToken,
+  type JsonTokenKind,
+  type VisibleJsonLine,
+  createJsonFolds,
+  jsonLines,
+  visibleJsonLines,
+} from "./json"
 export {
   type Navigation,
   type NavigationOptions,
+  type NavigationRow,
   type NavigationSnapshot,
   type NavigationSource,
   type OperationGroup,
   createNavigation,
   filterOperations,
   groupByTag,
+  groupKey,
   navigationGroups,
+  navigationRows,
+  operationHash,
+  parseOperationHash,
 } from "./navigation"

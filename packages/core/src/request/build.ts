@@ -35,7 +35,13 @@ export type HttpRequest = {
   body?: string | BodyChunk[]
   /** The parts of a `multipart/form-data` body, also encoded in `body`. */
   form?: FormPart[]
+  /** `{name}` stand-ins written where required parameters have no value yet. */
+  placeholders?: string[]
 }
+
+const placeholder = ({ name }: Parameter) => `{${name}}`
+
+const UNFILLED = /\{[^}]+\}/g
 
 const hasBody = (body?: RequestBodyValue): body is RequestBodyValue =>
   typeof body === "string" ? body !== "" : body !== undefined && Object.keys(body).length > 0
@@ -59,6 +65,9 @@ export const buildRequest = (
   })
   const located = (location: ParameterLocation) =>
     provided.filter(({ parameter }) => parameter.in === location)
+  const missing = missingParameters(operation, parameters)
+  const absent = (location: ParameterLocation) =>
+    missing.filter((parameter) => parameter.in === location)
   const auth = applySecurity(model.securitySchemes, operation.security, credentials)
 
   const path = fillTemplate(operation.path, (name) => {
@@ -67,12 +76,16 @@ export const buildRequest = (
   })
   const query = [
     ...located("query").flatMap(({ parameter, value }) => serializeFormParameter(parameter, value)),
+    ...absent("query").map(
+      (parameter) => `${encodeURIComponent(parameter.name)}=${placeholder(parameter)}`,
+    ),
     ...auth.query,
   ].join("&")
   const cookie = [
     ...located("cookie").flatMap(({ parameter, value }) =>
       serializeFormParameter(parameter, value),
     ),
+    ...absent("cookie").map((parameter) => `${parameter.name}=${placeholder(parameter)}`),
     ...auth.cookies,
   ].join("; ")
   const media = operation.requestBody?.content.find(
@@ -88,10 +101,19 @@ export const buildRequest = (
       parameter.name,
       serializeHeaderParameter(parameter, value),
     ]),
+    ...absent("header").map((parameter) => [parameter.name, placeholder(parameter)]),
     ...auth.headers,
     ...(cookie ? [["Cookie", cookie]] : []),
     ...(encoded?.contentType ? [["Content-Type", encoded.contentType]] : []),
   ])
+  const placeholders = [
+    ...new Set([
+      ...(path.match(UNFILLED) ?? []),
+      ...(["query", "header", "cookie"] as const).flatMap((location) =>
+        absent(location).map(placeholder),
+      ),
+    ]),
+  ]
 
   return {
     method: operation.method.toUpperCase(),
@@ -99,5 +121,6 @@ export const buildRequest = (
     headers,
     ...(encoded && { body: encoded.body }),
     ...(encoded?.form && { form: encoded.form }),
+    ...(placeholders.length > 0 && { placeholders }),
   }
 }

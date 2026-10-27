@@ -1,5 +1,6 @@
 export { normalize } from "./normalize"
 export { getSchema } from "./schema/get"
+export { getMergedSchema, mergeAllOf } from "./schema/merge"
 export { type ExampleOptions, exampleFromSchema } from "./schema/example"
 export { appendPointer } from "./json/pointer"
 export { findOperation, parameterKey } from "./model"
@@ -33,5 +34,5 @@ export {
   isJsonMediaType,
   isTextMediaType,
 } from "./request/media-type"
-export { toCurl } from "./request/curl"
+export { type CurlToken, toCurl, toCurlTokens } from "./request/curl"
 export type * from "./model"

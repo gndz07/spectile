@@ -10,13 +10,16 @@ export type HttpResponse = {
   blob?: Blob
   /** Milliseconds from sending to the full body. */
   duration: number
+  /** Bytes in the body as received. */
+  size: number
 }
 
 export type TryItResult =
   | { status: "idle" }
   | { status: "pending" }
   | { status: "done"; response: HttpResponse }
-  | { status: "error"; error: string }
+  /** `network` when no response came back, e.g. the browser blocked the request. */
+  | { status: "error"; error: string; network?: true }
 
 /** What the user typed for one operation. Parameter values are text, keyed by `parameterKey`. */
 export type RequestDraft = {

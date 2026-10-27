@@ -1,6 +1,14 @@
 import { findOperation } from "@spectile/core"
 import { describe, expect, it, vi } from "vitest"
-import { type Navigation, createNavigation } from "../src"
+import {
+  type KeyboardEventLike,
+  type Navigation,
+  createNavigation,
+  isSearchShortcut,
+  matchRanges,
+  operationHash,
+  parseOperationHash,
+} from "../src"
 import { model } from "./fixture"
 
 const groupIds = (navigation: Navigation) =>
@@ -77,6 +85,47 @@ describe("createNavigation", () => {
     expect(navigation.getSearchProps()).toMatchObject({ type: "search", value: "pet" })
   })
 
+  it("follows the tree keyboard pattern over groups and items", () => {
+    const navigation = createNavigation(model, { activeId: "getPet" })
+    const [users, pets] = navigation.getSnapshot().groups
+    const press = (props: { onKeyDown?: (event: KeyboardEventLike) => void }, key: string) =>
+      props.onKeyDown?.({ key, preventDefault: () => {} })
+    const snapshot = () => navigation.getSnapshot()
+    const rowIds = () => snapshot().rows.map(({ id, operation }) => operation?.id ?? id)
+
+    const petItem = navigation.getItemProps(operation("getPet"), pets)
+    expect(petItem).toMatchObject({ role: "treeitem", tabIndex: 0 })
+    expect(navigation.getGroupProps(users!)).toMatchObject({ tabIndex: -1, "aria-expanded": true })
+
+    press(petItem, "ArrowLeft")
+    expect(snapshot().focusedId).toBe("tag:pets")
+    press(navigation.getGroupProps(pets!), "ArrowLeft")
+    expect(rowIds()).not.toContain("getPet")
+    expect(navigation.getGroupProps(pets!)).toMatchObject({ "aria-expanded": false, tabIndex: 0 })
+    press(navigation.getGroupProps(pets!), "ArrowRight")
+    expect(rowIds()).toContain("getPet")
+
+    press(navigation.getGroupProps(pets!), "Home")
+    expect(snapshot().focusedId).toBe("tag:users")
+    press(navigation.getGroupProps(users!), "ArrowDown")
+    press(navigation.getItemProps(operation("listUsers"), users), "End")
+    expect(rowIds().at(-1)).toBe("webhook-post-usercreated")
+    expect(snapshot().focusedId).toBe(snapshot().rows.at(-1)?.id)
+  })
+
+  it("moves focus to a group that hides it, and opens every group while searching", () => {
+    const navigation = createNavigation(model)
+    const users = navigation.getSnapshot().groups[0]!
+    navigation.getItemProps(operation("listUsers"), users).onFocus?.()
+    navigation.getGroupToggleProps(users).onClick()
+    expect(navigation.getSnapshot().focusedId).toBe("tag:users")
+    navigation.setQuery("list")
+    expect(navigation.getSnapshot().rows.map(({ id }) => id)).toEqual([
+      "tag:users",
+      "tag:users\u001flistUsers",
+    ])
+  })
+
   it("does not recompute groups when only the active operation changes", () => {
     const navigation = createNavigation(model)
     const { groups } = navigation.getSnapshot()
@@ -86,5 +135,31 @@ describe("createNavigation", () => {
     navigation.setActive("health")
     expect(navigation.getSnapshot().groups).toBe(groups)
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("search helpers", () => {
+  it("finds where the terms match, joining overlaps", () => {
+    expect(matchRanges("List users", "USER s")).toEqual([
+      { start: 2, end: 3 },
+      { start: 5, end: 10 },
+    ])
+    expect(matchRanges("List users", " ")).toEqual([])
+  })
+
+  it("treats / outside text fields as the search shortcut", () => {
+    const field = { closest: (selector: string) => (selector.includes("input") ? field : null) }
+    const row = { closest: () => null }
+    expect(isSearchShortcut({ key: "/", target: row })).toBe(true)
+    expect(isSearchShortcut({ key: "/", target: field })).toBe(false)
+    expect(isSearchShortcut({ key: "/", ctrlKey: true, target: row })).toBe(false)
+    expect(isSearchShortcut({ key: "?", target: row })).toBe(false)
+  })
+
+  it("round-trips operation ids through the URL hash", () => {
+    expect(operationHash("get /pets")).toBe("#get%20%2Fpets")
+    expect(parseOperationHash(operationHash("get /pets"))).toBe("get /pets")
+    expect(parseOperationHash("#")).toBeUndefined()
+    expect(parseOperationHash("#%E0%A4%A")).toBeUndefined()
   })
 })
