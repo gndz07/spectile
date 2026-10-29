@@ -19,7 +19,8 @@
   },
   "files": [
     "dist",
-    "css"
+    "css",
+    "LICENSE-feather"
   ],
   "scripts": {
     "build": "tsup",

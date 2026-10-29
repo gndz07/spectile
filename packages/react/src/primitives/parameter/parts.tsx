@@ -1,4 +1,4 @@
-import { type Header, type Parameter, getSchema } from "@spectile/core"
+import { type Header, type Parameter, getMergedSchema } from "@spectile/core"
 import { schemaTypeLabel } from "@spectile/headless"
 import { type DescriptionProps, Markdown } from "../../markdown"
 import {
@@ -39,7 +39,7 @@ export const Type = (props: TextProps) => {
   const { model } = useSpectile()
   const { schema, content } = useParameter()
   const ref = schema ?? content[0]?.schema
-  return <Text value={ref && schemaTypeLabel(getSchema(model, ref), model)} {...props} />
+  return <Text value={ref && schemaTypeLabel(getMergedSchema(model, ref), model)} {...props} />
 }
 
 export const Required = (props: TextProps) => (

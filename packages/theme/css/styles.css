@@ -20,3 +20,1259 @@
   outline: var(--spectile-focus-width) solid var(--spectile-color-focus-ring);
   outline-offset: var(--spectile-focus-offset);
 }
+
+.spectile button,
+.spectile input,
+.spectile select,
+.spectile textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.spectile-icon {
+  flex: none;
+}
+
+.spectile-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.spectile-muted {
+  margin: 0;
+  color: var(--spectile-color-text-secondary);
+}
+
+.spectile-prose {
+  line-height: var(--spectile-line-height-prose);
+  overflow-wrap: anywhere;
+}
+
+.spectile-prose > :first-child {
+  margin-top: 0;
+}
+
+.spectile-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.spectile-prose a,
+.spectile-link {
+  color: var(--spectile-color-link);
+  text-decoration: underline;
+}
+
+.spectile-prose code {
+  padding: 0 var(--spectile-space-2);
+  border-radius: var(--spectile-radius-sm);
+  background: var(--spectile-color-surface-sunken);
+  font-family: var(--spectile-font-mono);
+  font-size: 0.9em;
+}
+
+/* Controls */
+
+.spectile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spectile-space-3);
+  min-height: var(--spectile-row-height);
+  padding: 0 var(--spectile-space-5);
+  border: var(--spectile-border-width) solid var(--spectile-color-border-control);
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-raised);
+  color: var(--spectile-color-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--spectile-duration) var(--spectile-easing);
+}
+
+.spectile-button:hover {
+  background: var(--spectile-color-surface-sunken);
+}
+
+.spectile-button[data-variant="primary"] {
+  border-color: var(--spectile-color-accent);
+  background: var(--spectile-color-accent);
+  color: var(--spectile-color-text-on-accent);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-button[data-variant="primary"]:hover {
+  border-color: var(--spectile-color-accent-hover);
+  background: var(--spectile-color-accent-hover);
+}
+
+.spectile-button:disabled {
+  border-color: var(--spectile-color-divider);
+  background: var(--spectile-color-surface-sunken);
+  color: var(--spectile-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.spectile-button[data-size="small"] {
+  min-height: 28px;
+  padding: 0 var(--spectile-space-4);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-button[data-state="copied"]::after {
+  content: " ✓";
+}
+
+.spectile-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--spectile-radius-md);
+  background: transparent;
+  color: var(--spectile-color-text-secondary);
+  cursor: pointer;
+}
+
+.spectile-icon-button:hover {
+  background: var(--spectile-color-divider);
+  color: var(--spectile-color-text);
+}
+
+.spectile-icon-button[data-state="copied"] {
+  color: var(--spectile-color-status-success);
+}
+
+.spectile-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--spectile-color-link);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.spectile-input,
+.spectile-select {
+  min-height: var(--spectile-row-height);
+  border: var(--spectile-border-width) solid var(--spectile-color-border-control);
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-raised);
+}
+
+.spectile-input {
+  width: 100%;
+  padding: var(--spectile-space-3) var(--spectile-space-4);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-select {
+  max-width: 100%;
+  padding: 0 var(--spectile-space-3);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-select[data-size="small"] {
+  min-height: 28px;
+  padding: 0 var(--spectile-space-2);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-kbd {
+  padding: 0 var(--spectile-space-2);
+  border: var(--spectile-border-width) solid var(--spectile-color-border);
+  border-radius: var(--spectile-radius-sm);
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+/* Page states */
+
+.spectile-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spectile-space-4);
+  max-width: var(--spectile-content-max-width);
+  margin: 0 auto;
+  padding: var(--spectile-space-8) var(--spectile-space-7);
+  text-align: center;
+}
+
+.spectile-state[aria-busy="true"] {
+  align-items: stretch;
+}
+
+.spectile-state-title {
+  margin: 0;
+  font-size: var(--spectile-font-size-xl);
+  font-weight: var(--spectile-font-weight-strong);
+  line-height: var(--spectile-line-height-tight);
+}
+
+.spectile-state-detail {
+  margin: 0;
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.spectile-skeleton {
+  height: var(--spectile-row-height);
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-sunken);
+}
+
+.spectile-skeleton:nth-child(3n + 1) {
+  width: 60%;
+}
+
+.spectile-notice {
+  margin: var(--spectile-space-5);
+  padding: var(--spectile-space-4) var(--spectile-space-5);
+  border-radius: var(--spectile-radius-md);
+}
+
+.spectile-notice[data-tone="warning"] {
+  background: var(--spectile-color-status-warning-bg);
+  color: var(--spectile-color-status-warning);
+}
+
+.spectile-notice summary {
+  cursor: pointer;
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-notice ul {
+  margin: var(--spectile-space-3) 0 0;
+  padding-left: var(--spectile-space-6);
+}
+
+.spectile-notice code {
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-sm);
+}
+
+/* Sidebar layout */
+
+/* A full-page layout: at least as tall as the window, so the side columns reach the bottom. */
+.spectile-sidebar-layout {
+  display: grid;
+  grid-template-columns: var(--spectile-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.spectile-sidebar {
+  border-right: var(--spectile-border-width) solid var(--spectile-color-divider);
+  background: var(--spectile-color-surface-sunken);
+}
+
+.spectile-sidebar-inner {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-3);
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: var(--spectile-space-5) var(--spectile-space-4);
+}
+
+.spectile-api-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spectile-space-3);
+  padding: 0 var(--spectile-space-3);
+}
+
+.spectile-api-title {
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-version {
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-search {
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-3);
+  min-height: var(--spectile-row-height);
+  padding: 0 var(--spectile-space-3);
+  border: var(--spectile-border-width) solid var(--spectile-color-border-control);
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-raised);
+  color: var(--spectile-color-text-secondary);
+}
+
+.spectile-search:focus-within {
+  outline: var(--spectile-focus-width) solid var(--spectile-color-focus-ring);
+  outline-offset: var(--spectile-focus-offset);
+}
+
+.spectile-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--spectile-color-text);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-search-input:focus-visible {
+  outline: none;
+}
+
+.spectile-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.spectile-result-count {
+  margin: 0;
+  padding: 0 var(--spectile-space-3);
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-result-count:empty {
+  display: none;
+}
+
+.spectile-no-results {
+  padding: var(--spectile-space-5) var(--spectile-space-3);
+  color: var(--spectile-color-text-secondary);
+}
+
+.spectile-no-results p {
+  margin: 0 0 var(--spectile-space-3);
+}
+
+.spectile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-5);
+}
+
+.spectile-nav-group:focus-visible {
+  outline-offset: calc(var(--spectile-focus-width) * -1);
+}
+
+.spectile-nav-heading {
+  padding: var(--spectile-space-2) var(--spectile-space-3);
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+  font-weight: var(--spectile-font-weight-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.spectile-nav-group[data-state="closed"] .spectile-nav-heading::after {
+  content: " ▸";
+}
+
+.spectile-nav-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.spectile-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-3);
+  width: 100%;
+  min-height: 32px;
+  padding: var(--spectile-space-2) var(--spectile-space-3);
+  border: 0;
+  border-radius: var(--spectile-radius-md);
+  background: transparent;
+  font-size: var(--spectile-font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.spectile-nav-item:hover {
+  background: var(--spectile-color-divider);
+}
+
+.spectile-nav-item:focus-visible {
+  outline-offset: calc(var(--spectile-focus-width) * -1);
+}
+
+.spectile-nav-item[data-state="active"] {
+  background: var(--spectile-color-accent-subtle-bg);
+  color: var(--spectile-color-accent-subtle);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-nav-item[data-deprecated] .spectile-nav-label {
+  color: var(--spectile-color-text-secondary);
+  text-decoration: line-through;
+}
+
+.spectile-nav-item .spectile-method {
+  flex: none;
+  width: 52px;
+  text-align: center;
+}
+
+.spectile-nav-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.spectile-nav-label[data-mono] {
+  font-family: var(--spectile-font-mono);
+}
+
+.spectile-nav-label mark {
+  border-radius: var(--spectile-radius-sm);
+  background: var(--spectile-color-status-warning-bg);
+  color: inherit;
+}
+
+/* Method badges and tags */
+
+.spectile-method {
+  display: inline-block;
+  padding: var(--spectile-space-1) var(--spectile-space-3);
+  border-radius: var(--spectile-radius-sm);
+  background: var(--spectile-color-method-other-bg);
+  color: var(--spectile-color-method-other);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+  font-weight: var(--spectile-font-weight-strong);
+  line-height: var(--spectile-line-height-tight);
+}
+
+.spectile-method[data-method="get"] {
+  background: var(--spectile-color-method-get-bg);
+  color: var(--spectile-color-method-get);
+}
+
+.spectile-method[data-method="post"] {
+  background: var(--spectile-color-method-post-bg);
+  color: var(--spectile-color-method-post);
+}
+
+.spectile-method[data-method="put"] {
+  background: var(--spectile-color-method-put-bg);
+  color: var(--spectile-color-method-put);
+}
+
+.spectile-method[data-method="patch"] {
+  background: var(--spectile-color-method-patch-bg);
+  color: var(--spectile-color-method-patch);
+}
+
+.spectile-method[data-method="delete"] {
+  background: var(--spectile-color-method-delete-bg);
+  color: var(--spectile-color-method-delete);
+}
+
+.spectile-tag {
+  display: inline-block;
+  padding: 0 var(--spectile-space-2);
+  border: var(--spectile-border-width) solid transparent;
+  border-radius: var(--spectile-radius-sm);
+  background: var(--spectile-color-deprecated-bg);
+  color: var(--spectile-color-deprecated);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+  font-weight: var(--spectile-font-weight-strong);
+  line-height: var(--spectile-line-height-ui);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.spectile-tag[data-tone="required"] {
+  background: var(--spectile-color-required-bg);
+  color: var(--spectile-color-required);
+}
+
+.spectile-tag[data-tone="deprecated"] {
+  border-color: var(--spectile-color-deprecated);
+  border-style: dashed;
+  background: transparent;
+}
+
+.spectile-tag[data-tone="recursive"],
+.spectile-tag[data-tone="webhook"] {
+  background: var(--spectile-color-accent-subtle-bg);
+  color: var(--spectile-color-accent-subtle);
+}
+
+button.spectile-tag {
+  cursor: pointer;
+  text-transform: none;
+}
+
+button.spectile-tag::before {
+  content: "↻ ";
+}
+
+/* Operation page */
+
+.spectile-operation-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.spectile[data-try-it="panel"] .spectile-operation-page {
+  grid-template-columns: minmax(0, 1fr) var(--spectile-panel-width);
+}
+
+.spectile-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-7);
+  width: 100%;
+  max-width: calc(var(--spectile-content-max-width) + 2 * var(--spectile-space-7));
+  margin: 0 auto;
+  padding: var(--spectile-space-7);
+}
+
+.spectile-operation-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-4);
+}
+
+.spectile-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spectile-space-4);
+}
+
+.spectile-operation-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--spectile-font-size-2xl);
+  font-weight: var(--spectile-font-weight-strong);
+  line-height: var(--spectile-line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+[data-deprecated] .spectile-operation-title {
+  text-decoration: line-through;
+}
+
+.spectile-operation-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-path {
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.spectile-placeholder {
+  color: var(--spectile-color-accent);
+}
+
+.spectile-operation-description {
+  font-size: var(--spectile-font-size-lg);
+}
+
+.spectile-docs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-2);
+}
+
+.spectile-docs .spectile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spectile-space-2);
+  align-self: start;
+}
+
+.spectile-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-4);
+}
+
+.spectile-section-heading,
+.spectile-schema-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-schema-header > :first-child {
+  flex: 1;
+}
+
+.spectile-section-title {
+  margin: 0;
+  font-size: var(--spectile-font-size-md);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-media-type {
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+/* Rows: parameters, headers and the schema tree */
+
+.spectile-rows,
+.spectile-schema {
+  border-top: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-row,
+.spectile-schema-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-2);
+  min-height: var(--spectile-row-height);
+  padding: var(--spectile-space-3) var(--spectile-space-3);
+  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-schema-row {
+  padding-left: calc(
+    var(--spectile-space-6) + var(--spectile-depth, 0) * var(--spectile-schema-indent)
+  );
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0 calc(var(--spectile-schema-indent) - 1px),
+    var(--spectile-color-divider) calc(var(--spectile-schema-indent) - 1px)
+      var(--spectile-schema-indent)
+  );
+  background-size: calc(var(--spectile-depth, 0) * var(--spectile-schema-indent)) 100%;
+  background-repeat: no-repeat;
+  background-position: var(--spectile-space-3) 0;
+  cursor: default;
+  transition: background-color var(--spectile-duration) var(--spectile-easing);
+}
+
+.spectile-schema-row[aria-expanded] {
+  cursor: pointer;
+}
+
+.spectile-schema-row:hover {
+  background-color: color-mix(in srgb, var(--spectile-color-accent-subtle-bg) 45%, transparent);
+}
+
+.spectile-schema-row[data-kind="root"] {
+  background-color: var(--spectile-color-surface-sunken);
+}
+
+.spectile-schema-row:focus-visible {
+  outline-offset: calc(var(--spectile-focus-width) * -1);
+}
+
+.spectile-row-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-indicator {
+  display: inline-flex;
+  margin-left: calc(var(--spectile-space-5) * -1 - var(--spectile-space-1));
+  color: var(--spectile-color-text-secondary);
+  transition: transform var(--spectile-duration) var(--spectile-easing);
+}
+
+.spectile-indicator[data-state="open"] {
+  transform: rotate(90deg);
+}
+
+.spectile-name {
+  font-family: var(--spectile-font-mono);
+  font-weight: var(--spectile-font-weight-strong);
+  overflow-wrap: anywhere;
+}
+
+[data-deprecated] > .spectile-row-line > .spectile-name {
+  color: var(--spectile-color-text-secondary);
+  text-decoration: line-through;
+}
+
+.spectile-type,
+.spectile-variant {
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-variant {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-variant .spectile-select {
+  min-height: 24px;
+  color: var(--spectile-color-text);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+p.spectile-type {
+  margin: 0;
+}
+
+.spectile-description {
+  color: var(--spectile-color-text);
+}
+
+.spectile-constraints {
+  margin: 0;
+  color: var(--spectile-color-text-secondary);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+/* Responses and examples */
+
+.spectile-responses {
+  border-top: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-response {
+  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-response-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spectile-space-3);
+  min-height: var(--spectile-row-height);
+  padding: var(--spectile-space-3);
+  font-size: var(--spectile-font-size-sm);
+  cursor: pointer;
+}
+
+.spectile-response-header .spectile-prose {
+  flex: 1;
+  min-width: 0;
+  line-height: var(--spectile-line-height-ui);
+}
+
+/* Inline, not flex, so its baseline is the status code's and lines up with the description. */
+.spectile-response-header .spectile-disclosure {
+  display: inline-block;
+  line-height: var(--spectile-line-height-ui);
+  white-space: nowrap;
+}
+
+.spectile-response-header .spectile-disclosure .spectile-icon {
+  margin-right: var(--spectile-space-2);
+  vertical-align: -3px;
+}
+
+.spectile-disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spectile-space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.spectile-disclosure .spectile-icon {
+  color: var(--spectile-color-text-secondary);
+  transition: transform var(--spectile-duration) var(--spectile-easing);
+}
+
+.spectile-disclosure[aria-expanded="true"] .spectile-icon {
+  transform: rotate(90deg);
+}
+
+.spectile-status-code {
+  font-family: var(--spectile-font-mono);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-response[data-tone="success"] .spectile-status-code {
+  color: var(--spectile-color-status-success);
+}
+
+.spectile-response[data-tone="redirect"] .spectile-status-code {
+  color: var(--spectile-color-status-redirect);
+}
+
+.spectile-response[data-tone="client-error"] .spectile-status-code {
+  color: var(--spectile-color-status-client-error);
+}
+
+.spectile-response[data-tone="server-error"] .spectile-status-code {
+  color: var(--spectile-color-status-server-error);
+}
+
+.spectile-response-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-5);
+  padding: 0 var(--spectile-space-3) var(--spectile-space-5) var(--spectile-space-6);
+}
+
+.spectile-media,
+.spectile-example,
+.spectile-collapsible {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-collapsible .spectile-disclosure {
+  align-self: start;
+  font-size: var(--spectile-font-size-sm);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-example > .spectile-select {
+  align-self: start;
+}
+
+/* Code blocks */
+
+.spectile-code {
+  margin: 0;
+  padding: var(--spectile-space-4) var(--spectile-space-5);
+  overflow: auto;
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-code-bg);
+  color: var(--spectile-color-code-text);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-sm);
+  line-height: var(--spectile-line-height-ui);
+  max-height: 480px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--spectile-color-code-muted) transparent;
+}
+
+/* Every line starts after a gutter that holds the fold arrows. */
+.spectile-code-line {
+  --spectile-code-gutter: 18px;
+  position: relative;
+  padding-left: calc(var(--spectile-code-gutter) + var(--spectile-depth, 0) * 2ch);
+  white-space: pre;
+}
+
+.spectile-code:not(:has(.spectile-fold)) .spectile-code-line {
+  --spectile-code-gutter: 0px;
+}
+
+.spectile-fold {
+  position: absolute;
+  top: calc((1lh - 14px) / 2);
+  left: calc(var(--spectile-depth, 0) * 2ch);
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--spectile-color-code-muted);
+  cursor: pointer;
+  transform: rotate(90deg);
+}
+
+.spectile-fold .spectile-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.spectile-fold:hover {
+  color: var(--spectile-color-code-text);
+}
+
+.spectile-fold[data-state="closed"] {
+  transform: none;
+}
+
+.spectile-code [data-kind="key"] {
+  color: var(--spectile-color-code-key);
+}
+
+.spectile-code [data-kind="string"] {
+  color: var(--spectile-color-code-string);
+}
+
+.spectile-code [data-kind="number"],
+.spectile-code [data-kind="boolean"],
+.spectile-code [data-kind="null"] {
+  color: var(--spectile-color-code-number);
+}
+
+.spectile-code [data-kind="ellipsis"] {
+  color: var(--spectile-color-code-muted);
+}
+
+.spectile-curl {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.spectile-curl [data-missing] {
+  color: var(--spectile-color-code-missing);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.spectile-code-frame {
+  position: relative;
+}
+
+/* Room for the copy button, so it never covers the first line. */
+.spectile-code-frame > .spectile-code {
+  padding-right: calc(var(--spectile-space-4) + 28px + var(--spectile-space-3));
+}
+
+.spectile-code-frame > .spectile-icon-button {
+  position: absolute;
+  top: var(--spectile-space-3);
+  right: var(--spectile-space-3);
+  color: var(--spectile-color-code-muted);
+}
+
+.spectile-code-frame > .spectile-icon-button:hover {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--spectile-color-code-text);
+}
+
+.spectile-code-frame > .spectile-icon-button[data-state="copied"] {
+  color: var(--spectile-color-code-string);
+}
+
+/* Tabs */
+
+.spectile-tabs {
+  display: flex;
+  gap: var(--spectile-space-5);
+  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-tab {
+  min-height: var(--spectile-row-height);
+  padding: 0;
+  border: 0;
+  border-bottom: var(--spectile-focus-width) solid transparent;
+  background: none;
+  color: var(--spectile-color-text-secondary);
+  cursor: pointer;
+}
+
+.spectile-tab[aria-selected="true"] {
+  border-bottom-color: var(--spectile-color-accent);
+  color: var(--spectile-color-text);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-5);
+  padding-top: var(--spectile-space-5);
+}
+
+/* Try it */
+
+.spectile-try-it,
+.spectile-try-it-request,
+.spectile-try-it-response {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-5);
+}
+
+.spectile-try-it-response:empty {
+  display: none;
+}
+
+/* Short fields pair up when two fit; a field alone on its row takes the whole row. */
+.spectile-fields,
+.spectile-field-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spectile-space-4);
+}
+
+.spectile-field,
+.spectile-credential {
+  display: flex;
+  flex: 1 1 180px;
+  flex-direction: column;
+  gap: var(--spectile-space-2);
+  min-width: 0;
+}
+
+.spectile-field[data-wide],
+.spectile-credential[data-wide] {
+  flex-basis: 100%;
+}
+
+.spectile-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spectile-space-2);
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-field[data-missing] .spectile-input {
+  border-color: var(--spectile-color-status-warning);
+}
+
+.spectile-body-input {
+  resize: vertical;
+  line-height: var(--spectile-line-height-ui);
+}
+
+.spectile-hint {
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-missing {
+  margin: 0;
+  color: var(--spectile-color-status-warning);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-actions [type="submit"] {
+  flex: 1;
+}
+
+.spectile-try-it-request > .spectile-text-button {
+  align-self: start;
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-banner {
+  padding: var(--spectile-space-4) var(--spectile-space-5);
+  border-radius: var(--spectile-radius-md);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-banner p {
+  margin: 0;
+}
+
+.spectile-banner[data-tone="server-error"] {
+  background: var(--spectile-color-status-server-error-bg);
+  color: var(--spectile-color-status-server-error);
+}
+
+.spectile-banner[data-tone="warning"] {
+  background: var(--spectile-color-status-warning-bg);
+  color: var(--spectile-color-status-warning);
+}
+
+.spectile-banner-title {
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-result-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-3);
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-chip {
+  padding: var(--spectile-space-1) var(--spectile-space-3);
+  border-radius: var(--spectile-radius-sm);
+  background: var(--spectile-color-method-other-bg);
+  color: var(--spectile-color-method-other);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-chip[data-tone="success"] {
+  background: var(--spectile-color-status-success-bg);
+  color: var(--spectile-color-status-success);
+}
+
+.spectile-chip[data-tone="redirect"] {
+  background: var(--spectile-color-status-redirect-bg);
+  color: var(--spectile-color-status-redirect);
+}
+
+.spectile-chip[data-tone="client-error"] {
+  background: var(--spectile-color-status-client-error-bg);
+  color: var(--spectile-color-status-client-error);
+}
+
+.spectile-chip[data-tone="server-error"] {
+  background: var(--spectile-color-status-server-error-bg);
+  color: var(--spectile-color-status-server-error);
+}
+
+.spectile-headers {
+  margin: 0;
+  font-family: var(--spectile-font-mono);
+  font-size: var(--spectile-font-size-xs);
+}
+
+.spectile-headers > div {
+  display: flex;
+  gap: var(--spectile-space-3);
+  padding: var(--spectile-space-2) 0;
+  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-headers dt {
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Panel */
+
+/* The column fills the page's height; its contents stay in view while the page scrolls. */
+.spectile-panel {
+  align-self: stretch;
+  border-left: var(--spectile-border-width) solid var(--spectile-color-divider);
+  background: var(--spectile-color-surface-raised);
+}
+
+.spectile-panel > .spectile-try-it {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: var(--spectile-space-5) var(--spectile-space-6);
+}
+
+.spectile-panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-panel-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-panel-section-title {
+  margin: 0;
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-xs);
+  font-weight: var(--spectile-font-weight-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Drawer and inline try-it */
+
+.spectile-try-it-button {
+  flex: none;
+}
+
+.spectile-drawer {
+  width: min(var(--spectile-drawer-width), 100vw);
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-left: var(--spectile-border-width) solid var(--spectile-color-border);
+  background: var(--spectile-color-surface-raised);
+  color: var(--spectile-color-text);
+  box-shadow: var(--spectile-shadow-overlay);
+}
+
+.spectile-drawer::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.spectile-drawer[open] {
+  animation: spectile-slide-in var(--spectile-duration) var(--spectile-easing);
+}
+
+@keyframes spectile-slide-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+.spectile-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-5);
+  min-height: 100%;
+  padding: var(--spectile-space-5) var(--spectile-space-6);
+}
+
+.spectile-overlay-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-3);
+}
+
+.spectile-overlay-title {
+  margin: 0;
+  font-size: var(--spectile-font-size-md);
+  font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-overlay-header > .spectile-icon-button {
+  margin-left: auto;
+}
+
+.spectile-inline-try-it {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spectile-space-5);
+  padding: var(--spectile-space-5);
+  border: var(--spectile-border-width) solid var(--spectile-color-divider);
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-sunken);
+}
+
+@container (min-width: 960px) {
+  .spectile-try-it[data-placement="inline"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}

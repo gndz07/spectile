@@ -62,8 +62,9 @@
 
   --spectile-font-system-sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial,
     sans-serif;
-  --spectile-font-system-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono",
-    monospace;
+  /* Cascadia Mono (Windows 11) matches Segoe UI better than Consolas. */
+  --spectile-font-system-mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas,
+    "Liberation Mono", monospace;
   --spectile-font-sans: var(--spectile-font-system-sans);
   --spectile-font-mono: var(--spectile-font-system-mono);
   --spectile-font-size-xs: 12px;

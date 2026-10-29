@@ -346,6 +346,7 @@ export const App = () => {
           </Info.Title>
           <SpecForm onLoad={(url) => void load(url)} />
           <a href="/unstyled.html">Unstyled</a>
+          <a href="/theme.html">Theme</a>
         </header>
         {loading && <p role="status">Loading…</p>}
         {error && <p role="alert">{error}</p>}
