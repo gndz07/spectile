@@ -15,7 +15,7 @@ export const BREAKPOINTS = { wide: 1280, medium: 960, narrow: 600 } as const
 
 /**
  * What renders at a container width. `layout` and `tryIt` are preferences: the panel needs a wide
- * sidebar layout, narrower containers use drawers, and phones get one bottom sheet.
+ * container, narrower containers use drawers, and phones get one bottom sheet.
  */
 export const resolveLayout = ({
   layout,
@@ -31,6 +31,5 @@ export const resolveLayout = ({
   if (tryIt === false) return { layout, navigation, tryIt }
   if (width < BREAKPOINTS.narrow) return { layout, navigation, tryIt: "sheet" }
   if (width < BREAKPOINTS.medium) return { layout, navigation, tryIt: "drawer" }
-  const panelFits = layout === "sidebar" && width >= BREAKPOINTS.wide
-  return { layout, navigation, tryIt: tryIt === "panel" && !panelFits ? "drawer" : tryIt }
+  return { layout, navigation, tryIt: tryIt === "panel" && width < BREAKPOINTS.wide ? "drawer" : tryIt }
 }

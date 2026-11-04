@@ -1,5 +1,6 @@
 import { Operation, TryIt, useOperationContext, useTryItContext } from "@spectile/react"
 import { useState } from "react"
+import { SectionTitle } from "./bits"
 import { useTheme } from "./context"
 import { Dialog } from "./dialog"
 import { ExampleView } from "./examples"
@@ -66,18 +67,29 @@ const PanelExample = () => (
 
 type PanelTab = "example" | "try-it"
 
+const PANEL_LABEL = "Example and try it"
+
+/** The panel while no operation is open, in the stacked layout. */
+export const EmptyPanel = () => (
+  <aside className="spectile-panel" aria-label={PANEL_LABEL}>
+    <p className="spectile-panel-empty spectile-muted">
+      Open an operation to see an example and try it.
+    </p>
+  </aside>
+)
+
 /** The right-hand column: Example (default) and Try it tabs. It never switches tabs by itself. */
 export const Panel = () => {
   const [tab, setTab] = useState<PanelTab>("example")
   const { kind } = useOperationContext()
   return (
-    <aside className="spectile-panel" aria-label="Example and try it">
+    <aside className="spectile-panel" aria-label={PANEL_LABEL}>
       <TryIt.Root className="spectile-try-it" data-placement="panel" noValidate>
         {kind === "webhook" ? (
           <PanelExample />
         ) : (
           <Tabs
-            label="Example and try it"
+            label={PANEL_LABEL}
             selected={tab}
             onSelect={setTab}
             tabs={[
@@ -122,7 +134,7 @@ export const InlineTryIt = () => {
   return (
     <section className="spectile-inline-try-it" aria-label="Try it">
       <header className="spectile-overlay-header">
-        <h2 className="spectile-overlay-title">Try it</h2>
+        <SectionTitle className="spectile-overlay-title">Try it</SectionTitle>
         <CloseButton onClick={() => setTryItOpen(false)} />
       </header>
       <TryIt.Root className="spectile-try-it" data-placement="inline" noValidate>
@@ -142,7 +154,7 @@ export const TryItButton = () => {
     <button
       type="button"
       className="spectile-button spectile-try-it-button"
-      data-variant="primary"
+      data-variant="accent"
       aria-expanded={tryIt === "inline" ? tryItOpen : undefined}
       onClick={() => setTryItOpen(!tryItOpen)}
     >

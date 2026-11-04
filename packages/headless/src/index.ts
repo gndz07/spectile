@@ -82,6 +82,7 @@ export {
   filterOperations,
   groupByTag,
   groupKey,
+  itemKey,
   navigationGroups,
   navigationRows,
   operationHash,

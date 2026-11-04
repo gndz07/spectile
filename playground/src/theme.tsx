@@ -1,5 +1,5 @@
 import { type OpenAPIDocument, normalize } from "@spectile/core"
-import { ApiReference, type TryItPreference } from "@spectile/theme"
+import { ApiReference, type Layout, type TryItPreference } from "@spectile/theme"
 import "@spectile/theme/styles.css"
 import "@spectile/theme/fonts.css"
 import { type CSSProperties, useState } from "react"
@@ -30,12 +30,23 @@ const SYSTEM_FONTS = {
 } as CSSProperties
 
 const ThemePage = () => {
+  const [layout, setLayout] = useState<Layout>("sidebar")
   const [tryIt, setTryIt] = useState("panel")
   const [theme, setTheme] = useState("system")
   const [fonts, setFonts] = useState("plex")
   return (
     <>
       <div style={bar}>
+        <label>
+          layout{" "}
+          <select
+            value={layout}
+            onChange={(event) => setLayout(event.currentTarget.value as Layout)}
+          >
+            <option>sidebar</option>
+            <option>stacked</option>
+          </select>
+        </label>
         <label>
           tryIt{" "}
           <select value={tryIt} onChange={(event) => setTryIt(event.currentTarget.value)}>
@@ -62,6 +73,7 @@ const ThemePage = () => {
       </div>
       <ApiReference
         model={model}
+        layout={layout}
         tryIt={TRY_IT[tryIt]}
         tryItOptions={{ storage: sessionStorage }}
         data-theme={theme === "system" ? undefined : theme}

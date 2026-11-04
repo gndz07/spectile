@@ -6,7 +6,7 @@ import {
   useRequestBody,
   useRequestBodyMedia,
 } from "@spectile/react"
-import { DocsLink, Tag } from "./bits"
+import { DocsLink, SectionTitle, Tag } from "./bits"
 import { useTheme } from "./context"
 import { OperationUiProvider } from "./operation-state"
 import { Parameters } from "./parameters"
@@ -57,7 +57,7 @@ const RequestBodyHeading = () => {
   const { required, content } = useRequestBody()
   return (
     <div className="spectile-section-heading">
-      <h2 className="spectile-section-title">Request body</h2>
+      <SectionTitle>Request body</SectionTitle>
       {required && <Tag tone="required">required</Tag>}
       {content.length > 1 ? (
         <RequestBody.MediaSelect className="spectile-select" aria-label="Content type" />
@@ -95,13 +95,21 @@ const RequestBodySection = () => (
   </RequestBody.Root>
 )
 
-/** Header, parameters, request body and responses of one operation. */
-export const OperationDetails = () => {
-  const { parameters, responses } = useOperationContext()
+export const RequestDetails = () => {
+  const { parameters } = useOperationContext()
   return (
     <>
       <Parameters parameters={parameters} />
       <RequestBodySection />
+    </>
+  )
+}
+
+const OperationDetails = () => {
+  const { responses } = useOperationContext()
+  return (
+    <>
+      <RequestDetails />
       <Responses responses={responses} />
       <TryItPlacement />
     </>

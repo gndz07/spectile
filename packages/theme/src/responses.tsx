@@ -1,7 +1,7 @@
 import type { Response as ResponseModel } from "@spectile/core"
 import { Response } from "@spectile/react"
 import { useId, useState } from "react"
-import { statusTone } from "./bits"
+import { SectionTitle, statusTone } from "./bits"
 import { useTheme } from "./context"
 import { CollapsibleExample } from "./examples"
 import { ChevronIcon } from "./icons"
@@ -84,7 +84,7 @@ const ResponseItem = ({ response }: { response: ResponseModel }) => {
 export const Responses = ({ responses }: { responses: ResponseModel[] }) =>
   responses.length === 0 ? null : (
     <section className="spectile-section">
-      <h2 className="spectile-section-title">Responses</h2>
+      <SectionTitle>Responses</SectionTitle>
       <div role="list" className="spectile-responses">
         {responses.map((response) => (
           <ResponseItem key={response.status} response={response} />

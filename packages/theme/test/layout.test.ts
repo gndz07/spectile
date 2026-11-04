@@ -11,12 +11,13 @@ describe("resolveLayout", () => {
     expect(resolveLayout({ layout: "sidebar", tryIt: "inline", width: 1000 }).tryIt).toBe("inline")
   })
 
-  it("turns the panel into a drawer below 1280px and in the stacked layout", () => {
+  it("turns the panel into a drawer below 1280px, in either layout", () => {
     expect(resolveLayout({ layout: "sidebar", tryIt: "panel", width: 1279 }).tryIt).toBe("drawer")
+    expect(resolveLayout({ layout: "stacked", tryIt: "panel", width: 1279 }).tryIt).toBe("drawer")
     expect(resolveLayout({ layout: "stacked", tryIt: "panel", width: 1440 })).toEqual({
       layout: "stacked",
       navigation: "none",
-      tryIt: "drawer",
+      tryIt: "panel",
     })
   })
 

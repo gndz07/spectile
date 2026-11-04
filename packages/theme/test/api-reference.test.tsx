@@ -41,7 +41,7 @@ describe("ApiReference", () => {
     })
     render(<ApiReference spec="https://example.com/openapi.json" layout="stacked" tryIt={false} />)
     expect(screen.getByRole("status", { name: "Loading API reference" })).toBeDefined()
-    expect(await screen.findByRole("heading", { level: 1, name: "/pets" })).toBeDefined()
+    expect(await screen.findByRole("heading", { level: 1, name: "Pets" })).toBeDefined()
     expect(loadSpec).toHaveBeenCalledWith("https://example.com/openapi.json")
     expect(screen.getByText("1 problem found in this spec")).toBeDefined()
     expect(screen.getByText("Bad thing").textContent).toBe("Bad thing #/paths")

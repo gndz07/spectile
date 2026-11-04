@@ -1,24 +1,6 @@
-import type { OperationGroup } from "@spectile/headless"
-import { Info, Navigation, Operation, useNavigation, useSpectile } from "@spectile/react"
-import { useRef } from "react"
-import { useTheme } from "./context"
-import { useSearchShortcut, writeOperationHash } from "./hash"
-import { CloseIcon, SearchIcon } from "./icons"
-
-export const groupLabel = ({ tag, kind }: OperationGroup) =>
-  tag?.name ?? (kind === "webhook" ? "Webhooks" : "Other")
-
-const NoResults = () => {
-  const { query, setQuery } = useNavigation()
-  return (
-    <div className="spectile-no-results">
-      <p>No operations match “{query.trim()}”</p>
-      <button type="button" className="spectile-text-button" onClick={() => setQuery("")}>
-        Clear search
-      </button>
-    </div>
-  )
-}
+import { Info, Navigation, Operation } from "@spectile/react"
+import { writeOperationHash } from "./hash"
+import { Search, SearchResultCount, SearchResults, groupLabel } from "./search"
 
 const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
   <Navigation.Tree className="spectile-nav" aria-label="Operations">
@@ -54,57 +36,16 @@ const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
   </Navigation.Tree>
 )
 
-const Search = () => {
-  const { searchShortcut } = useTheme()
-  const { query, setQuery } = useNavigation()
-  const input = useRef<HTMLInputElement>(null)
-  useSearchShortcut(searchShortcut, input)
-  return (
-    <div className="spectile-search">
-      <SearchIcon />
-      <Navigation.Search
-        ref={input}
-        className="spectile-search-input"
-        placeholder="Search"
-        aria-label="Search operations"
-        aria-keyshortcuts={searchShortcut ? "/" : undefined}
-      />
-      {query ? (
-        <button
-          type="button"
-          className="spectile-icon-button"
-          aria-label="Clear"
-          onClick={() => setQuery("")}
-        >
-          <CloseIcon />
-        </button>
-      ) : (
-        searchShortcut && (
-          <kbd className="spectile-kbd" aria-hidden>
-            /
-          </kbd>
-        )
-      )}
-    </div>
-  )
-}
-
 /** Search, a live result count and the operations grouped by tag. `onSelect` runs after a pick. */
-export const OperationNavigation = ({ onSelect }: { onSelect?: () => void }) => {
-  const { model } = useSpectile()
-  const { query, resultCount } = useNavigation()
-  const searching = query.trim() !== ""
-  const total = model.operations.length + model.webhooks.length
-  return (
-    <>
-      <Search />
-      <p className="spectile-result-count" role="status">
-        {searching ? `${resultCount} of ${total} operations` : ""}
-      </p>
-      {searching && resultCount === 0 ? <NoResults /> : <OperationTree onSelect={onSelect} />}
-    </>
-  )
-}
+export const OperationNavigation = ({ onSelect }: { onSelect?: () => void }) => (
+  <>
+    <Search placeholder="Search" />
+    <SearchResultCount />
+    <SearchResults>
+      <OperationTree onSelect={onSelect} />
+    </SearchResults>
+  </>
+)
 
 export const Sidebar = () => (
   <nav className="spectile-sidebar" aria-label="API reference">

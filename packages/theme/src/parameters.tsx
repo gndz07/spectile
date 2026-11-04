@@ -1,7 +1,7 @@
 import { type Header, type Parameter as ParameterModel, getMergedSchema, parameterKey } from "@spectile/core"
 import { groupParameters, schemaConstraintsLabel, schemaDefaultLabel } from "@spectile/headless"
 import { Parameter, useParameter, useSpectile } from "@spectile/react"
-import { Tag } from "./bits"
+import { SectionTitle, Tag } from "./bits"
 
 const LOCATION_LABELS = { path: "Path", query: "Query", header: "Header", cookie: "Cookie" }
 
@@ -44,7 +44,7 @@ export const ParameterRow = ({ parameter }: { parameter: ParameterModel | Header
 export const Parameters = ({ parameters }: { parameters: ParameterModel[] }) =>
   groupParameters(parameters).map(({ location, parameters: located }) => (
     <section key={location} className="spectile-section">
-      <h2 className="spectile-section-title">{LOCATION_LABELS[location]} parameters</h2>
+      <SectionTitle>{LOCATION_LABELS[location]} parameters</SectionTitle>
       <div role="list" className="spectile-rows">
         {located.map((parameter) => (
           <ParameterRow key={parameterKey(parameter)} parameter={parameter} />

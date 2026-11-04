@@ -1,7 +1,23 @@
 import type { ExternalDocs as ExternalDocsModel } from "@spectile/core"
 import { Copy, ExternalDocs, Json } from "@spectile/react"
-import type { ReactNode } from "react"
+import { type ReactNode, createContext, useContext } from "react"
 import { ChevronIcon, CopyIcon, ExternalLinkIcon } from "./icons"
+
+const SectionLevel = createContext<2 | 4>(2)
+
+/** Section headings sit one level below the operation's heading: h1 on a page, h3 in a stacked row. */
+export const SectionLevelProvider = SectionLevel.Provider
+
+export const SectionTitle = ({
+  className = "spectile-section-title",
+  children,
+}: {
+  className?: string
+  children: ReactNode
+}) => {
+  const Heading = `h${useContext(SectionLevel)}` as const
+  return <Heading className={className}>{children}</Heading>
+}
 
 export type StatusTone = "success" | "redirect" | "client-error" | "server-error" | "neutral"
 

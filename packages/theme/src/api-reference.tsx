@@ -1,8 +1,9 @@
-import { type Issue, type SpecModel, findOperation } from "@spectile/core"
-import { type TryItOptions, parseOperationHash } from "@spectile/headless"
+import type { Issue, SpecModel } from "@spectile/core"
+import type { TryItOptions } from "@spectile/headless"
 import { type RenderMarkdown, SpectileProvider, useComposedRefs } from "@spectile/react"
 import { type ComponentPropsWithRef, useRef } from "react"
 import { type ThemeSettings, ThemeProvider } from "./context"
+import { hashOperationId } from "./hash"
 import { type Layout, type TryItPreference, resolveLayout } from "./layout"
 import { defaultRenderMarkdown } from "./markdown"
 import { Reference } from "./reference"
@@ -36,11 +37,8 @@ type ContentOptions = Pick<Options, "tryItOptions" | "renderMarkdown">
 
 type ReadyProps = ContentOptions & { model: SpecModel; warnings?: Issue[] }
 
-const initialOperation = (model: SpecModel) => {
-  const fromHash =
-    typeof window === "undefined" ? undefined : parseOperationHash(window.location.hash)
-  return findOperation(model, fromHash)?.id ?? model.operations[0]?.id ?? model.webhooks[0]?.id
-}
+const initialOperation = (model: SpecModel) =>
+  hashOperationId(model) ?? model.operations[0]?.id ?? model.webhooks[0]?.id
 
 const Ready = ({ model, warnings = [], tryItOptions, renderMarkdown }: ReadyProps) => (
   <SpectileProvider

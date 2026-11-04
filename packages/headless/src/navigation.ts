@@ -86,7 +86,8 @@ export const groupKey = ({ kind, tag }: OperationGroup) => (tag ? `tag:${tag.nam
 
 const ITEM_SEPARATOR = "\u001f"
 
-const itemKey = (group: OperationGroup, operation: NormalizedOperation) =>
+/** One listing of an operation; an operation in several groups has one key per group. */
+export const itemKey = (group: OperationGroup, operation: NormalizedOperation) =>
   `${groupKey(group)}${ITEM_SEPARATOR}${operation.id}`
 
 /** While searching, every group shows its matches, collapsed or not. */
