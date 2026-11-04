@@ -117,7 +117,11 @@
   --spectile-focus-width: 2px;
   --spectile-focus-offset: 2px;
   --spectile-shadow-overlay: 0 12px 32px rgb(0 0 0 / 0.18);
+  --spectile-color-scrim: rgb(0 0 0 / 0.4);
+  /* Hovers, selections, and content fading in. */
   --spectile-duration: 160ms;
+  /* Drawers and the sheet sliding in and out. */
+  --spectile-duration-overlay: 240ms;
   --spectile-easing: cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -130,6 +134,7 @@
 @media (prefers-reduced-motion: reduce) {
   :where(:root) {
     --spectile-duration: 0ms;
+    --spectile-duration-overlay: 0ms;
   }
 }
 

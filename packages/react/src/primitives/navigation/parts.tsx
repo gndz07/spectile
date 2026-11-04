@@ -93,14 +93,23 @@ export const GroupToggle = (props: GroupToggleProps) => {
   return <Primitive as="div" {...mergeProps(ours, props)} />
 }
 
-export type GroupItemsProps = PrimitiveProps<"div">
-
-/** Holds the group's items; renders nothing while the group is closed. */
-export const GroupItems = (props: GroupItemsProps) => {
+/** Whether the enclosing group is open: its items show. */
+export const useGroupOpen = () => {
   const id = groupKey(useNavigationGroup())
-  const { rows } = useNavigation()
-  if (rows.find((row) => row.id === id)?.expanded === false) return null
-  return <Primitive as="div" {...mergeProps({ role: "group" }, props)} />
+  return useNavigation().rows.find((row) => row.id === id)?.expanded !== false
+}
+
+export type GroupItemsProps = PrimitiveProps<"div"> & {
+  /** Render while the group is closed too, e.g. to animate it closing. */
+  forceMount?: boolean
+}
+
+/** Holds the group's items; renders nothing while the group is closed, unless `forceMount`. */
+export const GroupItems = ({ forceMount, ...props }: GroupItemsProps) => {
+  const open = useGroupOpen()
+  if (!open && !forceMount) return null
+  const ours = { role: "group", "data-state": open ? "open" : "closed" }
+  return <Primitive as="div" {...mergeProps(ours, props)} />
 }
 
 export type ItemProps = PrimitiveProps<"button"> & { operation: NormalizedOperation }

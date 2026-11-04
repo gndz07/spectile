@@ -75,6 +75,70 @@
   font-size: 0.9em;
 }
 
+/* Motion: state changes ease, and content that appears fades in. */
+
+.spectile-button,
+.spectile-icon-button,
+.spectile-text-button,
+.spectile-input,
+.spectile-select,
+.spectile-search,
+.spectile-nav-item,
+.spectile-tab,
+.spectile-stacked-toggle,
+.spectile-schema-row,
+.spectile-indicator,
+.spectile-disclosure .spectile-icon,
+.spectile-stacked-toggle > .spectile-icon,
+.spectile-fold,
+button.spectile-tag {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: var(--spectile-duration);
+  transition-timing-function: var(--spectile-easing);
+}
+
+.spectile-content,
+.spectile-tab-panel,
+.spectile-inline-try-it,
+.spectile-result,
+.spectile-banner {
+  animation: spectile-reveal var(--spectile-duration) var(--spectile-easing);
+}
+
+@keyframes spectile-reveal {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--spectile-space-2) * -1);
+  }
+}
+
+/* Grows from no height to its content's and back; the clip margin keeps focus rings visible. */
+.spectile-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition-property: grid-template-rows, opacity;
+  transition-duration: var(--spectile-duration);
+  transition-timing-function: var(--spectile-easing);
+}
+
+.spectile-collapse[data-state="closed"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+@starting-style {
+  .spectile-collapse[data-state="open"]:not([data-initial]) {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+.spectile-collapse-inner {
+  min-height: 0;
+  overflow: clip;
+  overflow-clip-margin: calc(var(--spectile-focus-width) + var(--spectile-focus-offset));
+}
+
 /* Controls */
 
 .spectile-button {
@@ -90,7 +154,6 @@
   color: var(--spectile-color-text);
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color var(--spectile-duration) var(--spectile-easing);
 }
 
 .spectile-button:hover {
@@ -543,7 +606,6 @@
   font-size: var(--spectile-font-size-sm);
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--spectile-duration) var(--spectile-easing);
 }
 
 .spectile-stacked-toggle:hover,
@@ -866,7 +928,6 @@ button.spectile-tag::before {
   background-repeat: no-repeat;
   background-position: var(--spectile-space-3) 0;
   cursor: default;
-  transition: background-color var(--spectile-duration) var(--spectile-easing);
 }
 
 .spectile-schema-row[aria-expanded] {
@@ -896,7 +957,6 @@ button.spectile-tag::before {
   display: inline-flex;
   margin-left: calc(var(--spectile-space-5) * -1 - var(--spectile-space-1));
   color: var(--spectile-color-text-secondary);
-  transition: transform var(--spectile-duration) var(--spectile-easing);
 }
 
 .spectile-indicator[data-state="open"] {
@@ -1001,7 +1061,6 @@ p.spectile-type {
 .spectile-disclosure .spectile-icon,
 .spectile-stacked-toggle > .spectile-icon {
   color: var(--spectile-color-text-secondary);
-  transition: transform var(--spectile-duration) var(--spectile-easing);
 }
 
 .spectile-disclosure[aria-expanded="true"] .spectile-icon,
@@ -1043,6 +1102,15 @@ p.spectile-type {
   display: flex;
   flex-direction: column;
   gap: var(--spectile-space-3);
+}
+
+/* The gap is padding inside the collapse, so it closes with it. */
+.spectile-collapsible {
+  gap: 0;
+}
+
+.spectile-collapsible .spectile-example {
+  padding-top: var(--spectile-space-3);
 }
 
 .spectile-collapsible .spectile-disclosure {
@@ -1422,8 +1490,11 @@ p.spectile-type {
 
 /* Overlays: the try-it drawer, the navigation drawer and the sheet. */
 
+/* They slide in and out; display and overlay keep a closing one on screen until it has. */
 .spectile-overlay {
   --spectile-overlay-from: translateX(24px);
+  position: fixed;
+  inset: 0;
   max-width: 100vw;
   height: 100vh;
   max-height: 100vh;
@@ -1434,18 +1505,35 @@ p.spectile-type {
   box-shadow: var(--spectile-shadow-overlay);
 }
 
+.spectile-overlay,
 .spectile-overlay::backdrop {
-  background: rgb(0 0 0 / 0.4);
+  transition-property: transform, opacity, background-color, display, overlay;
+  transition-duration: var(--spectile-duration-overlay);
+  transition-timing-function: var(--spectile-easing);
+  transition-behavior: allow-discrete;
 }
 
-.spectile-overlay[open] {
-  animation: spectile-overlay-in var(--spectile-duration) var(--spectile-easing);
+.spectile-overlay:not([open]) {
+  transform: var(--spectile-overlay-from);
+  opacity: 0;
 }
 
-@keyframes spectile-overlay-in {
-  from {
+.spectile-overlay::backdrop {
+  background: transparent;
+}
+
+.spectile-overlay[open]::backdrop {
+  background: var(--spectile-color-scrim);
+}
+
+@starting-style {
+  .spectile-overlay[open] {
     transform: var(--spectile-overlay-from);
     opacity: 0;
+  }
+
+  .spectile-overlay[open]::backdrop {
+    background: transparent;
   }
 }
 

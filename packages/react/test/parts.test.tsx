@@ -236,6 +236,31 @@ describe("Navigation", () => {
     expect(item("Fetch a pet")).toBeDefined()
   })
 
+  it("keeps a closed group's items with forceMount, marked closed", () => {
+    const OpenState = () => <span data-testid="open">{String(Navigation.useGroupOpen())}</span>
+    render(
+      <SpectileProvider model={model}>
+        <Navigation.Tree aria-label="Operations">
+          <Navigation.Groups>
+            {(group) =>
+              group.tag?.name === "pets" && (
+                <Navigation.Group group={group}>
+                  <Navigation.GroupToggle>pets</Navigation.GroupToggle>
+                  <OpenState />
+                  <Navigation.GroupItems forceMount data-testid="items" />
+                </Navigation.Group>
+              )
+            }
+          </Navigation.Groups>
+        </Navigation.Tree>
+      </SpectileProvider>,
+    )
+    expect(screen.getByTestId("items").dataset.state).toBe("open")
+    fireEvent.click(screen.getByText("pets"))
+    expect(screen.getByTestId("items").dataset.state).toBe("closed")
+    expect(screen.getByTestId("open").textContent).toBe("false")
+  })
+
   it("highlights search matches and announces the result count", () => {
     render(<TreeNavigation />)
     fireEvent.change(screen.getByRole("searchbox", { name: "Search" }), {

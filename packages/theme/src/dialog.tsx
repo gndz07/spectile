@@ -1,5 +1,6 @@
 import { type ReactNode, useLayoutEffect, useRef } from "react"
 import { CloseIcon } from "./icons"
+import { usePresence } from "./presence"
 
 type DialogProps = {
   open: boolean
@@ -12,10 +13,11 @@ type DialogProps = {
 /**
  * A modal `<dialog>`: the browser traps focus and closes it on Escape; a click on the scrim
  * closes it too, and focus goes back to whatever was focused before it opened. A child marked
- * `data-autofocus` takes focus when it opens.
+ * `data-autofocus` takes focus when it opens. The contents stay until the closing transition ends.
  */
 export const Dialog = ({ open, onClose, label, className, children }: DialogProps) => {
   const ref = useRef<HTMLDialogElement>(null)
+  const rendered = usePresence(open, ref)
   useLayoutEffect(() => {
     const dialog = ref.current
     if (!dialog || !open) return
@@ -39,7 +41,7 @@ export const Dialog = ({ open, onClose, label, className, children }: DialogProp
         if (event.target === event.currentTarget) onClose()
       }}
     >
-      {open && <div className="spectile-dialog-body">{children}</div>}
+      {rendered && <div className="spectile-dialog-body">{children}</div>}
     </dialog>
   )
 }

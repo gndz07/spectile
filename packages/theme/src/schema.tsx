@@ -1,9 +1,10 @@
 import type { SchemaRef } from "@spectile/core"
 import { type SchemaRow as Row, schemaTypeLabel } from "@spectile/headless"
 import { Schema, useSchema, useSpectile } from "@spectile/react"
-import type { ReactNode } from "react"
+import { Fragment, type ReactNode, useMemo, useState } from "react"
 import { Tag } from "./bits"
 import { ChevronIcon } from "./icons"
+import { Collapse } from "./presence"
 
 const VARIANT_LABEL = { oneOf: "one of", anyOf: "any of" }
 
@@ -53,11 +54,46 @@ const ExpandToggle = () => {
   return <Schema.ExpandToggle className="spectile-button" data-size="small" />
 }
 
+type Children = ReadonlyMap<string | undefined, Row[]>
+
+const childrenByParent = (rows: Row[]): Children => {
+  const tree = new Map<string | undefined, Row[]>()
+  for (const row of rows) {
+    const siblings = tree.get(row.parentId)
+    if (siblings) siblings.push(row)
+    else tree.set(row.parentId, [row])
+  }
+  return tree
+}
+
+/** A row's children, kept while they shrink away after it collapses. */
+const Subtree = ({ row, tree }: { row: Row; tree: Children }) => {
+  const children = tree.get(row.id)
+  const [shown, setShown] = useState(children)
+  if (children && children !== shown) setShown(children)
+  return (
+    <Collapse open={row.expanded}>
+      <Branches rows={shown ?? []} tree={tree} />
+    </Collapse>
+  )
+}
+
+const Branches = ({ rows, tree }: { rows: Row[]; tree: Children }) =>
+  rows.map((row) => (
+    <Fragment key={row.id}>
+      <SchemaRow row={row} />
+      {row.expandable && <Subtree row={row} tree={tree} />}
+    </Fragment>
+  ))
+
+/** Rows nest by parent, so each expanded row's children can grow and shrink together. */
 const Tree = ({ label }: { label: string }) => {
-  if (useSchema().rows.length === 0) return <RootType />
+  const { rows } = useSchema()
+  const tree = useMemo(() => childrenByParent(rows), [rows])
+  if (rows.length === 0) return <RootType />
   return (
     <Schema.Tree className="spectile-schema" aria-label={label}>
-      <Schema.Rows>{(row) => <SchemaRow row={row} />}</Schema.Rows>
+      <Branches rows={tree.get(undefined) ?? []} tree={tree} />
     </Schema.Tree>
   )
 }

@@ -1,6 +1,16 @@
 import { Info, Navigation, Operation } from "@spectile/react"
+import type { ReactNode } from "react"
 import { writeOperationHash } from "./hash"
+import { Collapse } from "./presence"
 import { Search, SearchResultCount, SearchResults, groupLabel } from "./search"
+
+const GroupItems = ({ children }: { children: ReactNode }) => (
+  <Collapse open={Navigation.useGroupOpen()}>
+    <Navigation.GroupItems forceMount className="spectile-nav-items">
+      {children}
+    </Navigation.GroupItems>
+  </Collapse>
+)
 
 const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
   <Navigation.Tree className="spectile-nav" aria-label="Operations">
@@ -10,7 +20,7 @@ const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
           <Navigation.GroupToggle className="spectile-nav-heading">
             {groupLabel(group)}
           </Navigation.GroupToggle>
-          <Navigation.GroupItems className="spectile-nav-items">
+          <GroupItems>
             {group.operations.map((operation) => (
               <Navigation.Item
                 key={operation.id}
@@ -29,7 +39,7 @@ const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
                 />
               </Navigation.Item>
             ))}
-          </Navigation.GroupItems>
+          </GroupItems>
         </Navigation.Group>
       )}
     </Navigation.Groups>

@@ -3,6 +3,7 @@ import { Example, useExample } from "@spectile/react"
 import { useState } from "react"
 import { CodeBlock } from "./bits"
 import { ChevronIcon } from "./icons"
+import { Collapse } from "./presence"
 
 const Selected = ({ label }: { label: string }) => {
   const { text } = useExample()
@@ -40,7 +41,9 @@ export const CollapsibleExample = ({ media, usage }: { media: MediaType } & Exam
         <ChevronIcon />
         Example
       </button>
-      {open && <ExampleView media={media} usage={usage} label="example" />}
+      <Collapse open={open}>
+        <ExampleView media={media} usage={usage} label="example" />
+      </Collapse>
     </div>
   )
 }

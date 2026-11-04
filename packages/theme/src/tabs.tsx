@@ -53,6 +53,7 @@ export const Tabs = <T extends string>({
         ))}
       </div>
       <div
+        key={selected}
         role="tabpanel"
         id={`${id}-panel`}
         aria-labelledby={`${id}-${selected}`}

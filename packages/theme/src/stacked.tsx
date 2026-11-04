@@ -10,6 +10,7 @@ import { ChevronIcon } from "./icons"
 import { OperationPath, RequestDetails } from "./operation"
 import { OperationUiProvider } from "./operation-state"
 import { EmptyPanel, Panel, TryItButton, TryItPlacement } from "./placements"
+import { Collapse } from "./presence"
 import { Responses } from "./responses"
 import { Search, SearchResultCount, SearchResults, groupLabel } from "./search"
 
@@ -128,14 +129,14 @@ const OperationRow = ({
           <ChevronIcon />
         </button>
       </h3>
-      {isOpen && (
+      <Collapse open={isOpen}>
         <OperationUiProvider operation={operation}>
           <SectionLevelProvider value={4}>
             <OperationBody id={id} />
           </SectionLevelProvider>
           {isActive && panelSlot && createPortal(<Panel />, panelSlot)}
         </OperationUiProvider>
-      )}
+      </Collapse>
     </Operation.Root>
   )
 }

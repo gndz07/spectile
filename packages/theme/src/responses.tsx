@@ -7,6 +7,7 @@ import { CollapsibleExample } from "./examples"
 import { ChevronIcon } from "./icons"
 import { useOperationUi } from "./operation-state"
 import { ParameterRow } from "./parameters"
+import { Collapse } from "./presence"
 import { SchemaView } from "./schema"
 
 const ResponseBody = ({ response }: { response: ResponseModel }) => {
@@ -65,7 +66,7 @@ const ResponseItem = ({ response }: { response: ResponseModel }) => {
         </button>
         <Response.Description id={`${id}-description`} className="spectile-prose" />
       </div>
-      {open && (
+      <Collapse open={open}>
         <div id={id} className="spectile-response-body">
           {response.headers.length > 0 && (
             <div role="list" className="spectile-rows" aria-label="Headers">
@@ -76,7 +77,7 @@ const ResponseItem = ({ response }: { response: ResponseModel }) => {
           )}
           <ResponseBody response={response} />
         </div>
-      )}
+      </Collapse>
     </Response.Root>
   )
 }
