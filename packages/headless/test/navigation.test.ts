@@ -4,6 +4,7 @@ import {
   type KeyboardEventLike,
   type Navigation,
   createNavigation,
+  firstGroupOf,
   isSearchShortcut,
   matchRanges,
   operationHash,
@@ -135,6 +136,15 @@ describe("createNavigation", () => {
     navigation.setActive("health")
     expect(navigation.getSnapshot().groups).toBe(groups)
     expect(listener).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("firstGroupOf", () => {
+  it("finds the first group listing an operation, and webhooks under Webhooks", () => {
+    expect(firstGroupOf(model, "createUser")?.tag?.name).toBe("users")
+    expect(firstGroupOf(model, "health")?.tag).toBeUndefined()
+    expect(firstGroupOf(model, model.webhooks[0]!.id)?.kind).toBe("webhook")
+    expect(firstGroupOf(model, "missing")).toBeUndefined()
   })
 })
 

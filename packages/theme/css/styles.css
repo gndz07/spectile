@@ -1,7 +1,8 @@
 @import "./tokens.css";
 
+/* Named, so the width rules below always measure the root, never a nested container. */
 .spectile {
-  container-type: inline-size;
+  container: spectile / inline-size;
   background: var(--spectile-color-bg);
   color: var(--spectile-color-text);
   font-family: var(--spectile-font-sans);
@@ -81,8 +82,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--spectile-space-3);
-  min-height: var(--spectile-row-height);
-  padding: 0 var(--spectile-space-5);
+  min-height: var(--spectile-control-height);
+  padding: 0 var(--spectile-space-4);
   border: var(--spectile-border-width) solid var(--spectile-color-border-control);
   border-radius: var(--spectile-radius-md);
   background: var(--spectile-color-surface-raised);
@@ -126,7 +127,7 @@
 }
 
 .spectile-button[data-size="small"] {
-  min-height: 28px;
+  min-height: var(--spectile-control-height-small);
   padding: 0 var(--spectile-space-4);
   font-size: var(--spectile-font-size-xs);
 }
@@ -139,8 +140,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  min-height: 28px;
+  min-width: var(--spectile-control-height-small);
+  min-height: var(--spectile-control-height-small);
   padding: 0;
   border: 0;
   border-radius: var(--spectile-radius-md);
@@ -169,7 +170,7 @@
 
 .spectile-input,
 .spectile-select {
-  min-height: var(--spectile-row-height);
+  min-height: var(--spectile-control-height);
   border: var(--spectile-border-width) solid var(--spectile-color-border-control);
   border-radius: var(--spectile-radius-md);
   background: var(--spectile-color-surface-raised);
@@ -189,7 +190,7 @@
 }
 
 .spectile-select[data-size="small"] {
-  min-height: 28px;
+  min-height: var(--spectile-control-height-small);
   padding: 0 var(--spectile-space-2);
   font-family: var(--spectile-font-mono);
   font-size: var(--spectile-font-size-xs);
@@ -281,6 +282,11 @@
   min-height: 100vh;
 }
 
+.spectile[data-navigation="drawer"] .spectile-sidebar-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+
 .spectile-sidebar {
   border-right: var(--spectile-border-width) solid var(--spectile-color-divider);
   background: var(--spectile-color-surface-sunken);
@@ -318,7 +324,7 @@
   display: flex;
   align-items: center;
   gap: var(--spectile-space-3);
-  min-height: var(--spectile-row-height);
+  min-height: var(--spectile-control-height);
   padding: 0 var(--spectile-space-3);
   border: var(--spectile-border-width) solid var(--spectile-color-border-control);
   border-radius: var(--spectile-radius-md);
@@ -409,7 +415,7 @@
   align-items: center;
   gap: var(--spectile-space-3);
   width: 100%;
-  min-height: 32px;
+  min-height: var(--spectile-control-height);
   padding: var(--spectile-space-2) var(--spectile-space-3);
   border: 0;
   border-radius: var(--spectile-radius-md);
@@ -530,7 +536,7 @@
   align-items: center;
   gap: var(--spectile-space-4);
   width: 100%;
-  min-height: 44px;
+  min-height: var(--spectile-touch-height);
   padding: var(--spectile-space-3) var(--spectile-space-4);
   border: 0;
   background: transparent;
@@ -723,10 +729,25 @@ button.spectile-tag::before {
   padding: var(--spectile-space-7);
 }
 
+/* The Try it button sits beside the title; on phones it moves below the description. */
 .spectile-operation-header {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: var(--spectile-space-4);
+}
+
+.spectile-operation-header > * {
+  grid-column: 1 / -1;
+}
+
+.spectile-operation-header > .spectile-title-row {
+  grid-column: 1;
+}
+
+.spectile-operation-header > .spectile-try-it-button {
+  grid-row: 1;
+  grid-column: 2;
 }
 
 .spectile-title-row {
@@ -907,7 +928,7 @@ button.spectile-tag::before {
 }
 
 .spectile-variant .spectile-select {
-  min-height: 24px;
+  min-height: var(--spectile-control-height-small);
   color: var(--spectile-color-text);
   font-family: var(--spectile-font-mono);
   font-size: var(--spectile-font-size-xs);
@@ -1124,7 +1145,9 @@ p.spectile-type {
 
 /* Room for the copy button, so it never covers the first line. */
 .spectile-code-frame > .spectile-code {
-  padding-right: calc(var(--spectile-space-4) + 28px + var(--spectile-space-3));
+  padding-right: calc(
+    var(--spectile-space-4) + var(--spectile-control-height-small) + var(--spectile-space-3)
+  );
 }
 
 .spectile-code-frame > .spectile-icon-button {
@@ -1152,7 +1175,7 @@ p.spectile-type {
 }
 
 .spectile-tab {
-  min-height: var(--spectile-row-height);
+  min-height: var(--spectile-control-height);
   padding: 0;
   border: 0;
   border-bottom: var(--spectile-focus-width) solid transparent;
@@ -1392,37 +1415,51 @@ p.spectile-type {
 
 /* Drawer and inline try-it */
 
-.spectile-try-it-button {
+.spectile-try-it-button,
+.spectile-menu-button {
   flex: none;
 }
 
-.spectile-drawer {
-  width: min(var(--spectile-drawer-width), 100vw);
+/* Overlays: the try-it drawer, the navigation drawer and the sheet. */
+
+.spectile-overlay {
+  --spectile-overlay-from: translateX(24px);
   max-width: 100vw;
   height: 100vh;
   max-height: 100vh;
-  margin: 0 0 0 auto;
   padding: 0;
   border: 0;
-  border-left: var(--spectile-border-width) solid var(--spectile-color-border);
   background: var(--spectile-color-surface-raised);
   color: var(--spectile-color-text);
   box-shadow: var(--spectile-shadow-overlay);
 }
 
-.spectile-drawer::backdrop {
+.spectile-overlay::backdrop {
   background: rgb(0 0 0 / 0.4);
 }
 
-.spectile-drawer[open] {
-  animation: spectile-slide-in var(--spectile-duration) var(--spectile-easing);
+.spectile-overlay[open] {
+  animation: spectile-overlay-in var(--spectile-duration) var(--spectile-easing);
 }
 
-@keyframes spectile-slide-in {
+@keyframes spectile-overlay-in {
   from {
-    transform: translateX(24px);
+    transform: var(--spectile-overlay-from);
     opacity: 0;
   }
+}
+
+.spectile-drawer {
+  width: min(var(--spectile-drawer-width), 100vw);
+  margin: 0 0 0 auto;
+  border-left: var(--spectile-border-width) solid var(--spectile-color-border);
+}
+
+.spectile-nav-drawer {
+  --spectile-overlay-from: translateX(-24px);
+  width: min(var(--spectile-nav-drawer-width), calc(100vw - var(--spectile-space-8)));
+  margin: 0 auto 0 0;
+  border-right: var(--spectile-border-width) solid var(--spectile-color-border);
 }
 
 .spectile-dialog-body {
@@ -1431,6 +1468,94 @@ p.spectile-type {
   gap: var(--spectile-space-5);
   min-height: 100%;
   padding: var(--spectile-space-5) var(--spectile-space-6);
+}
+
+.spectile-nav-drawer .spectile-dialog-body {
+  gap: var(--spectile-space-3);
+  padding: var(--spectile-space-4);
+}
+
+.spectile-nav-drawer .spectile-overlay-header {
+  padding-left: var(--spectile-space-3);
+}
+
+/* The sheet rises from the bottom and stops short of the top; only its tabs scroll. */
+.spectile-sheet {
+  --spectile-overlay-from: translateY(24px);
+  width: 100vw;
+  height: calc(100vh - var(--spectile-sheet-top));
+  height: calc(100dvh - var(--spectile-sheet-top));
+  max-height: none;
+  margin: auto 0 0;
+  overflow: hidden;
+  border-radius: var(--spectile-radius-lg) var(--spectile-radius-lg) 0 0;
+}
+
+.spectile-sheet .spectile-dialog-body {
+  gap: var(--spectile-space-4);
+  height: 100%;
+  min-height: 0;
+  padding: var(--spectile-space-3) var(--spectile-space-5) 0;
+}
+
+.spectile-sheet-handle {
+  flex: none;
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--spectile-color-border);
+}
+
+.spectile-sheet .spectile-try-it {
+  flex: 1;
+  gap: 0;
+  min-height: 0;
+}
+
+.spectile-sheet-tabs {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.spectile-sheet-tabs > .spectile-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  gap: var(--spectile-space-1);
+  padding: var(--spectile-space-1);
+  border: 0;
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-sunken);
+}
+
+.spectile-sheet-tabs > .spectile-tabs > .spectile-tab {
+  flex: 1;
+  border: 0;
+  border-radius: var(--spectile-radius-sm);
+}
+
+.spectile-sheet-tabs > .spectile-tabs > .spectile-tab[aria-selected="true"] {
+  background: var(--spectile-color-surface-raised);
+  box-shadow: 0 0 0 var(--spectile-border-width) var(--spectile-color-border);
+}
+
+.spectile-sheet-tabs > .spectile-tab-panel {
+  padding-bottom: var(--spectile-space-5);
+}
+
+.spectile-sheet-footer {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--spectile-space-3);
+  padding: var(--spectile-space-4) 0;
+  border-top: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-sheet-footer .spectile-button {
+  flex: 1;
 }
 
 .spectile-overlay-header {
@@ -1464,5 +1589,118 @@ p.spectile-type {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
+  }
+}
+
+/* Top bar, below 960px in the sidebar layout */
+
+.spectile-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-4);
+  padding: var(--spectile-space-3) var(--spectile-space-5);
+  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
+  background: var(--spectile-color-surface-sunken);
+}
+
+.spectile-breadcrumb {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spectile-breadcrumb-current {
+  color: var(--spectile-color-text);
+}
+
+/* Widths. The numbers match BREAKPOINTS in layout.ts. */
+
+@container spectile (600px <= width < 960px) {
+  .spectile-content {
+    padding: calc(var(--spectile-space-7) + var(--spectile-space-3));
+  }
+}
+
+@container spectile (width < 600px) {
+  .spectile-content,
+  .spectile-stacked {
+    gap: var(--spectile-space-6);
+    padding: var(--spectile-space-5);
+  }
+
+  .spectile-top-bar {
+    gap: var(--spectile-space-2);
+    padding: 0 var(--spectile-space-2);
+  }
+
+  .spectile-menu-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .spectile-menu-label,
+  .spectile-breadcrumb-current {
+    display: none;
+  }
+
+  .spectile-menu-button,
+  .spectile-top-bar .spectile-icon-button {
+    min-width: var(--spectile-touch-height);
+  }
+
+  .spectile-button,
+  .spectile-input,
+  .spectile-select,
+  .spectile-search,
+  .spectile-tab,
+  .spectile-nav-item,
+  .spectile-top-bar .spectile-icon-button {
+    min-height: var(--spectile-touch-height);
+  }
+
+  .spectile-operation-header > .spectile-try-it-button {
+    order: 1;
+    grid-row: auto;
+    grid-column: 1 / -1;
+  }
+
+  .spectile-stacked-header .spectile-search {
+    flex-basis: 100%;
+  }
+
+  .spectile-stacked-label {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .spectile-stacked-summary {
+    order: -1;
+  }
+
+  .spectile-stacked-label .spectile-path {
+    font-size: var(--spectile-font-size-xs);
+  }
+
+  .spectile-stacked-body {
+    padding: var(--spectile-space-4);
+  }
+
+  /* The Try it button moves to the end of the open row, full width. */
+  .spectile-stacked-intro {
+    display: contents;
+  }
+
+  .spectile-stacked-intro > .spectile-try-it-button {
+    order: 1;
+    margin-left: 0;
   }
 }

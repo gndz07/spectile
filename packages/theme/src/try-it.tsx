@@ -169,8 +169,24 @@ const useMissingNames = () => {
   ]
 }
 
-const Actions = () => {
-  const { request, result } = useTryItContext()
+/** Disabled while a required value is missing or a request is pending. */
+export const SendButton = ({ children }: { children: ReactNode }) => {
+  const { result } = useTryItContext()
+  const missing = useMissingNames()
+  return (
+    <TryIt.Send
+      className="spectile-button"
+      data-variant="primary"
+      disabled={missing.length > 0 || result.status === "pending"}
+    >
+      {children}
+    </TryIt.Send>
+  )
+}
+
+/** What's missing, then Send, Cancel and Copy curl. */
+export const TryItActions = () => {
+  const { request } = useTryItContext()
   const missing = useMissingNames()
   return (
     <>
@@ -180,13 +196,7 @@ const Actions = () => {
         </p>
       )}
       <div className="spectile-actions">
-        <TryIt.Send
-          className="spectile-button"
-          data-variant="primary"
-          disabled={missing.length > 0 || result.status === "pending"}
-        >
-          Send request
-        </TryIt.Send>
+        <SendButton>Send request</SendButton>
         <TryIt.Cancel className="spectile-button">Cancel</TryIt.Cancel>
         <Copy text={toCurl(request)} className="spectile-button">
           Copy curl
@@ -276,31 +286,40 @@ const ResponseResult = () => {
   )
 }
 
-/** Request fields, Send, curl and the response, inside a `TryIt.Root`. */
-export const TryItFields = () => {
+/** The fields, then `actions`, then the live curl and Reset. */
+export const TryItRequest = ({ actions }: { actions?: ReactNode }) => {
   const schemes = useCredentialSchemes()
   const { reset } = useTryItContext()
   return (
-    <>
-      <div className="spectile-try-it-request">
-        <div className="spectile-fields">
-          <ServerFields />
-          {schemes.map((scheme) => (
-            <CredentialField key={scheme.name} scheme={scheme} />
-          ))}
-          <ParameterFields />
-          <BodyFields />
-        </div>
-        <Actions />
-        <CurlPreview />
-        <button type="button" className="spectile-text-button" onClick={reset}>
-          Reset to examples
-        </button>
+    <div className="spectile-try-it-request">
+      <div className="spectile-fields">
+        <ServerFields />
+        {schemes.map((scheme) => (
+          <CredentialField key={scheme.name} scheme={scheme} />
+        ))}
+        <ParameterFields />
+        <BodyFields />
       </div>
-      <div className="spectile-try-it-response">
-        <NetworkError />
-        <ResponseResult />
-      </div>
-    </>
+      {actions}
+      <CurlPreview />
+      <button type="button" className="spectile-text-button" onClick={reset}>
+        Reset to examples
+      </button>
+    </div>
   )
 }
+
+export const TryItResponse = () => (
+  <div className="spectile-try-it-response">
+    <NetworkError />
+    <ResponseResult />
+  </div>
+)
+
+/** Request fields, Send, curl and the response, inside a `TryIt.Root`. */
+export const TryItFields = () => (
+  <>
+    <TryItRequest actions={<TryItActions />} />
+    <TryItResponse />
+  </>
+)

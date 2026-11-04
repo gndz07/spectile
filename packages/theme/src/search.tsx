@@ -1,6 +1,6 @@
 import type { OperationGroup } from "@spectile/headless"
 import { Navigation, useNavigation, useSpectile } from "@spectile/react"
-import { type ReactNode, useRef } from "react"
+import { type ReactNode, useCallback, useRef } from "react"
 import { useTheme } from "./context"
 import { useSearchShortcut } from "./hash"
 import { CloseIcon, SearchIcon } from "./icons"
@@ -10,11 +10,15 @@ export const groupLabel = ({ tag, kind }: OperationGroup) =>
 
 const isSearching = (query: string) => query.trim() !== ""
 
-export const Search = ({ placeholder }: { placeholder: string }) => {
+/** `autoFocus` focuses the field when the dialog around it opens. */
+export const Search = ({ placeholder, autoFocus }: { placeholder: string; autoFocus?: boolean }) => {
   const { searchShortcut } = useTheme()
   const { query, setQuery } = useNavigation()
   const input = useRef<HTMLInputElement>(null)
-  useSearchShortcut(searchShortcut, input)
+  useSearchShortcut(
+    searchShortcut,
+    useCallback(() => input.current?.focus(), []),
+  )
   return (
     <div className="spectile-search">
       <SearchIcon />
@@ -24,6 +28,7 @@ export const Search = ({ placeholder }: { placeholder: string }) => {
         placeholder={placeholder}
         aria-label="Search operations"
         aria-keyshortcuts={searchShortcut ? "/" : undefined}
+        data-autofocus={autoFocus ? "" : undefined}
       />
       {query ? (
         <button

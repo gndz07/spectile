@@ -82,6 +82,12 @@ export const navigationGroups = (
   ...(webhooks.length > 0 ? [{ kind: "webhook" as const, operations: webhooks }] : []),
 ]
 
+/** The first group that lists the operation: where a deep link goes and what a breadcrumb names. */
+export const firstGroupOf = ({ tags, operations, webhooks }: NavigationSource, id: string) =>
+  navigationGroups(tags, operations, webhooks).find((group) =>
+    group.operations.some((operation) => operation.id === id),
+  )
+
 export const groupKey = ({ kind, tag }: OperationGroup) => (tag ? `tag:${tag.name}` : kind)
 
 const ITEM_SEPARATOR = "\u001f"

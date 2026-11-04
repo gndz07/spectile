@@ -1,4 +1,5 @@
 import { type ReactNode, useLayoutEffect, useRef } from "react"
+import { CloseIcon } from "./icons"
 
 type DialogProps = {
   open: boolean
@@ -10,7 +11,8 @@ type DialogProps = {
 
 /**
  * A modal `<dialog>`: the browser traps focus and closes it on Escape; a click on the scrim
- * closes it too, and focus goes back to whatever was focused before it opened.
+ * closes it too, and focus goes back to whatever was focused before it opened. A child marked
+ * `data-autofocus` takes focus when it opens.
  */
 export const Dialog = ({ open, onClose, label, className, children }: DialogProps) => {
   const ref = useRef<HTMLDialogElement>(null)
@@ -20,6 +22,7 @@ export const Dialog = ({ open, onClose, label, className, children }: DialogProp
     const opener = dialog.ownerDocument.activeElement as HTMLElement | null
     if (typeof dialog.showModal === "function") dialog.showModal()
     else dialog.setAttribute("open", "")
+    dialog.querySelector<HTMLElement>("[data-autofocus]")?.focus()
     return () => {
       if (typeof dialog.close === "function") dialog.close()
       else dialog.removeAttribute("open")
@@ -30,7 +33,7 @@ export const Dialog = ({ open, onClose, label, className, children }: DialogProp
     <dialog
       ref={ref}
       aria-label={label}
-      className={className}
+      className={`spectile-overlay ${className}`}
       onClose={onClose}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose()
@@ -40,3 +43,9 @@ export const Dialog = ({ open, onClose, label, className, children }: DialogProp
     </dialog>
   )
 }
+
+export const CloseButton = ({ onClick }: { onClick: () => void }) => (
+  <button type="button" className="spectile-icon-button" aria-label="Close" onClick={onClick}>
+    <CloseIcon />
+  </button>
+)

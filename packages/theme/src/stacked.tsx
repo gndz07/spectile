@@ -1,5 +1,5 @@
 import type { NormalizedOperation, SpecModel } from "@spectile/core"
-import { type OperationGroup, itemKey, navigationGroups } from "@spectile/headless"
+import { type OperationGroup, firstGroupOf, itemKey } from "@spectile/headless"
 import { Info, Navigation, Operation, useOperationContext, useSpectile } from "@spectile/react"
 import { useCallback, useEffect, useId, useRef, useState } from "react"
 import { createPortal } from "react-dom"
@@ -33,11 +33,10 @@ const raised = (rows: OpenRows, key: string): OpenRows => {
 }
 
 /** A deep link opens the first listing of its operation. */
-const firstRowKey = ({ tags, operations, webhooks }: SpecModel, id: string) => {
-  for (const group of navigationGroups(tags, operations, webhooks)) {
-    const operation = group.operations.find((candidate) => candidate.id === id)
-    if (operation) return itemKey(group, operation)
-  }
+const firstRowKey = (model: SpecModel, id: string) => {
+  const group = firstGroupOf(model, id)
+  const operation = group?.operations.find((candidate) => candidate.id === id)
+  return group && operation && itemKey(group, operation)
 }
 
 /** A new object per deep link, so following the same one again scrolls again. */

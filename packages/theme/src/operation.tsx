@@ -40,8 +40,8 @@ const OperationHeader = () => {
       <div className="spectile-title-row">
         <h1 className="spectile-operation-title">{summary ?? path}</h1>
         {deprecated && <Tag tone="deprecated">deprecated</Tag>}
-        <TryItButton />
       </div>
+      <TryItButton />
       <div className="spectile-operation-line">
         {kind === "webhook" && <Tag tone="webhook">Webhook</Tag>}
         <Operation.Method className="spectile-method" />

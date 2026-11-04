@@ -2,10 +2,11 @@ import { Operation, TryIt, useOperationContext, useTryItContext } from "@spectil
 import { useState } from "react"
 import { SectionTitle } from "./bits"
 import { useTheme } from "./context"
-import { Dialog } from "./dialog"
+import { CloseButton, Dialog } from "./dialog"
 import { ExampleView } from "./examples"
-import { CloseIcon, PlayIcon } from "./icons"
+import { PlayIcon } from "./icons"
 import { useOperationUi } from "./operation-state"
+import { TryItSheet } from "./sheet"
 import { Tabs } from "./tabs"
 import { CurlPreview, TryItFields } from "./try-it"
 
@@ -105,12 +106,6 @@ export const Panel = () => {
   )
 }
 
-const CloseButton = ({ onClick }: { onClick: () => void }) => (
-  <button type="button" className="spectile-icon-button" aria-label="Close" onClick={onClick}>
-    <CloseIcon />
-  </button>
-)
-
 export const TryItDrawer = () => {
   const { tryItOpen, setTryItOpen } = useOperationUi()
   const close = () => setTryItOpen(false)
@@ -163,12 +158,13 @@ export const TryItButton = () => {
   )
 }
 
-/** The drawer or inline form for the resolved placement; the panel sits beside the page instead. */
+const PLACEMENTS = { inline: InlineTryIt, drawer: TryItDrawer, sheet: TryItSheet }
+
+/** The drawer, sheet or inline form for the resolved placement; the panel sits beside the page. */
 export const TryItPlacement = () => {
   const { tryIt } = useTheme()
   const { kind } = useOperationContext()
-  if (kind === "webhook") return null
-  if (tryIt === "inline") return <InlineTryIt />
-  if (tryIt === "drawer" || tryIt === "sheet") return <TryItDrawer />
-  return null
+  if (kind === "webhook" || !tryIt || tryIt === "panel") return null
+  const Placement = PLACEMENTS[tryIt]
+  return <Placement />
 }

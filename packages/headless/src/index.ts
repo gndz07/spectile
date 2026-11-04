@@ -80,6 +80,7 @@ export {
   type OperationGroup,
   createNavigation,
   filterOperations,
+  firstGroupOf,
   groupByTag,
   groupKey,
   itemKey,

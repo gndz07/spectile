@@ -3,12 +3,13 @@ import { useHashNavigation } from "./hash"
 import { OperationPage } from "./operation"
 import { Sidebar } from "./sidebar"
 import { StackedReference } from "./stacked"
+import { TopBar } from "./top-bar"
 
 const SidebarReference = () => {
   useHashNavigation()
   return (
     <div className="spectile-sidebar-layout">
-      <Sidebar />
+      {useTheme().navigation === "drawer" ? <TopBar /> : <Sidebar />}
       <OperationPage />
     </div>
   )

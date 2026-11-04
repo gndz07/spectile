@@ -88,13 +88,23 @@
   --spectile-space-7: 32px;
   --spectile-space-8: 48px;
   --spectile-schema-indent: 18px;
+  /* Buttons, inputs, selects, the search field, tabs and sidebar items. */
+  --spectile-control-height: 32px;
+  /* Small buttons and selects, icon buttons. */
+  --spectile-control-height-small: 28px;
+  /* Schema, parameter and response rows. */
   --spectile-row-height: 36px;
+  /* Stacked row headers; rows on touch screens; controls and rows on phones. */
+  --spectile-touch-height: 44px;
 
   --spectile-sidebar-width: 264px;
   --spectile-content-max-width: 1000px;
   --spectile-prose-max-width: 72ch;
   --spectile-panel-width: 440px;
   --spectile-drawer-width: 480px;
+  --spectile-nav-drawer-width: 328px;
+  /* The gap the sheet leaves above it. */
+  --spectile-sheet-top: 72px;
   /* For reference only: container queries can't read variables, so styles.css repeats these. */
   --spectile-bp-panel: 1280px;
   --spectile-bp-sidebar: 960px;
@@ -113,7 +123,7 @@
 
 @media (pointer: coarse) {
   :where(:root) {
-    --spectile-row-height: 44px;
+    --spectile-row-height: var(--spectile-touch-height);
   }
 }
 

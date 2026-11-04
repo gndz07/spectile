@@ -1,7 +1,7 @@
 import { type SpecModel, findOperation } from "@spectile/core"
 import { isSearchShortcut, operationHash, parseOperationHash } from "@spectile/headless"
 import { useNavigation, useSpectile } from "@spectile/react"
-import { type RefObject, useEffect } from "react"
+import { useEffect } from "react"
 
 /** The operation `#operationId` in the page URL names, if any. */
 export const hashOperationId = (model: SpecModel) =>
@@ -47,15 +47,15 @@ export const useHashNavigation = (onNavigate?: (id: string) => void) => {
   }, [model, setActive, onNavigate])
 }
 
-/** `/` focuses the search field, unless typed into another field. */
-export const useSearchShortcut = (enabled: boolean, input: RefObject<HTMLInputElement | null>) =>
+/** `/`, unless typed into a field, runs `onShortcut`; pass a stable function. */
+export const useSearchShortcut = (enabled: boolean, onShortcut: () => void) =>
   useEffect(() => {
     if (!enabled) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!isSearchShortcut(event) || !input.current) return
+      if (!isSearchShortcut(event)) return
       event.preventDefault()
-      input.current.focus()
+      onShortcut()
     }
     document.addEventListener("keydown", onKeyDown)
     return () => document.removeEventListener("keydown", onKeyDown)
-  }, [enabled, input])
+  }, [enabled, onShortcut])

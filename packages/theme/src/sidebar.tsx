@@ -37,9 +37,15 @@ const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
 )
 
 /** Search, a live result count and the operations grouped by tag. `onSelect` runs after a pick. */
-export const OperationNavigation = ({ onSelect }: { onSelect?: () => void }) => (
+export const OperationNavigation = ({
+  onSelect,
+  autoFocusSearch,
+}: {
+  onSelect?: () => void
+  autoFocusSearch?: boolean
+}) => (
   <>
-    <Search placeholder="Search" />
+    <Search placeholder="Search" autoFocus={autoFocusSearch} />
     <SearchResultCount />
     <SearchResults>
       <OperationTree onSelect={onSelect} />
@@ -47,13 +53,17 @@ export const OperationNavigation = ({ onSelect }: { onSelect?: () => void }) => 
   </>
 )
 
+export const ApiHeading = () => (
+  <div className="spectile-api-heading">
+    <Info.Title className="spectile-api-title" />
+    <Info.Version className="spectile-version" />
+  </div>
+)
+
 export const Sidebar = () => (
   <nav className="spectile-sidebar" aria-label="API reference">
     <div className="spectile-sidebar-inner">
-      <div className="spectile-api-heading">
-        <Info.Title className="spectile-api-title" />
-        <Info.Version className="spectile-version" />
-      </div>
+      <ApiHeading />
       <OperationNavigation />
     </div>
   </nav>
