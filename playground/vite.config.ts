@@ -14,5 +14,5 @@ export default defineConfig(({ command }) => ({
   plugins: [react()],
   resolve: command === "serve" ? { alias: sourceAliases, dedupe: ["react", "react-dom"] } : {},
   server: { port: 3000, open: true },
-  build: { rolldownOptions: { input: ["index.html", "unstyled.html", "theme.html"] } },
+  build: { rolldownOptions: { input: ["index.html", "unstyled.html"] } },
 }))

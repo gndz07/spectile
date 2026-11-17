@@ -286,28 +286,32 @@ const ResponseResult = () => {
   )
 }
 
+const RequestFields = () => (
+  <div className="spectile-fields">
+    <ServerFields />
+    {useCredentialSchemes().map((scheme) => (
+      <CredentialField key={scheme.name} scheme={scheme} />
+    ))}
+    <ParameterFields />
+    <BodyFields />
+  </div>
+)
+
+const ResetButton = () => (
+  <button type="button" className="spectile-text-button" onClick={useTryItContext().reset}>
+    Reset to examples
+  </button>
+)
+
 /** The fields, then `actions`, then the live curl and Reset. */
-export const TryItRequest = ({ actions }: { actions?: ReactNode }) => {
-  const schemes = useCredentialSchemes()
-  const { reset } = useTryItContext()
-  return (
-    <div className="spectile-try-it-request">
-      <div className="spectile-fields">
-        <ServerFields />
-        {schemes.map((scheme) => (
-          <CredentialField key={scheme.name} scheme={scheme} />
-        ))}
-        <ParameterFields />
-        <BodyFields />
-      </div>
-      {actions}
-      <CurlPreview />
-      <button type="button" className="spectile-text-button" onClick={reset}>
-        Reset to examples
-      </button>
-    </div>
-  )
-}
+export const TryItRequest = ({ actions }: { actions?: ReactNode }) => (
+  <div className="spectile-try-it-request">
+    <RequestFields />
+    {actions}
+    <CurlPreview />
+    <ResetButton />
+  </div>
+)
 
 export const TryItResponse = () => (
   <div className="spectile-try-it-response">
@@ -321,5 +325,20 @@ export const TryItFields = () => (
   <>
     <TryItRequest actions={<TryItActions />} />
     <TryItResponse />
+  </>
+)
+
+/** The form, then the live curl and the response; side by side when the inline form is wide. */
+export const TryItColumns = () => (
+  <>
+    <div className="spectile-try-it-request">
+      <RequestFields />
+      <TryItActions />
+      <ResetButton />
+    </div>
+    <div className="spectile-try-it-output">
+      <CurlPreview />
+      <TryItResponse />
+    </div>
   </>
 )

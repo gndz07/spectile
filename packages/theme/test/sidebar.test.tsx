@@ -125,10 +125,19 @@ describe("sidebar layout", () => {
     expect(document.activeElement).toBe(button)
   })
 
-  it("opens the form inside the operation for inline", () => {
+  it("expands the inline form from its own header, above the parameters", () => {
     render(<ApiReference model={model} tryIt="inline" />)
-    expect(screen.queryByRole("region", { name: "Try it" })).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "Try it" }))
-    expect(screen.getByRole("region", { name: "Try it" })).toBeDefined()
+    const toggles = screen.getAllByRole("button", { name: "Try it" })
+    expect(toggles).toHaveLength(1)
+    const [toggle] = toggles
+    const parameters = screen.getByRole("heading", { name: "Path parameters" })
+    expect(toggle!.compareDocumentPosition(parameters) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(toggle!.getAttribute("aria-expanded")).toBe("false")
+    expect(screen.queryByLabelText("user_id *")).toBeNull()
+    fireEvent.click(toggle!)
+    expect(toggle!.getAttribute("aria-expanded")).toBe("true")
+    expect(screen.getByLabelText("user_id *")).toBeDefined()
+    fireEvent.click(toggle!)
+    expect(screen.queryByLabelText("user_id *")).toBeNull()
   })
 })

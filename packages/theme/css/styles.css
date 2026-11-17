@@ -22,10 +22,8 @@
   outline-offset: var(--spectile-focus-offset);
 }
 
-.spectile button,
-.spectile input,
-.spectile select,
-.spectile textarea {
+/* No specificity beyond the element, so component classes can set their own font. */
+:where(.spectile) :is(button, input, select, textarea) {
   font: inherit;
   color: inherit;
 }
@@ -90,6 +88,8 @@
 .spectile-indicator,
 .spectile-disclosure .spectile-icon,
 .spectile-stacked-toggle > .spectile-icon,
+.spectile-inline-try-it-toggle,
+.spectile-inline-try-it-toggle > .spectile-icon,
 .spectile-fold,
 button.spectile-tag {
   transition-property: color, background-color, border-color, box-shadow, transform;
@@ -99,7 +99,6 @@ button.spectile-tag {
 
 .spectile-content,
 .spectile-tab-panel,
-.spectile-inline-try-it,
 .spectile-result,
 .spectile-banner {
   animation: spectile-reveal var(--spectile-duration) var(--spectile-easing);
@@ -1269,6 +1268,7 @@ p.spectile-type {
 
 .spectile-try-it,
 .spectile-try-it-request,
+.spectile-try-it-output,
 .spectile-try-it-response {
   display: flex;
   flex-direction: column;
@@ -1663,13 +1663,52 @@ p.spectile-type {
 }
 
 .spectile-inline-try-it {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spectile-space-5);
-  padding: var(--spectile-space-5);
+  overflow: clip;
+  overflow-clip-margin: calc(var(--spectile-focus-width) + var(--spectile-focus-offset));
   border: var(--spectile-border-width) solid var(--spectile-color-divider);
   border-radius: var(--spectile-radius-md);
-  background: var(--spectile-color-surface-sunken);
+  background: var(--spectile-color-surface-raised);
+}
+
+.spectile-inline-try-it-heading {
+  margin: 0;
+  font-size: var(--spectile-font-size-md);
+}
+
+.spectile-inline-try-it-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-3);
+  width: 100%;
+  min-height: var(--spectile-touch-height);
+  padding: 0 var(--spectile-space-5);
+  border: 0;
+  background: none;
+  color: var(--spectile-color-accent);
+  font-weight: var(--spectile-font-weight-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.spectile-inline-try-it-toggle:hover {
+  background: var(--spectile-color-accent-subtle-bg);
+}
+
+.spectile-inline-try-it-toggle:focus-visible {
+  outline-offset: calc(var(--spectile-focus-width) * -1);
+}
+
+.spectile-inline-try-it-toggle > .spectile-icon:last-child {
+  margin-left: auto;
+  color: var(--spectile-color-text-secondary);
+}
+
+.spectile-inline-try-it-toggle[aria-expanded="true"] > .spectile-icon:last-child {
+  transform: rotate(90deg);
+}
+
+.spectile-inline-try-it .spectile-try-it {
+  padding: var(--spectile-space-3) var(--spectile-space-5) var(--spectile-space-5);
 }
 
 @container (min-width: 960px) {
@@ -1677,6 +1716,7 @@ p.spectile-type {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
+    column-gap: var(--spectile-space-6);
   }
 }
 

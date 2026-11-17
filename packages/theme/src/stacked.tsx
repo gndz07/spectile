@@ -64,6 +64,7 @@ const OperationBody = ({ id }: { id: string }) => {
         <TryItButton />
       </div>
       <DocsLink externalDocs={externalDocs} />
+      <TryItPlacement />
       <div className="spectile-stacked-columns">
         <div className="spectile-stacked-column">
           <RequestDetails />
@@ -72,7 +73,6 @@ const OperationBody = ({ id }: { id: string }) => {
           <Responses responses={responses} />
         </div>
       </div>
-      <TryItPlacement />
     </div>
   )
 }

@@ -1,14 +1,15 @@
 import { Operation, TryIt, useOperationContext, useTryItContext } from "@spectile/react"
-import { useState } from "react"
+import { useId, useState } from "react"
 import { SectionTitle } from "./bits"
 import { useTheme } from "./context"
 import { CloseButton, Dialog } from "./dialog"
 import { ExampleView } from "./examples"
-import { PlayIcon } from "./icons"
+import { ChevronIcon, PlayIcon } from "./icons"
 import { useOperationUi } from "./operation-state"
+import { Collapse } from "./presence"
 import { TryItSheet } from "./sheet"
 import { Tabs } from "./tabs"
-import { CurlPreview, TryItFields } from "./try-it"
+import { CurlPreview, TryItColumns, TryItFields } from "./try-it"
 
 const ResponseExample = () => {
   const { responses } = useOperationContext()
@@ -123,35 +124,46 @@ export const TryItDrawer = () => {
   )
 }
 
+/** A card whose header is its own toggle, so the trigger and the form stay together. */
 export const InlineTryIt = () => {
   const { tryItOpen, setTryItOpen } = useOperationUi()
-  if (!tryItOpen) return null
+  const id = useId()
   return (
-    <section className="spectile-inline-try-it" aria-label="Try it">
-      <header className="spectile-overlay-header">
-        <SectionTitle className="spectile-overlay-title">Try it</SectionTitle>
-        <CloseButton onClick={() => setTryItOpen(false)} />
-      </header>
-      <TryIt.Root className="spectile-try-it" data-placement="inline" noValidate>
-        <TryItFields />
-      </TryIt.Root>
+    <section className="spectile-inline-try-it" data-state={tryItOpen ? "open" : "closed"}>
+      <SectionTitle className="spectile-inline-try-it-heading">
+        <button
+          type="button"
+          className="spectile-inline-try-it-toggle"
+          aria-expanded={tryItOpen}
+          aria-controls={tryItOpen ? id : undefined}
+          onClick={() => setTryItOpen(!tryItOpen)}
+        >
+          <PlayIcon /> Try it
+          <ChevronIcon />
+        </button>
+      </SectionTitle>
+      <Collapse open={tryItOpen}>
+        <TryIt.Root id={id} className="spectile-try-it" data-placement="inline" noValidate>
+          <TryItColumns />
+        </TryIt.Root>
+      </Collapse>
     </section>
   )
 }
 
-/** Opens the drawer or inline form; nothing in panel mode, with try-it off, or for webhooks. */
+/** Opens the drawer or sheet; inline has its own toggle, and panel mode needs none. */
 export const TryItButton = () => {
   const { tryIt } = useTheme()
   const { kind } = useOperationContext()
-  const { tryItOpen, setTryItOpen } = useOperationUi()
-  if (!tryIt || tryIt === "panel" || kind === "webhook") return null
+  const { setTryItOpen } = useOperationUi()
+  if (tryIt !== "drawer" && tryIt !== "sheet") return null
+  if (kind === "webhook") return null
   return (
     <button
       type="button"
       className="spectile-button spectile-try-it-button"
       data-variant="accent"
-      aria-expanded={tryIt === "inline" ? tryItOpen : undefined}
-      onClick={() => setTryItOpen(!tryItOpen)}
+      onClick={() => setTryItOpen(true)}
     >
       <PlayIcon /> Try it
     </button>

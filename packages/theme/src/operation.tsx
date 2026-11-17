@@ -109,9 +109,9 @@ const OperationDetails = () => {
   const { responses } = useOperationContext()
   return (
     <>
+      <TryItPlacement />
       <RequestDetails />
       <Responses responses={responses} />
-      <TryItPlacement />
     </>
   )
 }
