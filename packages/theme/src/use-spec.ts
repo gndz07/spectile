@@ -23,6 +23,17 @@ const load = async (spec: SpecInput): Promise<Ready | Failed> => {
 
 const keyOf = (spec: SpecInput) => (spec instanceof URL ? spec.href : spec)
 
+/** Where the spec was fetched from, resolved against `base`; undefined for document text or objects. */
+export const specUrl = (spec: SpecInput, base?: string) => {
+  if (spec instanceof URL) return spec.href
+  if (typeof spec !== "string" || /\s|^[{[]/.test(spec.trim())) return undefined
+  try {
+    return new URL(spec.trim(), base).href
+  } catch {
+    return undefined
+  }
+}
+
 /** Loads and normalizes the spec, again when it changes or on `retry`. Pass objects with a stable identity. */
 export const useSpec = (spec: SpecInput): SpecState => {
   const [attempt, setAttempt] = useState(0)

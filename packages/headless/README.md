@@ -44,6 +44,26 @@ nav.getSearchProps() // { type: "search", value, onChange }
 nav.getItemProps(operation) // { "aria-current", "data-state": "active" | "inactive", "data-method", onClick }
 ```
 
+**Keyboard tree.** The groups and operations can be one WAI-ARIA tree, with the same keys as the [schema tree](#schema-tree) and groups that fold. Pass the group to `getItemProps` to make an item part of it:
+
+```ts
+nav.getTreeProps() // { role: "tree" }
+nav.getGroupProps(group) // role: "treeitem", tabIndex, aria-expanded, data-state, onKeyDown, onFocus
+nav.getGroupToggleProps(group) // onClick opens or closes the group
+nav.getItemProps(operation, group) // adds role, tabIndex, onKeyDown, onFocus
+```
+
+The snapshot's `rows` lists the visible groups and items in order, and `focusedId` / `tabStopId` work as in the schema tree. `toggle(id)` and `focus(id)` take a row id (`groupKey(group)` or `itemKey(group, operation)`). Every group opens while a search is active.
+
+Helpers:
+
+```ts
+matchRanges("List pets", "pet") // [{ start: 5, end: 8 }], for highlighting matches
+isSearchShortcut(event) // "/" pressed outside a text field
+operationHash("listPets") // "#listPets"; parseOperationHash(location.hash) reverses it
+firstGroupOf(model, "listPets") // the first group listing it, e.g. for a breadcrumb
+```
+
 ## Schema tree
 
 An expandable tree of a schema's properties, following the WAI-ARIA tree pattern.
@@ -65,16 +85,31 @@ const { root, rows } = tree.getSnapshot()
 - `node`: the full `SchemaNode` (types, description, constraints…)
 - `expandable`, `expanded`
 - `recursive`: this schema already appears above this row. "Expand all" stops here, so circular schemas don't expand forever; you can still open them by hand.
+- `recursiveTarget`: on a recursive row, the id of that ancestor row, for a link back to it
+- `variants`: on a oneOf/anyOf row, `{ kind, labels, selected }`. Labels use the schema's title, then the discriminator value, then its name, then "Option n". Only the selected variant's fields are listed, and each variant keeps its own expanded rows.
 
-Actions: `expand(id)`, `collapse(id)`, `toggle(id)`, `expandAll()`, `collapseAll()`, `focus(id)`.
+When the schema itself is a oneOf/anyOf, the first row is a synthetic root row that holds the variant choice. `allOf` parts are merged into one list of properties.
+
+The snapshot also has `allExpanded`, for an Expand all / Collapse all toggle.
+
+**Options:** `createSchemaTree(model, ref, { defaultExpandedDepth, usage, recursion })`.
+
+- `defaultExpandedDepth`: how many levels start open. An array's item row doesn't count as a level, so `1` opens `pets` and the fields of each pet.
+- `usage`: `"request"` leaves out readOnly properties and `"response"` leaves out writeOnly ones. Their names, at any depth, are in the snapshot's `hiddenNames`, so you can say they were left out.
+- `recursion`: `"expandOnce"` (the default) lets a recursive row expand one more level before linking back; `"link"` only links back.
+
+Actions: `expand(id)`, `collapse(id)`, `toggle(id)`, `expandAll()`, `collapseAll()`, `focus(id)`, `selectVariant(id, index)`.
 
 Prop getters:
 
 ```ts
 tree.getTreeProps() // { role: "tree" }
-tree.getRowProps(row) // role, aria-level, aria-expanded, tabIndex, data-state, data-depth, data-kind,
-// data-required, data-recursive, data-deprecated, onKeyDown, onClick, onFocus
+tree.getRowProps(row) // role, aria-level, aria-setsize, aria-posinset, aria-expanded, tabIndex, data-state,
+// data-depth, data-kind, data-required, data-recursive, data-deprecated, onKeyDown, onClick, onFocus
+tree.getVariantSelectProps(row) // value, onChange, for a <select> whose option values are indexes into row.variants.labels
 ```
+
+Clicks and keys from a control inside a row, such as the variant select, are left to that control.
 
 **Keyboard support:**
 
@@ -106,9 +141,9 @@ const { draft, request, missing, result } = getPet.getSnapshot()
 ```
 
 - **`draft`**: what the user typed. It starts with the spec's examples; the body starts as an example built from the schema. Each operation keeps its own draft, so switching between operations doesn't lose input. `reset()` restores the starting values.
-- **`request`**: the request that will be sent, rebuilt on every change. Pass it to `toCurl` for a code sample.
+- **`request`**: the request that will be sent, rebuilt on every change. Pass it to `toCurl` for a code sample. A required parameter that's still empty shows as `{name}` in its place (URL, query or header) and is listed in `request.placeholders`; core's `toCurlTokens` marks it so you can style it.
 - **`missing`**: required parameters still empty. `send()` refuses to send while this isn't empty, or while `missingBody` (a required body left empty) is true.
-- **`result`**: `idle`, `pending`, `done` (with `response`: `status`, `headers`, `body`, `duration`) or `error` (with `error`). A 404 or 500 is still `done`: a response arrived. Header names are lowercase. JSON bodies are indented without being re-parsed, so large numbers stay exact. Binary bodies (images, PDFs…) come as `response.blob`, with an empty `body`.
+- **`result`**: `idle`, `pending`, `done` (with `response`: `status`, `headers`, `body`, `duration`, `size`) or `error` (with `error`, and `network: true` when no response came back). A 404 or 500 is still `done`: a response arrived. `formatDuration` and `formatBytes` turn `duration` and `size` into `85 ms` and `1.5 KB`. Header names are lowercase. JSON bodies are indented without being re-parsed, so large numbers stay exact. Binary bodies (images, PDFs…) come as `response.blob`, with an empty `body`.
 - `cancel()` stops a request in flight. Sending again replaces the previous request.
 
 Parameter inputs are text: list values are separated by commas, and object values are JSON. They're converted to what the schema expects before the request is built.
@@ -124,6 +159,8 @@ const { bodyFields, missingFields } = upload.getSnapshot()
 ```
 
 `send()` also refuses while a required field is empty (`missingFields`). Requests with files are sent as a `Blob`, so the multipart boundary stays correct.
+
+**Content types.** When a body accepts several, `setMediaType("application/xml")` picks one (`draft.mediaType`) and swaps in that type's example.
 
 **Servers.** Each operation sends to one of its own `servers` (the operation's, its path's, or the spec's), starting with the first.
 
@@ -152,6 +189,7 @@ Only credentials are stored, never drafts or responses. If the browser blocks st
 getPet.getFormProps() // onSubmit sends; data-state: idle | pending | done | error
 getPet.getParameterProps(parameter) // name, value, required, onChange
 getPet.getBodyProps() // name, value, onChange
+getPet.getMediaTypeSelectProps() // value, onChange, for a <select> of content types
 upload.getFieldProps(field) // name, value, required, onChange; files: type: "file", multiple, accept, no value
 getPet.getSendProps() // type: "submit", disabled and aria-busy while pending
 getPet.getServerProps() // the server URL: name, inputMode: "url", value, onChange
@@ -162,24 +200,37 @@ tryIt.getCredentialProps("apiKey") // or ("basic", "username" | "password")
 
 > Browsers only let a page call another site's API if that API allows it (CORS). When a request fails for this reason, the error says so. Browsers also refuse to set the `Cookie` header, so cookie parameters and cookie API keys only work through a proxy.
 
-## Labels
+## Labels and helpers
 
-Pure helpers so every framework shows the same text:
+Pure functions, so every framework shows the same text:
 
 ```ts
 schemaTypeLabel(node, model) // "Pet", "Pet[]", "string[]", "string | null", "string · email", "oneOf", "any"
 schemaRowLabel(row) // property name, else title, else schema name, else "oneOf[0]"
+schemaDefaultLabel(node) // "= true", or undefined without a default
 schemaAllowedValues(node) // { kind: "enum", values: ["asc", "desc"] }, { kind: "const", … } or undefined
 schemaConstraintsLabel(node) // "≥ 1 · ≤ 100", "at most 5 items"
+variantLabel(model, node, 0) // "Cat"
+groupParameters(operation.parameters) // [{ location: "path", parameters }, …] in path, query, header, cookie order
+defaultExampleResponse(operation) // the first 2xx response with a body, for an example panel
 ```
 
-`createSchemaTree(model, ref, { usage: "request" })` leaves out readOnly properties (`"response"` leaves out writeOnly ones) and lists their names in `hiddenNames`. A recursive row (one whose type is an ancestor's) expands one more level by default, then links back to that ancestor; `{ recursion: "link" }` makes it only link back. `defaultExpandedDepth` doesn't count an array's item row as a level, so `1` opens `pets` and the fields of each pet.
+## JSON viewer
 
-For JSON, `nestedFolds(jsonLines(text), 1)` lists what to start folded: nested objects, and arrays holding objects or arrays. Each fold has `size`, its number of entries, for labels like "3 items":
+A tokenizer and a small fold store for showing JSON bodies with collapsible objects and arrays.
 
 ```ts
-createJsonFolds(nestedFolds(lines, 1)) // { "settings": { … }, "pets": [ … ] }
+import { codeLines, createJsonFolds, nestedFolds, visibleJsonLines } from "@spectile/headless"
+
+const lines = codeLines(body) // plain lines when it isn't JSON; jsonLines(body) returns undefined instead
+const folds = createJsonFolds(nestedFolds(lines, 1)) // start nested objects and arrays of them folded
+const visible = visibleJsonLines(lines, folds.getSnapshot().folded)
 ```
+
+- Each line has `depth` and `tokens` (`{ kind, text }`, with `kind` one of `key`, `string`, `number`, `boolean`, `null`, `punctuation`, `ellipsis` or `text`). Numbers keep their original text, so large ids stay exact.
+- A line that opens an object or array has `fold`: its `path` (a JSON pointer), the `end` line and `size`, its number of entries, for labels like "3 items". A folded line closes on the same line: `{ … }`.
+- `nestedFolds(lines, depth)` lists the folds from `depth` down: objects, and arrays holding objects or arrays. Arrays of plain values stay open.
+- `folds.toggle(path)` and `folds.getToggleProps(path)` (`type: "button"`, `aria-expanded`, `data-state`, `onClick`). Folds are kept by path, so they survive a new body of the same shape.
 
 ## Building your own store
 

@@ -29,7 +29,7 @@ export const Docs = () => (
 )
 ```
 
-Need to load a spec from a URL or YAML? See `loadSpec` in `@spectile/core/loader`.
+Need to load a spec from a URL or YAML? See `loadSpec` in `@spectile/core/loader`. Want a finished, styled reference instead? See [`@spectile/theme`](../theme), which is built from these components.
 
 ## `<SpectileProvider>`
 
@@ -39,7 +39,7 @@ Wrap your reference in it once. Everything below reads from it.
 | ----------------- | -------------------------------------------------------------------------------------- |
 | `model`           | the `SpecModel` from `normalize`                                                       |
 | `defaultActiveId` | the operation selected at first                                                        |
-| `tryIt`           | `{ fetch, baseUrl, storage }` for try-it; see `createTryIt` in `@spectile/headless`    |
+| `tryItOptions`    | `{ fetch, baseUrl, storage, storageKey }`; see `createTryIt` in `@spectile/headless`   |
 | `renderMarkdown`  | `(markdown) => ReactNode`, turns descriptions into elements; see [Markdown](#markdown) |
 
 ## Hooks
@@ -92,8 +92,41 @@ A sidebar with search, tag groups and the active operation.
 | `Navigation.GroupName`        | the tag's name. Nothing for untagged operations and webhooks.                                                                             |
 | `Navigation.GroupDescription` | a `<div>` with the tag's description, as [Markdown](#markdown)                                                                            |
 | `Navigation.Item`             | a `<button>` that makes its `operation` active, with `aria-current="page"` when it is. `Operation.*` parts inside it show that operation. |
+| `Navigation.ResultCount`      | the number of matching operations, announced as it changes (`role="status"`)                                                              |
+| `Navigation.Highlight`        | its `text` prop, with each match of the search in a `<mark>`                                                                              |
 
-Clicking an item makes it the active operation, and `<Operation.Root>` and `useOperation()` follow it. For anything else, such as the number of results, use `useNavigation()`.
+Clicking an item makes it the active operation, and `<Operation.Root>` and `useOperation()` follow it. For anything else, use `useNavigation()`.
+
+**Keyboard tree.** Wrap the groups in `Navigation.Tree` to make them one WAI-ARIA tree: arrows move between groups and items, Left and Right close and open groups, Home and End jump. Groups then fold:
+
+```tsx
+<Navigation.Tree aria-label="Operations">
+  <Navigation.Groups>
+    {(group) => (
+      <Navigation.Group group={group}>
+        <Navigation.GroupToggle>
+          <Navigation.GroupName />
+        </Navigation.GroupToggle>
+        <Navigation.GroupItems>
+          {group.operations.map((operation) => (
+            <Navigation.Item key={operation.id} operation={operation}>
+              <Operation.Method /> <Navigation.Highlight text={operation.summary ?? operation.path} />
+            </Navigation.Item>
+          ))}
+        </Navigation.GroupItems>
+      </Navigation.Group>
+    )}
+  </Navigation.Groups>
+</Navigation.Tree>
+```
+
+| Part                     | Renders                                                                                               |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `Navigation.Tree`        | `<div role="tree">`; inside it, `Group` and `Item` become tree items with a single tab stop           |
+| `Navigation.GroupToggle` | a `<div>` that opens or closes its group when clicked                                                 |
+| `Navigation.GroupItems`  | `<div role="group">` holding the items; nothing while the group is closed, unless `forceMount` (to animate it closing) |
+
+`Navigation.useGroupOpen()` tells you whether the enclosing group is open. Every group opens while a search is active. Without `Navigation.Tree`, items stay plain buttons.
 
 ### `Operation`
 
@@ -147,6 +180,7 @@ Clicking an item makes it the active operation, and `<Operation.Root>` and `useO
 | `RequestBody.Root`        | a `<div>` for the operation's request body. Nothing when it takes none. Place it inside `Operation.Root`. |
 | `RequestBody.Required`    | `required`, only when it is                                                                               |
 | `RequestBody.Description` | a `<div>` with the description, as [Markdown](#markdown)                                                  |
+| `RequestBody.MediaSelect` | a `<select>` of content types when the body has several; nothing otherwise. The choice is shared with the operation's try-it form, and `useRequestBodyMedia()` returns it. |
 | `Response.Root`           | a `<div>` for one response (prop `response`)                                                              |
 | `Response.Status`         | `200`, `4XX` or `default`                                                                                 |
 | `Response.Description`    | a `<div>` with the description, as [Markdown](#markdown)                                                  |
@@ -223,8 +257,75 @@ An accessible, keyboard-navigable tree of a schema.
 | `Schema.Required`    | `required`, only when it is                                                 |
 | `Schema.Description` | a `<div>` with the description as [Markdown](#markdown), when there is one  |
 | `Schema.Indicator`   | your expand icon, only on expandable rows                                   |
+| `Schema.Default`     | the default after the type, e.g. `= true`                                   |
+| `Schema.Constraints` | limits, e.g. `≥ 1 · ≤ 100`                                                  |
+| `Schema.VariantSelect` | on a oneOf/anyOf row, a `<select>` of its variants; the chosen one's fields show under the row. Its own tab stop, so arrow keys never change it. |
+| `Schema.Link`        | on a recursive row that doesn't expand, a `<button>` that moves focus to the ancestor row with the same schema |
+| `Schema.ExpandToggle` | a `<button>`: "Expand all", then "Collapse all" once every row is open. Place it inside `Schema.Root`. |
 
-Inside a row, `useSchemaRow()` gives you the row (with its full `node`) for anything custom, such as constraints or enums. Inside a root, `useSchema()` gives you the whole tree state, including `expandAll()` and `collapseAll()`.
+`Schema.Root` takes the `useSchemaTree` options: `usage="request"` leaves out readOnly properties (`"response"` leaves out writeOnly ones), and `recursion="link"` keeps recursive rows from expanding at all. See [`@spectile/headless`](../headless#schema-tree).
+
+Inside a row, `useSchemaRow()` gives you the row (with its full `node`) for anything custom, such as allowed values (`schemaAllowedValues` in headless). Inside a root, `useSchema()` gives you the whole tree state, including `hiddenNames`, `expandAll()` and `collapseAll()`.
+
+### `Example`
+
+A media type's examples, with a picker when there are several.
+
+```tsx
+<Example.Root media={response.content[0]}>
+  <Example.Select aria-label="Example" />
+  <Example.Summary />
+  <Example.Description />
+  <pre>
+    <Example.Value />
+  </pre>
+</Example.Root>
+```
+
+| Part                  | Renders                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| `Example.Root`        | a `<div>`. Uses the media type's named examples, or builds one from its schema when it has none. Nothing when it has neither. Pass `usage` to build a request or response example. |
+| `Example.Select`      | a `<select>` of the examples, by summary or name; nothing when there's only one                       |
+| `Example.Summary`     | the chosen example's summary                                                                          |
+| `Example.Description` | a `<div>` with its description, as [Markdown](#markdown)                                              |
+| `Example.Value`       | its value as text (JSON indented), or the URL of an `externalValue`                                   |
+
+`useExample()` gives you the chosen example and its `text`, for example to hand to `Json.Root` or `Copy`.
+
+### `Json`
+
+A JSON viewer with foldable objects and arrays and tokens to color.
+
+```tsx
+<Json.Root text={body} foldDepth={1}>
+  <Json.Lines>
+    {(line) => (
+      <Json.Line line={line} className="line">
+        <Json.Toggle>▾</Json.Toggle>
+        <Json.Tokens />
+      </Json.Line>
+    )}
+  </Json.Lines>
+</Json.Root>
+```
+
+| Part          | Renders                                                                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Json.Root`   | a `<div>`. Text that isn't JSON shows as plain lines. `foldDepth` starts nested objects, and arrays of objects or arrays, folded from that depth; `1` keeps the top level open. |
+| `Json.Lines`  | calls its child function once per visible line                                                             |
+| `Json.Line`   | a `<div>` with `--spectile-depth` for indenting, and `data-state` on lines that open a fold                |
+| `Json.Toggle` | a `<button>` that folds the object or array opening on this line; nothing on other lines                   |
+| `Json.Tokens` | the line's tokens as `<span data-kind>`: `key`, `string`, `number`, `boolean`, `null`, `punctuation`, `ellipsis` or `text` |
+
+Folds are kept by path, so they survive a new body of the same shape. For custom tokens, `useJsonLine()` gives you the line, including `fold.size` (the folded entries) for labels like "3 items".
+
+### `Copy`
+
+```tsx
+<Copy text={curl}>Copy</Copy>
+```
+
+A `<button>` that copies `text` to the clipboard. `data-state` is `copied` for two seconds after (`resetAfter` changes that), or `failed`.
 
 ### `TryIt`
 
@@ -267,14 +368,18 @@ Send real requests from the docs. Place it inside `Operation.Root`.
 | `TryIt.Body`           | a `<textarea>` with an example body. Nothing when the operation takes no body, or when the body is filled in with `TryIt.Field`s.                                          |
 | `TryIt.Field`          | an `<input>` for one property of a form or multipart body (prop `field`): `type="file"` with `accept` and `multiple` for files, else text pre-filled from examples          |
 | `TryIt.Send`           | a submit `<button>`, disabled while sending                                                                                                                                 |
-| `TryIt.Status`         | `200 OK`, once a response arrives                                                                                                                                           |
+| `TryIt.Cancel`         | a `<button>` that stops the request; only while one is pending                                                                                                              |
+| `TryIt.Status`         | `200 OK`, once a response arrives (`aria-live="polite"`)                                                                                                                    |
+| `TryIt.Duration`       | how long it took, e.g. `85 ms`                                                                                                                                              |
+| `TryIt.Size`           | the body's size, e.g. `1.5 KB`                                                                                                                                              |
 | `TryIt.ResponseBody`   | the response body, pretty-printed when it's JSON                                                                                                                            |
-| `TryIt.Error`          | why the request failed (`role="alert"`)                                                                                                                                     |
-| `TryIt.Curl`           | the request as a curl command, updated as you type                                                                                                                          |
+| `TryIt.Error`          | why the request failed (`role="alert"`), with `data-network` when no response came back                                                                                    |
+| `TryIt.Curl`           | the request as a curl command, updated as you type. Required values still empty show as `{name}` in a `<span data-missing>`.                                               |
 | `TryIt.ServerSelect`   | a `<select>` with one `<option>` per server (its description, else its URL). Nothing when the operation has one server.                                                     |
 | `TryIt.ServerVariable` | for one server variable (prop `name`): a `<select>` when it lists its values, else an `<input>`. Nothing when the chosen server has no such variable.                       |
 | `TryIt.Server`         | an `<input>` with the resulting base URL. Typing in it overrides the server.                                                                                                |
 | `TryIt.Credential`     | an `<input>` for a security scheme's token or key (prop `scheme`). For HTTP Basic, use two, with `field="username"` and `field="password"`. Works anywhere in the provider. |
+| `TryIt.CredentialDescription` | a `<div>` with the security scheme's description (prop `scheme`), as [Markdown](#markdown)                                                                           |
 
 To show every variable of the chosen server, map over `useTryItContext().serverVariables`:
 
@@ -319,7 +424,12 @@ Components render no styles. They describe their state with attributes you can t
 | `data-status`                                        | `Response.Root`                              | the status, e.g. `200`              |
 | `data-state`                                         | `TryIt.Root`                                 | `idle`, `pending`, `done`, `error`  |
 | `data-status`, `data-ok`                             | `TryIt.Status`                               | the HTTP status; `data-ok` for 2xx  |
-| `--spectile-depth`                                   | `Schema.Row`                                 | nesting level, `0` at the top       |
+| `data-missing`                                       | spans inside `TryIt.Curl`                    | present on unfilled placeholders    |
+| `data-network`                                       | `TryIt.Error`                                | present when no response came back  |
+| `data-state`                                         | groups in `Navigation.Tree`, `GroupItems`, `Json.Line`, `Json.Toggle`, `Schema.ExpandToggle` | `open`, `closed` |
+| `data-state`                                         | `Copy`                                       | `idle`, `copied`, `failed`          |
+| `data-kind`                                          | spans from `Json.Tokens`                     | `key`, `string`, `number`…          |
+| `--spectile-depth`                                   | `Schema.Row`, `Json.Line`                    | nesting level, `0` at the top       |
 
 ```css
 .row {

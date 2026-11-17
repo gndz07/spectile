@@ -3,6 +3,7 @@ import type { LoadResult } from "@spectile/core/loader"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ApiReference, defaultRenderMarkdown } from "../src"
+import { specUrl } from "../src/use-spec"
 
 const loadSpec = vi.hoisted(() => vi.fn<(input: unknown) => Promise<LoadResult>>())
 
@@ -57,6 +58,14 @@ describe("ApiReference", () => {
     expect(loadSpec).toHaveBeenCalledTimes(2)
   })
 
+  it("sends try-it requests relative to where the spec came from", async () => {
+    loadSpec.mockResolvedValue({ document: { ...document, servers: [{ url: "/v1" }] }, warnings: [] })
+    render(<ApiReference spec="https://example.com/specs/openapi.json" />)
+    fireEvent.click(await screen.findByRole("tab", { name: "Try it" }))
+    fireEvent.click(screen.getByRole("button", { name: "Show curl" }))
+    expect(screen.getByLabelText("curl").textContent).toContain("'https://example.com/v1/pets'")
+  })
+
   it("renders Markdown without raw HTML or unsafe links", () => {
     const { container } = render(
       defaultRenderMarkdown('**bold** <img src=x onerror="alert(1)"> [x](javascript:alert(1))'),
@@ -69,5 +78,16 @@ describe("ApiReference", () => {
   it("says so when there are no operations", () => {
     render(<ApiReference model={normalize(empty)} />)
     expect(screen.getByText("This API has no operations")).toBeDefined()
+  })
+})
+
+describe("specUrl", () => {
+  it("reads a URL from a URL or a path, never from document text", () => {
+    const page = "https://docs.example.com/api/"
+    expect(specUrl(new URL("https://example.com/a.json"))).toBe("https://example.com/a.json")
+    expect(specUrl("/specs/a.yaml", page)).toBe("https://docs.example.com/specs/a.yaml")
+    expect(specUrl("openapi: 3.1.0\ninfo: {}", page)).toBeUndefined()
+    expect(specUrl('{"openapi":"3.1.0"}', page)).toBeUndefined()
+    expect(specUrl({ openapi: "3.1.0" }, page)).toBeUndefined()
   })
 })

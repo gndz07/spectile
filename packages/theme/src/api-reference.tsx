@@ -8,7 +8,7 @@ import { type Layout, type TryItPreference, resolveLayout } from "./layout"
 import { defaultRenderMarkdown } from "./markdown"
 import { Reference } from "./reference"
 import { LoadFailed, Loading, NoOperations, Warnings } from "./states"
-import { type SpecInput, useSpec } from "./use-spec"
+import { type SpecInput, specUrl, useSpec } from "./use-spec"
 import { useWidth } from "./use-width"
 
 type Options = {
@@ -52,11 +52,20 @@ const Ready = ({ model, warnings = [], tryItOptions, renderMarkdown }: ReadyProp
   </SpectileProvider>
 )
 
-const Loaded = ({ spec, ...props }: ContentOptions & { spec: SpecInput }) => {
+/** Relative server URLs resolve against where the spec came from, unless `baseUrl` says otherwise. */
+const Loaded = ({ spec, tryItOptions, ...props }: ContentOptions & { spec: SpecInput }) => {
   const state = useSpec(spec)
   if (state.status === "loading") return <Loading />
   if (state.status === "failed") return <LoadFailed error={state.error} retry={state.retry} />
-  return <Ready model={state.model} warnings={state.warnings} {...props} />
+  const baseUrl = tryItOptions?.baseUrl ?? specUrl(spec, globalThis.location?.href)
+  return (
+    <Ready
+      model={state.model}
+      warnings={state.warnings}
+      tryItOptions={{ ...tryItOptions, baseUrl }}
+      {...props}
+    />
+  )
 }
 
 /** A complete, styled API reference. Import `@spectile/theme/styles.css` once alongside it. */
