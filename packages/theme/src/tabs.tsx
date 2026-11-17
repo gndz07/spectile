@@ -13,6 +13,28 @@ type TabsProps<T extends string> = {
 
 const STEPS: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1 }
 
+/** A small switch between views of the same thing, e.g. cURL / JSON. */
+export const Segmented = <T extends string>({
+  options,
+  selected,
+  onSelect,
+  label,
+}: Omit<TabsProps<T>, "tabs" | "children" | "className"> & { options: Tab<T>[] }) => (
+  <div role="group" aria-label={label} className="spectile-segmented">
+    {options.map((option) => (
+      <button
+        key={option.value}
+        type="button"
+        aria-pressed={option.value === selected}
+        className="spectile-segment"
+        onClick={() => onSelect(option.value)}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+)
+
 /** Tabs with the ARIA pattern: one tab stop, arrow keys move and select. */
 export const Tabs = <T extends string>({
   tabs,

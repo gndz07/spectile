@@ -5,8 +5,12 @@ import { useTheme } from "./context"
 import { useSearchShortcut } from "./hash"
 import { CloseIcon, SearchIcon } from "./icons"
 
+/** `users` reads "Users"; names with capitals of their own, like `iOS`, stay as written. */
+const displayTagName = (name: string) =>
+  /^[a-z][^A-Z]*$/.test(name) ? name.charAt(0).toUpperCase() + name.slice(1) : name
+
 export const groupLabel = ({ tag, kind }: OperationGroup) =>
-  tag?.name ?? (kind === "webhook" ? "Webhooks" : "Other")
+  tag ? displayTagName(tag.name) : kind === "webhook" ? "Webhooks" : "Other"
 
 const isSearching = (query: string) => query.trim() !== ""
 

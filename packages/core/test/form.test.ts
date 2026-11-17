@@ -95,7 +95,7 @@ describe("form bodies", () => {
 
   it("fills typed fields from the example", () => {
     expect(fieldExamples(model, multipart!)).toEqual({
-      owner: "string",
+      owner: "text",
       meta: '{"a":0}',
       note: "hi",
     })
@@ -136,7 +136,7 @@ describe("form bodies", () => {
       { name: "meta", value: '{"a":1}', contentType: "application/json" },
     ])
     expect(toCurl(request)).toBe(
-      `curl -X POST '/upload' \\\n  -F 'photo=@"me.png";type=image/png' \\\n  -F 'raw=@"x.bin";type=application/octet-stream' \\\n  -F 'meta="{\\"a\\":1}";type=application/json'`,
+      `curl '/upload' \\\n  -F 'photo=@"me.png";type=image/png' \\\n  -F 'raw=@"x.bin";type=application/octet-stream' \\\n  -F 'meta="{\\"a\\":1}";type=application/json'`,
     )
   })
 

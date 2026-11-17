@@ -1,49 +1,36 @@
 import type { ExampleOptions, MediaType } from "@spectile/core"
 import { Example, useExample } from "@spectile/react"
-import { useState } from "react"
-import { CodeBlock } from "./bits"
-import { ChevronIcon } from "./icons"
-import { Collapse } from "./presence"
+import { Code, CodeBlock } from "./bits"
+import { Disclosure } from "./presence"
 
-const Selected = ({ label }: { label: string }) => {
+/** A response preview folds nested objects to `{ … }`, so its shape reads at a glance. */
+const foldDepthFor =(usage: ExampleOptions["usage"]) => (usage === "response" ? 1 : undefined)
+
+/**
+ * Inside `Example.Root`: a select for several named examples, the description and the code.
+ * Without `bare`, the code has its own copy button.
+ */
+export const SelectedExample = ({
+  label,
+  usage,
+  bare = false,
+}: { label: string; bare?: boolean } & ExampleOptions) => {
   const { text } = useExample()
+  const Block = bare ? Code : CodeBlock
   return (
     <>
       <Example.Select className="spectile-select" data-size="small" aria-label="Example" />
       <Example.Description className="spectile-description spectile-prose" />
-      {text !== undefined && <CodeBlock text={text} label={label} />}
+      {text !== undefined && <Block text={text} label={label} foldDepth={foldDepthFor(usage)} />}
     </>
   )
 }
 
-/** The media type's example in a code block, with a select for several named examples. */
-export const ExampleView = ({
-  media,
-  usage,
-  label,
-}: { media: MediaType; label: string } & ExampleOptions) => (
-  <Example.Root media={media} usage={usage} className="spectile-example">
-    <Selected label={label} />
-  </Example.Root>
-)
-
 /** A collapsed "Example" that opens to the example. */
-export const CollapsibleExample = ({ media, usage }: { media: MediaType } & ExampleOptions) => {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="spectile-collapsible" data-state={open ? "open" : "closed"}>
-      <button
-        type="button"
-        className="spectile-disclosure"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        <ChevronIcon />
-        Example
-      </button>
-      <Collapse open={open}>
-        <ExampleView media={media} usage={usage} label="example" />
-      </Collapse>
-    </div>
-  )
-}
+export const CollapsibleExample = ({ media, usage }: { media: MediaType } & ExampleOptions) => (
+  <Disclosure label="Example">
+    <Example.Root media={media} usage={usage} className="spectile-example">
+      <SelectedExample label="example" usage={usage} />
+    </Example.Root>
+  </Disclosure>
+)

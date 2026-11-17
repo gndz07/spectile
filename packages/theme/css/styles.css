@@ -78,6 +78,8 @@
 .spectile-button,
 .spectile-icon-button,
 .spectile-text-button,
+.spectile-quiet-button,
+.spectile-segment,
 .spectile-input,
 .spectile-select,
 .spectile-search,
@@ -90,8 +92,7 @@
 .spectile-stacked-toggle > .spectile-icon,
 .spectile-inline-try-it-toggle,
 .spectile-inline-try-it-toggle > .spectile-icon,
-.spectile-fold,
-button.spectile-tag {
+.spectile-fold {
   transition-property: color, background-color, border-color, box-shadow, transform;
   transition-duration: var(--spectile-duration);
   transition-timing-function: var(--spectile-easing);
@@ -221,13 +222,71 @@ button.spectile-tag {
   color: var(--spectile-color-status-success);
 }
 
-.spectile-text-button {
+.spectile-text-button,
+.spectile-type-link {
   padding: 0;
   border: 0;
   background: none;
   color: var(--spectile-color-link);
   text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
+}
+
+/* A text button with an icon and no outline, e.g. Expand all. */
+.spectile-quiet-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spectile-space-2);
+  min-height: var(--spectile-control-height-small);
+  padding: 0 var(--spectile-space-3);
+  border: 0;
+  border-radius: var(--spectile-radius-md);
+  background: none;
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.spectile-quiet-button:hover:not(:disabled) {
+  background: var(--spectile-color-surface-sunken);
+  color: var(--spectile-color-text);
+}
+
+.spectile-quiet-button:disabled {
+  color: var(--spectile-color-text-disabled);
+  cursor: default;
+}
+
+.spectile-segmented {
+  display: inline-flex;
+  gap: var(--spectile-space-1);
+  padding: var(--spectile-space-1);
+  border-radius: var(--spectile-radius-md);
+  background: var(--spectile-color-surface-sunken);
+}
+
+.spectile-segment {
+  min-height: calc(var(--spectile-control-height-small) - 2 * var(--spectile-space-1));
+  padding: 0 var(--spectile-space-3);
+  border: 0;
+  border-radius: var(--spectile-radius-sm);
+  background: none;
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-xs);
+  cursor: pointer;
+}
+
+.spectile-segment:hover {
+  color: var(--spectile-color-text);
+}
+
+.spectile-segment[aria-pressed="true"] {
+  background: var(--spectile-color-surface-raised);
+  box-shadow: 0 0 0 var(--spectile-border-width) var(--spectile-color-divider);
+  color: var(--spectile-color-text);
+  font-weight: var(--spectile-font-weight-strong);
 }
 
 .spectile-input,
@@ -254,7 +313,7 @@ button.spectile-tag {
 .spectile-select[data-size="small"] {
   min-height: var(--spectile-control-height-small);
   padding: 0 var(--spectile-space-2);
-  font-family: var(--spectile-font-mono);
+  color: var(--spectile-color-text);
   font-size: var(--spectile-font-size-xs);
 }
 
@@ -450,11 +509,8 @@ button.spectile-tag {
 .spectile-group-title {
   margin: 0;
   color: var(--spectile-color-text-secondary);
-  font-family: var(--spectile-font-mono);
-  font-size: var(--spectile-font-size-xs);
+  font-size: var(--spectile-font-size-sm);
   font-weight: var(--spectile-font-weight-strong);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .spectile-nav-heading {
@@ -509,7 +565,7 @@ button.spectile-tag {
 .spectile-nav-item .spectile-method,
 .spectile-stacked-toggle .spectile-method {
   flex: none;
-  width: 52px;
+  width: 46px;
   text-align: center;
 }
 
@@ -725,45 +781,24 @@ button.spectile-tag {
   color: var(--spectile-color-method-delete);
 }
 
+/* Tags are a lowercase word in their tone's color, never a box. */
 .spectile-tag {
-  display: inline-block;
-  padding: 0 var(--spectile-space-2);
-  border: var(--spectile-border-width) solid transparent;
-  border-radius: var(--spectile-radius-sm);
-  background: var(--spectile-color-deprecated-bg);
-  color: var(--spectile-color-deprecated);
-  font-family: var(--spectile-font-mono);
+  color: var(--spectile-color-text-secondary);
   font-size: var(--spectile-font-size-xs);
-  font-weight: var(--spectile-font-weight-strong);
-  line-height: var(--spectile-line-height-ui);
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .spectile-tag[data-tone="required"] {
-  background: var(--spectile-color-required-bg);
   color: var(--spectile-color-required);
 }
 
 .spectile-tag[data-tone="deprecated"] {
-  border-color: var(--spectile-color-deprecated);
-  border-style: dashed;
-  background: transparent;
+  color: var(--spectile-color-deprecated);
 }
 
-.spectile-tag[data-tone="recursive"],
 .spectile-tag[data-tone="webhook"] {
-  background: var(--spectile-color-accent-subtle-bg);
-  color: var(--spectile-color-accent-subtle);
-}
-
-button.spectile-tag {
-  cursor: pointer;
-  text-transform: none;
-}
-
-button.spectile-tag::before {
-  content: "↻ ";
+  color: var(--spectile-color-accent);
+  font-weight: var(--spectile-font-weight-strong);
 }
 
 /* Operation page */
@@ -875,58 +910,70 @@ button.spectile-tag::before {
 .spectile-schema-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spectile-space-3);
+  align-items: baseline;
+  gap: var(--spectile-space-3) var(--spectile-space-4);
 }
 
 .spectile-schema-header > :first-child {
   flex: 1;
 }
 
+.spectile-schema-header > .spectile-quiet-button {
+  align-self: center;
+}
+
 .spectile-section-title {
   margin: 0;
-  font-size: var(--spectile-font-size-md);
+  font-size: var(--spectile-font-size-lg);
   font-weight: var(--spectile-font-weight-strong);
+  line-height: var(--spectile-line-height-tight);
 }
 
 .spectile-media-type {
   color: var(--spectile-color-text-secondary);
-  font-family: var(--spectile-font-mono);
-  font-size: var(--spectile-font-size-xs);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-section-heading > .spectile-tag {
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-note {
+  margin: 0;
+  color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-sm);
 }
 
 /* Rows: parameters, headers and the schema tree */
 
+/* Dividers sit between top-level fields only; a field's nested ones stay inside its divider. */
 .spectile-rows,
 .spectile-schema {
   border-top: var(--spectile-border-width) solid var(--spectile-color-divider);
 }
 
 .spectile-row,
+.spectile-schema > .spectile-schema-branch {
+  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+.spectile-row,
 .spectile-schema-row {
   display: flex;
   flex-direction: column;
-  gap: var(--spectile-space-2);
+  gap: var(--spectile-space-1);
   min-height: var(--spectile-row-height);
-  padding: var(--spectile-space-3) var(--spectile-space-3);
-  border-bottom: var(--spectile-border-width) solid var(--spectile-color-divider);
-  font-size: var(--spectile-font-size-sm);
+  padding: var(--spectile-space-4) var(--spectile-space-3);
 }
 
+/* Room on the left for the arrow, which the indicator pulls back into it. */
 .spectile-schema-row {
-  padding-left: calc(
-    var(--spectile-space-6) + var(--spectile-depth, 0) * var(--spectile-schema-indent)
-  );
-  background-image: repeating-linear-gradient(
-    to right,
-    transparent 0 calc(var(--spectile-schema-indent) - 1px),
-    var(--spectile-color-divider) calc(var(--spectile-schema-indent) - 1px)
-      var(--spectile-schema-indent)
-  );
-  background-size: calc(var(--spectile-depth, 0) * var(--spectile-schema-indent)) 100%;
-  background-repeat: no-repeat;
-  background-position: var(--spectile-space-3) 0;
+  padding-left: var(--spectile-space-6);
   cursor: default;
+}
+
+.spectile-schema-children .spectile-schema-row {
+  padding-block: var(--spectile-space-3);
 }
 
 .spectile-schema-row[aria-expanded] {
@@ -937,24 +984,39 @@ button.spectile-tag::before {
   background-color: color-mix(in srgb, var(--spectile-color-accent-subtle-bg) 45%, transparent);
 }
 
-.spectile-schema-row[data-kind="root"] {
-  background-color: var(--spectile-color-surface-sunken);
-}
-
 .spectile-schema-row:focus-visible {
   outline-offset: calc(var(--spectile-focus-width) * -1);
+}
+
+/* Nested fields hang under one guide line from their parent's arrow. */
+.spectile-schema-children {
+  margin-left: var(--spectile-space-4);
+  border-left: var(--spectile-border-width) solid var(--spectile-color-divider);
+}
+
+/* An array's items stand for the array, so their fields aren't indented again. */
+.spectile-schema-children:is([data-parent="items"], [data-parent="additionalProperties"]) {
+  margin-left: 0;
+  border-left: 0;
 }
 
 .spectile-row-line {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spectile-space-2) var(--spectile-space-3);
+  margin: 0;
+}
+
+/* A select is taller than the text, so the line centers on it instead of the text's baseline. */
+.spectile-row-line:has(> .spectile-select) {
   align-items: center;
-  gap: var(--spectile-space-3);
 }
 
 .spectile-indicator {
   display: inline-flex;
-  margin-left: calc(var(--spectile-space-5) * -1 - var(--spectile-space-1));
+  align-self: center;
+  margin: 0 calc(var(--spectile-space-2) * -1) 0 calc(-16px - var(--spectile-space-2));
   color: var(--spectile-color-text-secondary);
 }
 
@@ -973,28 +1035,22 @@ button.spectile-tag::before {
   text-decoration: line-through;
 }
 
-.spectile-type,
-.spectile-variant {
+.spectile-type {
   color: var(--spectile-color-text-secondary);
+  font-size: var(--spectile-font-size-sm);
+}
+
+.spectile-type-link {
+  font-size: inherit;
+}
+
+.spectile-value {
+  padding: 0 var(--spectile-space-2);
+  border: var(--spectile-border-width) solid var(--spectile-color-divider);
+  border-radius: var(--spectile-radius-sm);
+  background: var(--spectile-color-surface-sunken);
   font-family: var(--spectile-font-mono);
   font-size: var(--spectile-font-size-xs);
-}
-
-.spectile-variant {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spectile-space-3);
-}
-
-.spectile-variant .spectile-select {
-  min-height: var(--spectile-control-height-small);
-  color: var(--spectile-color-text);
-  font-family: var(--spectile-font-mono);
-  font-size: var(--spectile-font-size-xs);
-}
-
-p.spectile-type {
-  margin: 0;
 }
 
 .spectile-description {
@@ -1002,10 +1058,14 @@ p.spectile-type {
   color: var(--spectile-color-text);
 }
 
+.spectile-row > .spectile-description,
+.spectile-schema-row > .spectile-description {
+  color: var(--spectile-color-text-secondary);
+}
+
 .spectile-constraints {
   margin: 0;
   color: var(--spectile-color-text-secondary);
-  font-family: var(--spectile-font-mono);
   font-size: var(--spectile-font-size-xs);
 }
 
@@ -1022,10 +1082,9 @@ p.spectile-type {
 .spectile-response-header {
   display: flex;
   align-items: baseline;
-  gap: var(--spectile-space-3);
+  gap: var(--spectile-space-4);
   min-height: var(--spectile-row-height);
-  padding: var(--spectile-space-3);
-  font-size: var(--spectile-font-size-sm);
+  padding: var(--spectile-space-4) var(--spectile-space-3);
   cursor: pointer;
 }
 
@@ -1068,8 +1127,17 @@ p.spectile-type {
 }
 
 .spectile-status-code {
+  color: var(--spectile-color-text-secondary);
   font-family: var(--spectile-font-mono);
   font-weight: var(--spectile-font-weight-strong);
+}
+
+.spectile-status-reason {
+  color: var(--spectile-color-text);
+}
+
+.spectile-response-header .spectile-prose {
+  color: var(--spectile-color-text-secondary);
 }
 
 .spectile-response[data-tone="success"] .spectile-status-code {
@@ -1108,8 +1176,8 @@ p.spectile-type {
   gap: 0;
 }
 
-.spectile-collapsible .spectile-example {
-  padding-top: var(--spectile-space-3);
+.spectile-collapsible .spectile-collapse-inner > :first-child {
+  margin-top: var(--spectile-space-3);
 }
 
 .spectile-collapsible .spectile-disclosure {
@@ -1128,6 +1196,7 @@ p.spectile-type {
   margin: 0;
   padding: var(--spectile-space-4) var(--spectile-space-5);
   overflow: auto;
+  border: var(--spectile-border-width) solid var(--spectile-color-code-border);
   border-radius: var(--spectile-radius-md);
   background: var(--spectile-color-code-bg);
   color: var(--spectile-color-code-text);
@@ -1139,7 +1208,7 @@ p.spectile-type {
   scrollbar-color: var(--spectile-color-code-muted) transparent;
 }
 
-/* Every line starts after a gutter that holds the fold arrows. */
+/* Every line starts after a gutter that holds the fold arrows. Long lines scroll, never break a value. */
 .spectile-code-line {
   --spectile-code-gutter: 18px;
   position: relative;
@@ -1196,8 +1265,7 @@ p.spectile-type {
 }
 
 .spectile-curl {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
 }
 
 .spectile-curl [data-missing] {
@@ -1225,7 +1293,7 @@ p.spectile-type {
 }
 
 .spectile-code-frame > .spectile-icon-button:hover {
-  background: rgb(255 255 255 / 0.08);
+  background: var(--spectile-color-code-hover-bg);
   color: var(--spectile-color-code-text);
 }
 
@@ -1275,10 +1343,6 @@ p.spectile-type {
   gap: var(--spectile-space-5);
 }
 
-.spectile-try-it-response:empty {
-  display: none;
-}
-
 /* Short fields pair up when two fit; a field alone on its row takes the whole row. */
 .spectile-fields,
 .spectile-field-pair {
@@ -1301,6 +1365,22 @@ p.spectile-type {
   flex-basis: 100%;
 }
 
+/* A label with a control at the other end, e.g. Body and its Reset. */
+.spectile-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spectile-space-3);
+}
+
+/* As tall as the label, so the field keeps its spacing. */
+.spectile-field-header > .spectile-quiet-button {
+  min-height: 0;
+  margin-right: calc(var(--spectile-space-2) * -1);
+  padding: 0 var(--spectile-space-2);
+  font-size: var(--spectile-font-size-xs);
+}
+
 .spectile-field-label {
   display: inline-flex;
   align-items: center;
@@ -1313,9 +1393,16 @@ p.spectile-type {
   border-color: var(--spectile-color-status-warning);
 }
 
+/* Grows with its content up to 15 lines, then scrolls; browsers without field-sizing keep its rows. */
 .spectile-body-input {
-  resize: vertical;
+  min-height: calc(4lh + 2 * (var(--spectile-space-3) + var(--spectile-border-width)));
+  max-height: calc(15lh + 2 * (var(--spectile-space-3) + var(--spectile-border-width)));
+  overflow-y: auto;
+  field-sizing: content;
+  resize: none;
   line-height: var(--spectile-line-height-ui);
+  scrollbar-width: thin;
+  scrollbar-color: var(--spectile-color-border-control) transparent;
 }
 
 .spectile-hint {
@@ -1337,11 +1424,6 @@ p.spectile-type {
 
 .spectile-actions [type="submit"] {
   flex: 1;
-}
-
-.spectile-try-it-request > .spectile-text-button {
-  align-self: start;
-  font-size: var(--spectile-font-size-xs);
 }
 
 .spectile-banner {
@@ -1378,7 +1460,6 @@ p.spectile-type {
   display: flex;
   align-items: center;
   gap: var(--spectile-space-3);
-  font-family: var(--spectile-font-mono);
   font-size: var(--spectile-font-size-xs);
 }
 
@@ -1468,17 +1549,19 @@ p.spectile-type {
 .spectile-panel-section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--spectile-space-3);
 }
 
 .spectile-panel-section-title {
+  flex: 1;
   margin: 0;
   color: var(--spectile-color-text-secondary);
-  font-size: var(--spectile-font-size-xs);
+  font-size: var(--spectile-font-size-sm);
   font-weight: var(--spectile-font-weight-strong);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+}
+
+.spectile-panel-section-header > .spectile-select {
+  min-width: 0;
 }
 
 /* Drawer and inline try-it */

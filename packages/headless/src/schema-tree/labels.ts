@@ -45,12 +45,18 @@ const range = (noun: string, min: number | undefined, max: number | undefined) =
   return max === undefined ? [] : [`at most ${max} ${noun}`]
 }
 
-/** Allowed values and limits, e.g. `one of "asc", "desc" · ≥ 1 · ≤ 100`; undefined when there are none. */
+export type AllowedValues = { kind: "const" | "enum"; values: unknown[] }
+
+/** The one value a `const` allows, or an `enum`'s list; undefined when any value goes. */
+export const schemaAllowedValues = (node: SchemaNode): AllowedValues | undefined => {
+  if (node.const !== undefined) return { kind: "const", values: [node.const] }
+  return node.enum ? { kind: "enum", values: node.enum } : undefined
+}
+
+/** Limits, e.g. `≥ 1 · ≤ 100`; undefined when there are none. Allowed values are `schemaAllowedValues`. */
 export const schemaConstraintsLabel = (node: SchemaNode) => {
   const { constraints: limits } = node
   const parts = [
-    ...(node.const === undefined ? [] : [`exactly ${show(node.const)}`]),
-    ...(node.enum ? [`one of ${node.enum.map(show).join(", ")}`] : []),
     ...(limits.exclusiveMinimum === undefined
       ? bound("≥", limits.minimum)
       : bound(">", limits.exclusiveMinimum)),

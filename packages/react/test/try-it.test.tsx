@@ -183,7 +183,7 @@ describe("TryIt primitives", () => {
   it("edits the request body", () => {
     renderTryIt("createUser")
     const body = screen.getByLabelText("Body")
-    expect(JSON.parse((body as HTMLTextAreaElement).value)).toMatchObject({ name: "string" })
+    expect(JSON.parse((body as HTMLTextAreaElement).value)).toMatchObject({ name: "Ada Lovelace" })
     fireEvent.change(body, { target: { value: '{"name":"Ada"}' } })
     expect(screen.getByTestId("curl").textContent).toContain(`--data-raw '{"name":"Ada"}'`)
   })

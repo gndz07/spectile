@@ -1,8 +1,9 @@
-import { type SecurityScheme, parameterKey, toCurl } from "@spectile/core"
+import { type SecurityScheme, bodyExample, parameterKey, toCurl } from "@spectile/core"
 import { Copy, TryIt, useOperationContext, useSpectile, useTryItContext } from "@spectile/react"
-import { type ReactNode, useState } from "react"
-import { CodeBlock, CodeFrame, statusTone } from "./bits"
+import { type ReactNode, useId, useMemo, useState } from "react"
+import { CodeBlock, mediaTypeLabel, statusTone } from "./bits"
 import { LockIcon } from "./icons"
+import { Disclosure } from "./presence"
 import { Tabs } from "./tabs"
 
 const Field = ({
@@ -87,24 +88,47 @@ const useCredentialSchemes = () => {
   )
 }
 
+const CUSTOM_SERVER = "custom"
+
+/** One server: its URL, editable. Several: a select of them plus "Custom…", which shows the URL field. */
 const ServerFields = () => {
   const { servers } = useOperationContext()
-  const { serverVariables } = useTryItContext()
+  const { serverVariables, serverIndex } = useTryItContext()
+  const [custom, setCustom] = useState(false)
+  const several = servers.length > 1
   return (
     <>
-      {servers.length > 1 && (
+      {several && (
         <Field label="Server" wide>
-          <TryIt.ServerSelect className="spectile-select" />
+          <TryIt.ServerSelect
+            className="spectile-select"
+            value={custom ? CUSTOM_SERVER : String(serverIndex)}
+            onChange={(event) => {
+              const picked = event.currentTarget.value === CUSTOM_SERVER
+              setCustom(picked)
+              if (picked) event.preventDefault()
+            }}
+          >
+            {servers.map((server, index) => (
+              <option key={index} value={index}>
+                {server.description ?? server.url}
+              </option>
+            ))}
+            <option value={CUSTOM_SERVER}>Custom…</option>
+          </TryIt.ServerSelect>
         </Field>
       )}
-      {Object.keys(serverVariables).map((name) => (
-        <Field key={name} label={name}>
-          <TryIt.ServerVariable name={name} className="spectile-input" />
+      {!custom &&
+        Object.keys(serverVariables).map((name) => (
+          <Field key={name} label={name}>
+            <TryIt.ServerVariable name={name} className="spectile-input" />
+          </Field>
+        ))}
+      {(!several || custom) && (
+        <Field label="Server URL" wide>
+          <TryIt.Server className="spectile-input" spellCheck={false} />
         </Field>
-      ))}
-      <Field label="Server URL" wide>
-        <TryIt.Server className="spectile-input" spellCheck={false} />
-      </Field>
+      )}
     </>
   )
 }
@@ -132,9 +156,39 @@ const ParameterFields = () => {
   })
 }
 
+/** "Body · JSON" with a quiet Reset beside it, which puts the example back. */
+const BodyEditor = () => {
+  const { model } = useSpectile()
+  const { requestBody } = useOperationContext()
+  const { draft, setBody, missingBody } = useTryItContext()
+  const id = useId()
+  const media =
+    requestBody?.content.find(({ mediaType }) => mediaType === draft.mediaType) ??
+    requestBody?.content[0]
+  const example = useMemo(() => (media ? bodyExample(model, media) : ""), [model, media])
+  return (
+    <div className="spectile-field" data-missing={missingBody ? "" : undefined} data-wide="">
+      <div className="spectile-field-header">
+        <label htmlFor={id} className="spectile-field-label">
+          Body{media && ` · ${mediaTypeLabel(media.mediaType)}`}
+        </label>
+        <button
+          type="button"
+          className="spectile-quiet-button"
+          disabled={draft.body === example}
+          onClick={() => setBody(example)}
+        >
+          Reset
+        </button>
+      </div>
+      <TryIt.Body id={id} className="spectile-input spectile-body-input" rows={8} spellCheck={false} />
+    </div>
+  )
+}
+
 const BodyFields = () => {
   const { requestBody } = useOperationContext()
-  const { bodyFields, missingFields, missingBody } = useTryItContext()
+  const { bodyFields, missingFields } = useTryItContext()
   const missingNames = new Set(missingFields.map(({ name }) => name))
   return (
     <>
@@ -147,11 +201,7 @@ const BodyFields = () => {
           <TryIt.Field field={field} className="spectile-input" />
         </Field>
       ))}
-      {bodyFields.length === 0 && requestBody && (
-        <Field label="Body" missing={missingBody} wide>
-          <TryIt.Body className="spectile-input spectile-body-input" rows={8} spellCheck={false} />
-        </Field>
-      )}
+      {bodyFields.length === 0 && requestBody && <BodyEditor />}
     </>
   )
 }
@@ -206,22 +256,19 @@ export const TryItActions = () => {
   )
 }
 
-const Curl = () => (
+/** The live curl, unfilled values marked. */
+export const CurlPreview = () => (
   <pre className="spectile-code spectile-curl" aria-label="curl">
     <TryIt.Curl />
   </pre>
 )
 
-/** The live curl; with `copy`, its own copy button in the corner (the form has a Copy curl button). */
-export const CurlPreview = ({ copy = false }: { copy?: boolean }) => {
-  const { request } = useTryItContext()
-  if (!copy) return <Curl />
-  return (
-    <CodeFrame copy={toCurl(request)} copyLabel="Copy curl">
-      <Curl />
-    </CodeFrame>
-  )
-}
+/** The form already shows the same values, so the curl waits behind a toggle (Copy curl covers copying). */
+const CurlToggle = () => (
+  <Disclosure label={(open) => (open ? "Hide curl" : "Show curl")}>
+    <CurlPreview />
+  </Disclosure>
+)
 
 const NetworkError = () => {
   const { result } = useTryItContext()
@@ -297,28 +344,30 @@ const RequestFields = () => (
   </div>
 )
 
-const ResetButton = () => (
-  <button type="button" className="spectile-text-button" onClick={useTryItContext().reset}>
-    Reset to examples
-  </button>
-)
-
-/** The fields, then `actions`, then the live curl and Reset. */
+/** The fields, then `actions`, then the live curl. */
 export const TryItRequest = ({ actions }: { actions?: ReactNode }) => (
   <div className="spectile-try-it-request">
     <RequestFields />
     {actions}
-    <CurlPreview />
-    <ResetButton />
+    <CurlToggle />
   </div>
 )
 
-export const TryItResponse = () => (
-  <div className="spectile-try-it-response">
-    <NetworkError />
-    <ResponseResult />
-  </div>
-)
+const WAITING = { idle: "Send the request to see the response here.", pending: "Sending…" }
+
+/** Says where the response will appear until there is one. */
+export const TryItResponse = () => {
+  const { status } = useTryItContext().result
+  return (
+    <div className="spectile-try-it-response">
+      {(status === "idle" || status === "pending") && (
+        <p className="spectile-muted">{WAITING[status]}</p>
+      )}
+      <NetworkError />
+      <ResponseResult />
+    </div>
+  )
+}
 
 /** Request fields, Send, curl and the response, inside a `TryIt.Root`. */
 export const TryItFields = () => (
@@ -328,16 +377,15 @@ export const TryItFields = () => (
   </>
 )
 
-/** The form, then the live curl and the response; side by side when the inline form is wide. */
+/** The form and its curl, then the response; side by side when the inline form is wide. */
 export const TryItColumns = () => (
   <>
     <div className="spectile-try-it-request">
       <RequestFields />
       <TryItActions />
-      <ResetButton />
+      <CurlToggle />
     </div>
     <div className="spectile-try-it-output">
-      <CurlPreview />
       <TryItResponse />
     </div>
   </>

@@ -48,7 +48,7 @@ Wrap your reference in it once. Everything below reads from it.
 | ---------------------------------------------------- | ------------------------------------------------------------------------ |
 | `useNavigation()`                                    | search, tag groups, the active operation, and prop getters for a sidebar |
 | `useOperation(id?)`                                  | the operation with that id, or the active one                            |
-| `useSchemaTree(schemaRef, { defaultExpandedDepth })` | the rows and actions of a schema tree                                    |
+| `useSchemaTree(schemaRef, { defaultExpandedDepth, usage, recursion })` | the rows and actions of a schema tree                                    |
 | `useTryIt(operationId)`                              | the draft, request, result and actions for trying an operation           |
 | `useTryItSettings()`                                 | the credentials shared by every operation                                |
 | `useSpectile()`                                      | `{ model, navigation, tryIt }`                                           |
@@ -214,7 +214,7 @@ An accessible, keyboard-navigable tree of a schema.
 
 | Part                 | Renders                                                                     |
 | -------------------- | --------------------------------------------------------------------------- |
-| `Schema.Root`        | no element; creates the tree state. Props: `schema`, `defaultExpandedDepth` |
+| `Schema.Root`        | no element; creates the tree state. Props: `schema`, `defaultExpandedDepth`, `usage`, `recursion` |
 | `Schema.Tree`        | `<div role="tree">`                                                         |
 | `Schema.Rows`        | calls its child function once per visible row                               |
 | `Schema.Row`         | `<div role="treeitem">`, clickable, with keyboard support                   |

@@ -51,14 +51,15 @@
   --spectile-color-required: light-dark(#8f3c12, #f0a58a);
   --spectile-color-required-bg: light-dark(#fbe9e0, #3a2218);
 
-  /* Code blocks are dark in both themes. */
-  --spectile-color-code-bg: light-dark(#17191a, #0f1211);
-  --spectile-color-code-text: #cdd3d0;
-  --spectile-color-code-key: #8fd1dc;
-  --spectile-color-code-string: #c9e29a;
-  --spectile-color-code-number: #f0b98a;
-  --spectile-color-code-muted: #8f9895;
-  --spectile-color-code-missing: #e8c35a;
+  --spectile-color-code-bg: light-dark(#f1f1ee, #0f1211);
+  --spectile-color-code-border: light-dark(#e6e6e2, transparent);
+  --spectile-color-code-hover-bg: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.08));
+  --spectile-color-code-text: light-dark(#1c1c1a, #cdd3d0);
+  --spectile-color-code-key: light-dark(#0b6e7f, #8fd1dc);
+  --spectile-color-code-string: light-dark(#446a14, #c9e29a);
+  --spectile-color-code-number: light-dark(#a3460f, #f0b98a);
+  --spectile-color-code-muted: light-dark(#696964, #8f9895);
+  --spectile-color-code-missing: light-dark(#7d5700, #e8c35a);
 
   --spectile-font-system-sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial,
     sans-serif;
@@ -87,7 +88,6 @@
   --spectile-space-6: 24px;
   --spectile-space-7: 32px;
   --spectile-space-8: 48px;
-  --spectile-schema-indent: 18px;
   /* Buttons, inputs, selects, the search field, tabs and sidebar items. */
   --spectile-control-height: 32px;
   /* Small buttons and selects, icon buttons. */
@@ -110,7 +110,7 @@
   --spectile-bp-sidebar: 960px;
   --spectile-bp-phone: 600px;
 
-  --spectile-radius-sm: 3px;
+  --spectile-radius-sm: 4px;
   --spectile-radius-md: 6px;
   --spectile-radius-lg: 12px;
   --spectile-border-width: 1px;

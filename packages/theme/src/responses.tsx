@@ -1,7 +1,7 @@
 import type { Response as ResponseModel } from "@spectile/core"
 import { Response } from "@spectile/react"
 import { useId, useState } from "react"
-import { SectionTitle, statusTone } from "./bits"
+import { SectionTitle, mediaTypeLabel, statusCodeLabel, statusReason, statusTone } from "./bits"
 import { useTheme } from "./context"
 import { CollapsibleExample } from "./examples"
 import { ChevronIcon } from "./icons"
@@ -19,12 +19,24 @@ const ResponseBody = ({ response }: { response: ResponseModel }) => {
         <SchemaView
           schema={media.schema}
           label={`${response.status} ${media.mediaType} schema`}
-          header={<span className="spectile-media-type">{media.mediaType}</span>}
+          header={<span className="spectile-media-type">{mediaTypeLabel(media.mediaType)}</span>}
+          usage="response"
         />
       )}
       {tryIt !== "panel" && <CollapsibleExample media={media} usage="response" />}
     </div>
   ))
+}
+
+const sameWords = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
+
+/** The reason phrase unless the description says the same; `default` falls back to "Unexpected error". */
+const Reason = ({ response }: { response: ResponseModel }) => {
+  const reason = statusReason(response.status)
+  if (response.status === "default" && !response.description)
+    return <span className="spectile-status-reason">Unexpected error</span>
+  if (!reason || (response.description && sameWords(reason, response.description))) return null
+  return <span className="spectile-status-reason">{reason}</span>
 }
 
 const ResponseItem = ({ response }: { response: ResponseModel }) => {
@@ -62,7 +74,8 @@ const ResponseItem = ({ response }: { response: ResponseModel }) => {
           }}
         >
           <ChevronIcon />
-          <Response.Status className="spectile-status-code" />
+          <span className="spectile-status-code">{statusCodeLabel(response.status)}</span>{" "}
+          <Reason response={response} />
         </button>
         <Response.Description id={`${id}-description`} className="spectile-prose" />
       </div>

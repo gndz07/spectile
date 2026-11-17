@@ -6,7 +6,7 @@ import {
   useRequestBody,
   useRequestBodyMedia,
 } from "@spectile/react"
-import { DocsLink, SectionTitle, Tag } from "./bits"
+import { DocsLink, SectionTitle, Tag, mediaTypeLabel } from "./bits"
 import { useTheme } from "./context"
 import { OperationUiProvider } from "./operation-state"
 import { Parameters } from "./parameters"
@@ -53,36 +53,44 @@ const OperationHeader = () => {
   )
 }
 
+/** "Request body · JSON · required". */
 const RequestBodyHeading = () => {
   const { required, content } = useRequestBody()
+  const [single] = content
   return (
     <div className="spectile-section-heading">
       <SectionTitle>Request body</SectionTitle>
-      {required && <Tag tone="required">required</Tag>}
       {content.length > 1 ? (
-        <RequestBody.MediaSelect className="spectile-select" aria-label="Content type" />
+        <RequestBody.MediaSelect
+          className="spectile-select"
+          data-size="small"
+          aria-label="Content type"
+        />
       ) : (
-        <span className="spectile-media-type">{content[0]?.mediaType}</span>
+        single && <span className="spectile-media-type">{mediaTypeLabel(single.mediaType)}</span>
       )}
+      {required && <Tag tone="required">required</Tag>}
     </div>
   )
 }
 
+/** The heading, then the body's description, then its fields. */
 const RequestBodyContent = () => {
   const media = useRequestBodyMedia()
-  return (
+  const description = <RequestBody.Description className="spectile-description spectile-prose" />
+  return media?.schema ? (
+    <SchemaView
+      key={media.mediaType}
+      schema={media.schema}
+      label="Request body schema"
+      header={<RequestBodyHeading />}
+      intro={description}
+      usage="request"
+    />
+  ) : (
     <>
-      <RequestBody.Description className="spectile-description spectile-prose" />
-      {media?.schema ? (
-        <SchemaView
-          key={media.mediaType}
-          schema={media.schema}
-          label="Request body schema"
-          header={<RequestBodyHeading />}
-        />
-      ) : (
-        <RequestBodyHeading />
-      )}
+      <RequestBodyHeading />
+      {description}
     </>
   )
 }

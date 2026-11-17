@@ -1,4 +1,4 @@
-import { Operation, TryIt, useOperationContext, useTryItContext } from "@spectile/react"
+import { Operation, TryIt, useOperationContext } from "@spectile/react"
 import { useState } from "react"
 import { CloseButton, Dialog } from "./dialog"
 import { useOperationUi } from "./operation-state"
@@ -6,20 +6,6 @@ import { Tabs } from "./tabs"
 import { SendButton, TryItActions, TryItRequest, TryItResponse } from "./try-it"
 
 type SheetTab = "request" | "response"
-
-const WAITING = { idle: "Send the request to see its response.", pending: "Sending…" }
-
-const Response = () => {
-  const { status } = useTryItContext().result
-  return (
-    <>
-      {(status === "idle" || status === "pending") && (
-        <p className="spectile-muted">{WAITING[status]}</p>
-      )}
-      <TryItResponse />
-    </>
-  )
-}
 
 /** The phone's try-it: Request and Response tabs over a footer that stays at the bottom. */
 export const TryItSheet = () => {
@@ -51,7 +37,7 @@ export const TryItSheet = () => {
             { value: "response", label: "Response" },
           ]}
         >
-          {tab === "request" ? <TryItRequest /> : <Response />}
+          {tab === "request" ? <TryItRequest /> : <TryItResponse />}
         </Tabs>
         <footer className="spectile-sheet-footer">
           {tab === "request" ? (

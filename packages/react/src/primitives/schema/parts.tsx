@@ -77,7 +77,7 @@ export const Default = (props: TextProps) => (
   <Text value={schemaDefaultLabel(useSchemaRow().node)} {...props} />
 )
 
-/** Allowed values and limits, e.g. `≥ 1 · ≤ 100`. */
+/** Limits, e.g. `≥ 1 · ≤ 100`. */
 export const Constraints = (props: TextProps) => (
   <Text value={schemaConstraintsLabel(useSchemaRow().node)} {...props} />
 )
@@ -105,8 +105,8 @@ export const VariantSelect = ({ children, ...props }: VariantSelectProps) => {
 export type LinkProps = PrimitiveProps<"button">
 
 /**
- * On a recursive row that no longer expands, a button that moves focus to the ancestor row with
- * the same schema. Its text defaults to that row's label.
+ * On a recursive row that doesn't expand, a button that moves focus to the ancestor row with the
+ * same schema. Its text defaults to that row's label.
  */
 export const Link = ({ children, ...props }: LinkProps) => {
   const { rows, root, focus } = useSchema()

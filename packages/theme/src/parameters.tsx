@@ -1,7 +1,8 @@
 import { type Header, type Parameter as ParameterModel, getMergedSchema, parameterKey } from "@spectile/core"
 import { groupParameters, schemaConstraintsLabel, schemaDefaultLabel } from "@spectile/headless"
 import { Parameter, useParameter, useSpectile } from "@spectile/react"
-import { SectionTitle, Tag } from "./bits"
+import { SectionTitle, Tag, TypeWithValues } from "./bits"
+import { typeLabel } from "./labels"
 
 const LOCATION_LABELS = { path: "Path", query: "Query", header: "Header", cookie: "Cookie" }
 
@@ -18,20 +19,23 @@ const Details = () => {
   return constraints ? <p className="spectile-constraints">{constraints}</p> : null
 }
 
-const Default = () => {
+const TypeLine = () => {
+  const { model } = useSpectile()
   const node = useParameterSchema()
-  const label = node && schemaDefaultLabel(node)
-  return label ? <> {label}</> : null
+  const defaultLabel = node && schemaDefaultLabel(node)
+  return (
+    <>
+      <TypeWithValues type={node && typeLabel(model, node)} node={node} />
+      {defaultLabel && <span className="spectile-type">{defaultLabel}</span>}
+    </>
+  )
 }
 
 export const ParameterRow = ({ parameter }: { parameter: ParameterModel | Header }) => (
   <Parameter.Root parameter={parameter} className="spectile-row" role="listitem">
     <div className="spectile-row-line">
       <Parameter.Name className="spectile-name" />
-      <span className="spectile-type">
-        <Parameter.Type />
-        <Default />
-      </span>
+      <TypeLine />
       {parameter.required && <Tag tone="required">required</Tag>}
       {parameter.deprecated && <Tag tone="deprecated">deprecated</Tag>}
     </div>

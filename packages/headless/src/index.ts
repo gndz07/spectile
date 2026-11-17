@@ -37,6 +37,8 @@ export {
   serverListKey,
 } from "./try-it"
 export {
+  type AllowedValues,
+  type RecursionMode,
   type SchemaChild,
   type SchemaRow,
   type SchemaRowKind,
@@ -44,10 +46,12 @@ export {
   type SchemaTree,
   type SchemaTreeOptions,
   type SchemaTreeSnapshot,
+  type SchemaUsage,
   type TreeAction,
   type TreeRow,
   type VariantKind,
   createSchemaTree,
+  schemaAllowedValues,
   schemaChildren,
   schemaConstraintsLabel,
   schemaDefaultLabel,
@@ -69,6 +73,7 @@ export {
   codeLines,
   createJsonFolds,
   jsonLines,
+  nestedFolds,
   visibleJsonLines,
 } from "./json"
 export {

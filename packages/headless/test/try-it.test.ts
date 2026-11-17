@@ -48,9 +48,9 @@ describe("createTryIt", () => {
     const { draft } = tryIt.forOperation("createUser").getSnapshot()
     expect(draft.mediaType).toBe("application/json")
     expect(JSON.parse(draft.body)).toEqual({
-      name: "string",
+      name: "Ada Lovelace",
       friends: [],
-      profile: { bio: "string" },
+      profile: { bio: "text" },
     })
   })
 
@@ -276,7 +276,7 @@ describe("form bodies", () => {
         ["tags", false, true, undefined],
       ],
     )
-    expect(draft.fields).toEqual({ caption: "Me", tags: "string" })
+    expect(draft.fields).toEqual({ caption: "Me", tags: "text" })
     expect(upload.getFieldProps(bodyFields[2]!)).toMatchObject({ name: "body.caption", value: "Me" })
   })
 
@@ -319,9 +319,9 @@ describe("form bodies", () => {
     upload.setMediaType("application/x-www-form-urlencoded")
     const { bodyFields, draft } = upload.getSnapshot()
     expect(bodyFields.map(({ name }) => name)).toEqual(["q", "ids"])
-    expect(draft.fields).toEqual({ q: "string", ids: "string" })
+    expect(draft.fields).toEqual({ q: "text", ids: "text" })
     upload.setField("ids", "1,2")
-    expect(upload.getSnapshot().request.body).toBe("q=string&ids=1,2")
+    expect(upload.getSnapshot().request.body).toBe("q=text&ids=1,2")
   })
 })
 

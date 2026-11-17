@@ -21,7 +21,11 @@ const model = normalize({
             "application/json": {
               schema: {
                 oneOf: [
-                  { title: "Cat", type: "object", properties: { name: { type: "string" } } },
+                  {
+                    title: "Cat",
+                    type: "object",
+                    properties: { id: { type: "string", readOnly: true }, name: { type: "string" } },
+                  },
                   { title: "Dog", type: "object", properties: { barks: { type: "boolean" } } },
                 ],
               },
@@ -36,6 +40,7 @@ const model = normalize({
             },
           },
           "204": { description: "Nothing" },
+          default: { description: "" },
         },
       },
     },
@@ -49,14 +54,14 @@ describe("sidebar layout", () => {
   it("lists operations and shows the active one", () => {
     render(<ApiReference model={model} />)
     const nav = screen.getByRole("tree", { name: "Operations" })
-    expect(within(nav).getByRole("treeitem", { name: "pets" })).toBeDefined()
+    expect(within(nav).getByRole("treeitem", { name: "Pets" })).toBeDefined()
     expect(within(nav).getByRole("treeitem", { name: "Other" })).toBeDefined()
     expect(screen.getByRole("heading", { level: 1, name: "Add a pet" })).toBeDefined()
     expect(screen.getByRole("heading", { name: "Path parameters" })).toBeDefined()
     const body = screen.getByRole("tree", { name: "Request body schema" })
     expect(within(body).getByRole("combobox", { name: "Variant" })).toBeDefined()
     expect(within(body).getAllByRole("treeitem").map((row) => row.textContent)).toEqual([
-      expect.stringContaining("body"),
+      expect.stringContaining("One of"),
       expect.stringContaining("name"),
     ])
 
@@ -80,11 +85,11 @@ describe("sidebar layout", () => {
     render(<ApiReference model={model} tryIt="drawer" />)
     const responses = screen.getByRole("heading", { name: "Responses" }).parentElement!
     fireEvent.click(within(responses).getByRole("button", { name: /204/ }))
-    expect(within(responses).getByText("No content")).toBeDefined()
+    expect(within(responses).getByText("No content", { selector: "p" })).toBeDefined()
     fireEvent.click(within(responses).getByRole("button", { name: /201/ }))
     fireEvent.click(within(responses).getByRole("button", { name: "Example" }))
     expect(within(responses).getByRole("region", { name: "example" }).textContent).toContain(
-      '"id": "string"',
+      '"id": "usr_8f2k1q"',
     )
   })
 
@@ -104,12 +109,69 @@ describe("sidebar layout", () => {
       "disabled",
       true,
     )
+    expect(within(panel).queryByLabelText("curl")).toBeNull()
+    fireEvent.click(within(panel).getByRole("button", { name: "Show curl" }))
     const curl = within(panel).getByLabelText("curl")
+    expect(curl.textContent).toMatch(/^curl 'https:\/\/api\.example\.com\/users\//)
     expect(curl.querySelector("[data-missing]")?.textContent).toBe("{user_id}")
     fireEvent.change(within(panel).getByLabelText("user_id *"), { target: { value: "u1" } })
     expect(within(panel).getByRole("button", { name: "Send request" })).toHaveProperty(
       "disabled",
       false,
+    )
+    expect(within(panel).getByText("Send the request to see the response here.")).toBeDefined()
+  })
+
+  it("resets the body to its example from beside its label", () => {
+    render(<ApiReference model={model} />)
+    const panel = screen.getByRole("complementary", { name: "Example and try it" })
+    fireEvent.click(within(panel).getByRole("tab", { name: "Try it" }))
+    const body = within(panel).getByLabelText("Body · JSON") as HTMLTextAreaElement
+    const example = body.value
+    const reset = within(panel).getByRole("button", { name: "Reset" })
+    expect(reset).toHaveProperty("disabled", true)
+    fireEvent.change(body, { target: { value: "{}" } })
+    expect(reset).toHaveProperty("disabled", false)
+    fireEvent.click(reset)
+    expect(body.value).toBe(example)
+  })
+
+  it("offers the spec's servers and a custom URL", () => {
+    const servers = normalize({
+      openapi: "3.1.0",
+      info: { title: "Servers", version: "1" },
+      servers: [
+        { url: "https://api.example.com", description: "Production" },
+        { url: "https://sandbox.example.com", description: "Sandbox" },
+      ],
+      paths: { "/ping": { get: { operationId: "ping", responses: {} } } },
+    })
+    render(<ApiReference model={servers} />)
+    const panel = screen.getByRole("complementary", { name: "Example and try it" })
+    fireEvent.click(within(panel).getByRole("tab", { name: "Try it" }))
+    const select = within(panel).getByRole("combobox", { name: "Server" })
+    expect(within(panel).queryByLabelText("Server URL")).toBeNull()
+    fireEvent.change(select, { target: { value: "custom" } })
+    const url = within(panel).getByLabelText("Server URL") as HTMLInputElement
+    expect(url.value).toBe("https://api.example.com")
+    fireEvent.change(select, { target: { value: "1" } })
+    expect(within(panel).queryByLabelText("Server URL")).toBeNull()
+    expect(select).toHaveProperty("value", "1")
+  })
+
+  it("notes left-out fields, names the default response and switches the request view", () => {
+    render(<ApiReference model={model} />)
+    expect(screen.getByText(/^Read-only fields like/).textContent).toBe(
+      "Read-only fields like id are set by the server, so they aren't listed here.",
+    )
+    expect(screen.getByRole("button", { name: "Other Unexpected error" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "201 Created" })).toBeDefined()
+    const panel = screen.getByRole("complementary", { name: "Example and try it" })
+    expect(within(panel).getByLabelText("curl")).toBeDefined()
+    fireEvent.click(within(panel).getByRole("button", { name: "JSON" }))
+    expect(within(panel).queryByLabelText("curl")).toBeNull()
+    expect(within(panel).getByRole("region", { name: "request body" }).textContent).toContain(
+      '"name": "Ada Lovelace"',
     )
   })
 

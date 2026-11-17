@@ -167,8 +167,18 @@ tryIt.getCredentialProps("apiKey") // or ("basic", "username" | "password")
 Pure helpers so every framework shows the same text:
 
 ```ts
-schemaTypeLabel(node, model) // "Pet", "Pet[]", "string[]", "string | null", "oneOf", "any"
+schemaTypeLabel(node, model) // "Pet", "Pet[]", "string[]", "string | null", "string · email", "oneOf", "any"
 schemaRowLabel(row) // property name, else title, else schema name, else "oneOf[0]"
+schemaAllowedValues(node) // { kind: "enum", values: ["asc", "desc"] }, { kind: "const", … } or undefined
+schemaConstraintsLabel(node) // "≥ 1 · ≤ 100", "at most 5 items"
+```
+
+`createSchemaTree(model, ref, { usage: "request" })` leaves out readOnly properties (`"response"` leaves out writeOnly ones) and lists their names in `hiddenNames`. A recursive row (one whose type is an ancestor's) expands one more level by default, then links back to that ancestor; `{ recursion: "link" }` makes it only link back. `defaultExpandedDepth` doesn't count an array's item row as a level, so `1` opens `pets` and the fields of each pet.
+
+For JSON, `nestedFolds(jsonLines(text), 1)` lists what to start folded: nested objects, and arrays holding objects or arrays. Each fold has `size`, its number of entries, for labels like "3 items":
+
+```ts
+createJsonFolds(nestedFolds(lines, 1)) // { "settings": { … }, "pets": [ … ] }
 ```
 
 ## Building your own store

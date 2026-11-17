@@ -63,6 +63,18 @@ export const schemaChildren = (node: SchemaNode): SchemaChild[] => {
   ]
 }
 
+/** `request` leaves out readOnly properties, `response` leaves out writeOnly ones. */
+export type SchemaUsage = "request" | "response"
+
+/** Whether a property is left out of the tree for this usage. */
+export type IsHidden = (child: SchemaChild, node: SchemaNode) => boolean
+
+export const hiddenIn =
+  (usage: SchemaUsage | undefined): IsHidden =>
+  (child, node) =>
+    child.kind === "property" &&
+    (usage === "request" ? node.readOnly : usage === "response" && node.writeOnly)
+
 export type ChildEntry = { child: SchemaChild; id: string; node: SchemaNode }
 
 export const childEntries = (
@@ -70,16 +82,37 @@ export const childEntries = (
   parent: SchemaNode,
   parentId: string,
   selected: SelectedVariant,
+  hidden: IsHidden,
 ): ChildEntry[] => {
-  const own = schemaChildren(parent).map((child) => ({
-    child,
-    id: appendPointer(parentId, ...child.segments),
-    node: getNode(child.schema),
-  }))
+  const own = schemaChildren(parent)
+    .map((child) => ({
+      child,
+      id: appendPointer(parentId, ...child.segments),
+      node: getNode(child.schema),
+    }))
+    .filter(({ child, node }) => !hidden(child, node))
   const variants = variantsOf(parent)
   const index = selected(parentId)
   const option = variants?.options[index]
   if (!variants || !option) return own
   const variantId = appendPointer(parentId, variants.kind, index)
-  return [...own, ...childEntries(getNode, getNode(option), variantId, selected)]
+  return [...own, ...childEntries(getNode, getNode(option), variantId, selected, hidden)]
+}
+
+/** The names of the properties left out anywhere in the schema, every variant included. */
+export const hiddenPropertyNames = (getNode: GetNode, root: SchemaNode, hidden: IsHidden) => {
+  const names = new Set<string>()
+  const seen = new Set<string>()
+  const visit = (node: SchemaNode) => {
+    if (seen.has(node.pointer)) return
+    seen.add(node.pointer)
+    for (const child of schemaChildren(node)) {
+      const childNode = getNode(child.schema)
+      if (hidden(child, childNode)) names.add(child.name ?? "")
+      else visit(childNode)
+    }
+    for (const option of variantsOf(node)?.options ?? []) visit(getNode(option))
+  }
+  visit(root)
+  return [...names]
 }

@@ -113,7 +113,7 @@ const request = buildRequest(model, operation, {
 })
 // { method: "POST", url: "https://…/pets/7?tags=a&tags=b", headers: {…}, body: "…" }
 
-toCurl(request) // curl -X POST 'https://…' -H '…' --data '…'
+toCurl(request) // curl 'https://…' -H '…' --data-raw '…' (-X only when curl wouldn't pick the method itself)
 ```
 
 - **Parameters** are keyed by `parameterKey(parameter)`, which is `"<in>.<name>"`. Arrays and objects follow the parameter's `style` and `explode`, as the OpenAPI spec says. Empty values are left out.

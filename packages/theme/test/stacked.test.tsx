@@ -35,7 +35,7 @@ describe("stacked layout", () => {
   it("groups collapsed rows by tag, with the tag description", () => {
     render(<ApiReference model={model} layout="stacked" />)
     expect(screen.getByRole("heading", { level: 1, name: "Petstore" })).toBeDefined()
-    expect(screen.getByRole("heading", { level: 2, name: "pets" })).toBeDefined()
+    expect(screen.getByRole("heading", { level: 2, name: "Pets" })).toBeDefined()
     expect(screen.getByText("Everything about pets.")).toBeDefined()
     expect(screen.getByRole("heading", { level: 2, name: "Other" })).toBeDefined()
     expect(toggle(/Add a pet/).getAttribute("aria-expanded")).toBe("false")

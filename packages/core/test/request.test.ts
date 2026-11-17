@@ -147,14 +147,14 @@ describe("buildRequest", () => {
       placeholders: ["{user_id}", "{limit}"],
     })
     expect(toCurlTokens(request)).toEqual([
-      { text: "curl -X GET '/users/" },
+      { text: "curl '/users/" },
       { text: "{user_id}", missing: true },
       { text: "?limit=" },
       { text: "{limit}", missing: true },
       { text: "' \\\n  -H 'X-Trace: t'" },
     ])
     expect(toCurlTokens({ method: "GET", url: "/a", headers: {} })).toEqual([
-      { text: "curl -X GET '/a'" },
+      { text: "curl '/a'" },
     ])
   })
 
@@ -191,7 +191,7 @@ describe("buildRequest", () => {
       ],
     })
     expect(toCurl(request)).toBe(
-      `curl -X POST '/items/{id}' \\\n  --form-string 'name=a b' \\\n  --form-string 'tags=x' \\\n  --form-string 'tags=y' \\\n  --form-string 'meta={"k":1}'`,
+      `curl '/items/{id}' \\\n  --form-string 'name=a b' \\\n  --form-string 'tags=x' \\\n  --form-string 'tags=y' \\\n  --form-string 'meta={"k":1}'`,
     )
   })
 
@@ -238,7 +238,10 @@ describe("request helpers", () => {
   it("prints a request as curl", () => {
     expect(
       toCurl({ method: "POST", url: "https://x.dev/a", headers: { A: "it's" }, body: '{"a":1}' }),
-    ).toBe(`curl -X POST 'https://x.dev/a' \\\n  -H 'A: it'\\''s' \\\n  --data-raw '{"a":1}'`)
+    ).toBe(`curl 'https://x.dev/a' \\\n  -H 'A: it'\\''s' \\\n  --data-raw '{"a":1}'`)
+    expect(toCurl({ method: "PUT", url: "/a", headers: {}, body: "{}" })).toMatch(/^curl -X PUT '\/a'/)
+    expect(toCurl({ method: "POST", url: "/a", headers: {} })).toBe("curl -X POST '/a'")
+    expect(toCurl({ method: "GET", url: "/a", headers: {}, body: "{}" })).toMatch(/^curl -X GET/)
     expect(toCurl({ method: "POST", url: "/a", headers: {}, body: "@here hi" })).toContain(
       "--data-raw '@here hi'",
     )
@@ -252,11 +255,42 @@ describe("exampleFromSchema", () => {
     expect(exampleFromSchema(model, item)).toEqual({
       name: "Lamp",
       price: 1,
-      created: "2024-01-01T00:00:00Z",
+      created: "2024-05-14T09:30:00Z",
       children: [],
       status: "active",
       kind: true,
-      secret: "string",
+      secret: "text",
+    })
+  })
+
+  it("picks a value from the property name when nothing else gives one", () => {
+    const named = normalize({
+      openapi: "3.1.0",
+      info: { title: "Named", version: "1" },
+      paths: {},
+      components: {
+        schemas: {
+          User: {
+            type: "object",
+            properties: Object.fromEntries(
+              ["id", "user_id", "fullName", "first_name", "username", "email", "nickname"].map(
+                (name) => [name, { type: "string" }],
+              ),
+            ),
+          },
+        },
+      },
+    })
+    expect(
+      exampleFromSchema(named, { pointer: "#/components/schemas/User", circular: false }),
+    ).toEqual({
+      id: "usr_8f2k1q",
+      user_id: "usr_8f2k1q",
+      fullName: "Ada Lovelace",
+      first_name: "Ada",
+      username: "ada",
+      email: "ada@example.com",
+      nickname: "text",
     })
   })
 

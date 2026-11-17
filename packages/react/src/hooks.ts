@@ -41,12 +41,12 @@ export type TryItState = ReturnType<typeof useTryIt>
 
 export const useSchemaTree = (
   schema: SchemaRef,
-  { defaultExpandedDepth }: SchemaTreeOptions = {},
+  { defaultExpandedDepth, usage, recursion }: SchemaTreeOptions = {},
 ): SchemaTreeState => {
   const { model } = useSpectile()
   const tree = useMemo(
-    () => createSchemaTree(model, schema, { defaultExpandedDepth }),
-    [model, schema.pointer, defaultExpandedDepth],
+    () => createSchemaTree(model, schema, { defaultExpandedDepth, usage, recursion }),
+    [model, schema.pointer, defaultExpandedDepth, usage, recursion],
   )
   return { ...tree, ...useStore(tree) }
 }

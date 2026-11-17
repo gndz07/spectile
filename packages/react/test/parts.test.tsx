@@ -290,7 +290,7 @@ describe("Example", () => {
         </Example.Root>
       </SpectileProvider>,
     )
-    expect(screen.getByTestId("example").textContent).toBe('{\n  "bio": "string"\n}')
+    expect(screen.getByTestId("example").textContent).toBe('{\n  "bio": "text"\n}')
     expect(screen.queryByRole("combobox")).toBeNull()
   })
 

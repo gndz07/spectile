@@ -70,7 +70,7 @@
         "summary": "Create a user",
         "tags": ["users"],
         "requestBody": {
-          "description": "The new user. `id` is set by the server.",
+          "description": "The new user.",
           "required": true,
           "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } }
         },

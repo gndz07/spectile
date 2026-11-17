@@ -82,7 +82,11 @@ describe("mergeAllOf", () => {
 
   it("is used for examples and form fields", () => {
     const ref = { pointer: "#/components/schemas/Admin", circular: false }
-    expect(exampleFromSchema(model, ref)).toEqual({ id: "string", name: "string", role: "string" })
+    expect(exampleFromSchema(model, ref)).toEqual({
+      id: "usr_8f2k1q",
+      name: "Ada Lovelace",
+      role: "text",
+    })
     expect(
       bodyFields(model, { mediaType: "application/x-www-form-urlencoded", schema: ref, examples: [] }),
     ).toMatchObject([

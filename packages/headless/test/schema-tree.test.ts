@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
   type SchemaTree,
   createSchemaTree,
+  schemaAllowedValues,
   schemaConstraintsLabel,
   schemaDefaultLabel,
   schemaRowLabel,
@@ -71,6 +72,71 @@ describe("createSchemaTree", () => {
       recursiveTarget: FRIENDS,
       expandable: false,
     })
+  })
+
+  it("only links back from a recursive row with recursion: link", () => {
+    const tree = createSchemaTree(model, schemaRef("User"), { recursion: "link" })
+    tree.expand(FRIENDS)
+    expect(rowOf(tree, FRIEND)).toMatchObject({ recursiveTarget: "#", expandable: false })
+    tree.expandAll()
+    expect(tree.getSnapshot().allExpanded).toBe(true)
+  })
+
+  it("leaves out readOnly properties for requests and writeOnly ones for responses", () => {
+    const accounts = normalize({
+      openapi: "3.1.0",
+      info: { title: "Accounts", version: "1.0.0" },
+      components: {
+        schemas: {
+          Account: {
+            type: "object",
+            properties: {
+              id: { type: "string", readOnly: true },
+              password: { type: "string", writeOnly: true },
+              name: { type: "string" },
+            },
+          },
+        },
+      },
+    })
+    const snapshot = (usage?: "request" | "response") =>
+      createSchemaTree(accounts, { pointer: "#/components/schemas/Account", circular: false }, {
+        usage,
+      }).getSnapshot()
+    const names = (usage?: "request" | "response") =>
+      snapshot(usage).rows.map(({ name }) => name)
+    expect(names("request")).toEqual(["password", "name"])
+    expect(snapshot("request").hiddenNames).toEqual(["id"])
+    expect(names("response")).toEqual(["id", "name"])
+    expect(snapshot("response").hiddenNames).toEqual(["password"])
+    expect(names()).toEqual(["id", "password", "name"])
+    expect(snapshot().hiddenNames).toEqual([])
+  })
+
+  it("opens an array's item row along with the array", () => {
+    const owners = normalize({
+      openapi: "3.1.0",
+      info: { title: "Owners", version: "1.0.0" },
+      components: {
+        schemas: {
+          Owner: {
+            type: "object",
+            properties: { pets: { type: "array", items: { $ref: "#/components/schemas/Pet" } } },
+          },
+          Pet: { type: "object", properties: { name: { type: "string" } } },
+        },
+      },
+    })
+    const tree = createSchemaTree(
+      owners,
+      { pointer: "#/components/schemas/Owner", circular: false },
+      { defaultExpandedDepth: 1 },
+    )
+    expect(ids(tree)).toEqual([
+      "#/properties/pets",
+      "#/properties/pets/items",
+      "#/properties/pets/items/properties/name",
+    ])
   })
 
   it("reports whether every row is expanded", () => {
@@ -235,9 +301,13 @@ describe("createSchemaTree", () => {
     expect(schemaDefaultLabel(node("Flag"))).toBe("= true")
     expect(schemaDefaultLabel(node("Id"))).toBeUndefined()
     expect(schemaConstraintsLabel(node("Limit"))).toBe("≥ 1 · < 100 · multiple of 5")
-    expect(schemaConstraintsLabel(node("Sort"))).toBe(
-      'one of "asc", "desc" · at least 3 characters · matches ^[a-z]+$',
-    )
+    expect(schemaConstraintsLabel(node("Sort"))).toBe("at least 3 characters · matches ^[a-z]+$")
+    expect(schemaAllowedValues(node("Sort"))).toEqual({ kind: "enum", values: ["asc", "desc"] })
+    expect(schemaAllowedValues({ ...node("Id"), const: "x" })).toEqual({
+      kind: "const",
+      values: ["x"],
+    })
+    expect(schemaAllowedValues(node("Id"))).toBeUndefined()
     expect(schemaConstraintsLabel(node("Tags"))).toBe("at most 5 items · unique items")
     expect(schemaConstraintsLabel(node("Id"))).toBeUndefined()
   })

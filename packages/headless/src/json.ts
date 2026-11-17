@@ -6,8 +6,8 @@ export type JsonTokenKind =
 
 export type JsonToken = { kind: JsonTokenKind; text: string }
 
-/** An object or array that can fold, opening on this line and closing on line `end`. */
-export type JsonFold = { path: string; end: number }
+/** An object or array that can fold, opening on this line and closing on line `end`, holding `size` entries. */
+export type JsonFold = { path: string; end: number; size: number }
 
 export type JsonLine = { depth: number; tokens: JsonToken[]; fold?: JsonFold }
 
@@ -36,7 +36,8 @@ const CLOSING: Record<string, string> = { "{": "}", "[": "]" }
 
 const escapeSegment = (segment: string) => segment.replaceAll("~", "~0").replaceAll("/", "~1")
 
-type Frame = { path: string; array: boolean; index: number; line: number }
+/** `size` counts the entries so far, and names the next one in an array. */
+type Frame = { path: string; array: boolean; size: number; line: number }
 
 /**
  * The JSON laid out two spaces per level, one value per line, with each non-empty object and
@@ -63,7 +64,8 @@ export const jsonLines = (text: string): JsonLine[] | undefined => {
   const nextPath = () => {
     const parent = stack.at(-1)
     if (!parent) return ""
-    const segment = parent.array ? String(parent.index++) : escapeSegment(key ?? "")
+    const segment = parent.array ? String(parent.size) : escapeSegment(key ?? "")
+    parent.size++
     return `${parent.path}/${segment}`
   }
 
@@ -82,15 +84,18 @@ export const jsonLines = (text: string): JsonLine[] | undefined => {
     } else if (lexeme in CLOSING) {
       const path = nextPath()
       push("punctuation", lexeme)
-      current.fold = { path, end: -1 }
-      stack.push({ path, array: lexeme === "[", index: 0, line: lines.length })
+      current.fold = { path, end: -1, size: 0 }
+      stack.push({ path, array: lexeme === "[", size: 0, line: lines.length })
       endLine(stack.length)
     } else if (lexeme === "}" || lexeme === "]") {
       const frame = stack.pop()
       endLine(stack.length)
       push("punctuation", lexeme)
       const opening = frame && lines[frame.line]?.fold
-      if (opening) opening.end = lines.length
+      if (opening) {
+        opening.end = lines.length
+        opening.size = frame.size
+      }
     } else if (next === ":" && lexeme.startsWith('"')) {
       key = JSON.parse(lexeme) as string
       push("key", lexeme)
@@ -128,7 +133,22 @@ export const visibleJsonLines = (
   return visible
 }
 
-export const createJsonFolds = (initial: Iterable<string> = []) => {
+const holdsContainers = (lines: readonly JsonLine[], index: number, fold: JsonFold) =>
+  lines.slice(index + 1, fold.end).some((line) => line.fold && line.depth === lines[index]!.depth + 1)
+
+/**
+ * The paths to start folded so the shape reads at a glance: objects opening at `depth` or deeper,
+ * and arrays there that hold objects or arrays. Arrays of plain values stay open.
+ */
+export const nestedFolds = (lines: readonly JsonLine[], depth: number) =>
+  lines.flatMap((line, index) => {
+    const { fold, tokens } = line
+    if (!fold || line.depth < depth) return []
+    const isObject = tokens.at(-1)?.text === "{"
+    return isObject || holdsContainers(lines, index, fold) ? [fold.path] : []
+  })
+
+export const createJsonFolds =(initial: Iterable<string> = []) => {
   const store = createStore<{ folded: ReadonlySet<string> }>({ folded: new Set(initial) })
 
   const toggle = (path: string) =>

@@ -6,29 +6,51 @@ import {
   fromNestedControl,
 } from "../events"
 import { createStore, memoizeLast, select } from "../store"
-import type { GetNode, SelectedVariant } from "./children"
+import {
+  type GetNode,
+  type SchemaUsage,
+  type SelectedVariant,
+  hiddenIn,
+  hiddenPropertyNames,
+} from "./children"
 import { type TreeAction, treeKeyAction } from "./keyboard"
-import { ROOT_ID, type SchemaRow, buildRows, expandedToDepth, hasRootRow } from "./rows"
+import {
+  type RecursionMode,
+  ROOT_ID,
+  type SchemaRow,
+  buildRows,
+  expandedToDepth,
+  hasRootRow,
+} from "./rows"
 import { type TreeState, withExpanded, withFocusShown, withVariant } from "./state"
 
 export {
   type SchemaChild,
   type SchemaRowKind,
+  type SchemaUsage,
   type VariantKind,
   schemaChildren,
   variantsOf,
 } from "./children"
 export { type TreeAction, type TreeRow, treeKeyAction } from "./keyboard"
 export {
+  type AllowedValues,
+  schemaAllowedValues,
   schemaConstraintsLabel,
   schemaDefaultLabel,
   schemaRowLabel,
   schemaTypeLabel,
 } from "./labels"
-export type { SchemaRow, SchemaRowVariants } from "./rows"
+export type { RecursionMode, SchemaRow, SchemaRowVariants } from "./rows"
 export { variantLabel } from "./variants"
 
-export type SchemaTreeOptions = { defaultExpandedDepth?: number }
+export type SchemaTreeOptions = {
+  defaultExpandedDepth?: number
+  /** `request` leaves out readOnly properties, `response` leaves out writeOnly ones. */
+  usage?: SchemaUsage
+  /** Defaults to `expandOnce`. */
+  recursion?: RecursionMode
+}
 
 export type SchemaTreeSnapshot = {
   root: SchemaNode
@@ -37,12 +59,14 @@ export type SchemaTreeSnapshot = {
   tabStopId?: string
   /** Every row that can open is open, so an Expand all control shows Collapse all. */
   allExpanded: boolean
+  /** The names of the properties `usage` left out, at any depth. */
+  hiddenNames: string[]
 }
 
 export const createSchemaTree = (
   model: SpecModel,
   rootRef: SchemaRef,
-  { defaultExpandedDepth = 0 }: SchemaTreeOptions = {},
+  { defaultExpandedDepth = 0, usage, recursion = "expandOnce" }: SchemaTreeOptions = {},
 ) => {
   const nodes = new WeakMap<SchemaRef, SchemaNode>()
   const getNode: GetNode = (ref) => {
@@ -54,21 +78,23 @@ export const createSchemaTree = (
   }
 
   const root = getNode(rootRef)
+  const hidden = hiddenIn(usage)
+  const hiddenNames = hiddenPropertyNames(getNode, root, hidden)
   const collapsed: ReadonlySet<string> = new Set(hasRootRow(root) ? [ROOT_ID] : [])
-  const selectedIn =
-    (variants: TreeState["variants"]): SelectedVariant =>
-    (id) =>
-      variants[id] ?? 0
+  const shapeOf = (variants: TreeState["variants"]) => {
+    const selected: SelectedVariant = (id) => variants[id] ?? 0
+    return { getNode, root, selected, hidden, recursion }
+  }
 
   const expandedTo = (depth: number, variants: TreeState["variants"]) =>
-    new Set([...collapsed, ...expandedToDepth(getNode, root, depth, selectedIn(variants))])
+    new Set([...collapsed, ...expandedToDepth(shapeOf(variants), depth)])
 
   const store = createStore<TreeState>({
     expanded: expandedTo(defaultExpandedDepth, {}),
     variants: {},
   })
   const rowsFor = memoizeLast((expanded: ReadonlySet<string>, variants: TreeState["variants"]) =>
-    buildRows(getNode, root, expanded, selectedIn(variants)),
+    buildRows(shapeOf(variants), expanded),
   )
   const view = select(store, ({ expanded, variants, focusedId }): SchemaTreeSnapshot => {
     const rows = rowsFor(expanded, variants)
@@ -79,6 +105,7 @@ export const createSchemaTree = (
       focusedId,
       tabStopId: focusVisible ? focusedId : rows[0]?.id,
       allExpanded: !rows.some((row) => row.expandable && !row.expanded && !row.recursive),
+      hiddenNames,
     }
   })
 

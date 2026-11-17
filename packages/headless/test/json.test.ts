@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
-import { type JsonLine, createJsonFolds, jsonLines, visibleJsonLines } from "../src"
+import {
+  type JsonLine,
+  createJsonFolds,
+  jsonLines,
+  nestedFolds,
+  visibleJsonLines,
+} from "../src"
 
 const text = (lines: readonly JsonLine[]) =>
   lines.map(({ depth, tokens }) => "  ".repeat(depth) + tokens.map((token) => token.text).join(""))
@@ -32,9 +38,9 @@ describe("jsonLines", () => {
       { kind: "punctuation", text: "," },
     ])
     expect(lines.flatMap(({ fold }) => (fold ? [fold] : []))).toEqual([
-      { path: "", end: 10 },
-      { path: "/tags", end: 5 },
-      { path: "/owner", end: 8 },
+      { path: "", end: 10, size: 4 },
+      { path: "/tags", end: 5, size: 2 },
+      { path: "/owner", end: 8, size: 1 },
     ])
   })
 
@@ -49,6 +55,15 @@ describe("visibleJsonLines", () => {
     const lines = jsonLines(BODY)!
     expect(text(visibleJsonLines(lines, new Set(["/tags"])))).toContain('  "tags": [ … ],')
     expect(text(visibleJsonLines(lines, new Set([""])))).toEqual(["{ … }"])
+  })
+})
+
+describe("nestedFolds", () => {
+  it("lists objects and arrays of containers at a depth or deeper, leaving plain arrays open", () => {
+    expect(nestedFolds(jsonLines(BODY)!, 1)).toEqual(["/owner"])
+    expect(nestedFolds(jsonLines(BODY)!, 0)).toEqual(["", "/owner"])
+    const pets = jsonLines('{"pets":[{"a":1}],"tags":["x"]}')!
+    expect(nestedFolds(pets, 1)).toEqual(["/pets", "/pets/0"])
   })
 })
 

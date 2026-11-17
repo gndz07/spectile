@@ -26,6 +26,13 @@ export const ChevronIcon = () => (
   </Icon>
 )
 
+export const ChevronsUpDownIcon = () => (
+  <Icon>
+    <polyline points="7 15 12 20 17 15" />
+    <polyline points="7 9 12 4 17 9" />
+  </Icon>
+)
+
 export const CopyIcon = () => (
   <Icon>
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />

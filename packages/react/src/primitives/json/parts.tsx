@@ -1,4 +1,10 @@
-import { type VisibleJsonLine, codeLines, createJsonFolds, visibleJsonLines } from "@spectile/headless"
+import {
+  type VisibleJsonLine,
+  codeLines,
+  createJsonFolds,
+  nestedFolds,
+  visibleJsonLines,
+} from "@spectile/headless"
 import { type CSSProperties, Fragment, type ReactNode, useMemo } from "react"
 import { useStore } from "../../hooks"
 import { Primitive, type PrimitiveProps, mergeProps } from "../../primitive"
@@ -7,13 +13,19 @@ import { JsonLineProvider, JsonProvider, useJson, useJsonLine } from "./context"
 export type RootProps = PrimitiveProps<"div"> & {
   /** A response or example body. Text that isn't JSON shows as plain lines. */
   text: string
+  /** Objects (and arrays of objects or arrays) this deep start folded; 1 folds everything inside the top level. */
+  foldDepth?: number
 }
 
 /** Folds are kept by path, so they survive a new body of the same shape. */
-export const Root = ({ text, ...props }: RootProps) => {
-  const folds = useMemo(() => createJsonFolds(), [])
-  const { folded } = useStore(folds)
+export const Root = ({ text, foldDepth, ...props }: RootProps) => {
   const lines = useMemo(() => codeLines(text), [text])
+  const folds = useMemo(
+    () => createJsonFolds(foldDepth === undefined ? [] : nestedFolds(lines, foldDepth)),
+    // Only the first body's folds start closed; later ones keep what the reader chose.
+    [],
+  )
+  const { folded } = useStore(folds)
   const visible = useMemo(() => visibleJsonLines(lines, folded), [lines, folded])
   return (
     <JsonProvider value={{ ...folds, lines: visible }}>

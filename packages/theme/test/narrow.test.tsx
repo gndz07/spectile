@@ -44,7 +44,7 @@ describe("tablet width", () => {
     atWidth(800)
     const { container } = render(<ApiReference model={model} />)
     expect(screen.queryByRole("navigation", { name: "API reference" })).toBeNull()
-    expect(container.querySelector(".spectile-breadcrumb")?.textContent).toBe("pets / Add a pet")
+    expect(container.querySelector(".spectile-breadcrumb")?.textContent).toBe("Pets / Add a pet")
 
     act(() => button("Operations").focus())
     fireEvent.click(button("Operations"))
@@ -105,6 +105,6 @@ describe("phone width", () => {
     const sheet = screen.getByRole("dialog", { name: "Try it" })
     expect(sheet.className).toContain("spectile-sheet")
     fireEvent.click(within(sheet).getByRole("tab", { name: "Response" }))
-    expect(within(sheet).getByText("Send the request to see its response.")).toBeDefined()
+    expect(within(sheet).getByText("Send the request to see the response here.")).toBeDefined()
   })
 })

@@ -1,4 +1,5 @@
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react"
+import { ChevronIcon } from "./icons"
 
 /**
  * Whether to render something that is `open`, or closing: after `open` turns false it stays true
@@ -36,6 +37,31 @@ export const Collapse = ({ open, children }: { open: boolean; children: ReactNod
       data-initial={initial ? "" : undefined}
     >
       <div className="spectile-collapse-inner">{children}</div>
+    </div>
+  )
+}
+
+/** A chevron button that grows `children` open below it; closed at first. */
+export const Disclosure = ({
+  label,
+  children,
+}: {
+  label: ReactNode | ((open: boolean) => ReactNode)
+  children: ReactNode
+}) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="spectile-collapsible" data-state={open ? "open" : "closed"}>
+      <button
+        type="button"
+        className="spectile-disclosure"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <ChevronIcon />
+        {typeof label === "function" ? label(open) : label}
+      </button>
+      <Collapse open={open}>{children}</Collapse>
     </div>
   )
 }
