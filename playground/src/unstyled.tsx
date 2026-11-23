@@ -104,7 +104,7 @@ const OperationView = () => {
 
 mount(
   <SpectileProvider model={model} defaultActiveId={model.operations[0]?.id}>
-    <a href="/">Themed playground</a>
+    <a href="./">Themed playground</a>
     <Sidebar />
     <OperationView />
   </SpectileProvider>,

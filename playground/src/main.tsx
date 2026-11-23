@@ -111,7 +111,7 @@ const Playground = () => {
             <SettingSelect key={name} name={name} value={settings[name]} onChange={set(name)} />
           ))}
         </div>
-        <a className="toolbar-link" href="/unstyled.html">
+        <a className="toolbar-link" href="unstyled.html">
           Unstyled primitives
         </a>
       </header>

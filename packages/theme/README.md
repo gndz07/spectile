@@ -29,6 +29,21 @@ export const Docs = () => <ApiReference spec={openapi} />
 
 The reference scrolls with the page, and its sidebar and panel stick to the top of the window, so it reads best as the page's main content rather than inside a scrolling box.
 
+It styles only itself, not the page around it. To keep the browser's default margin and a light page from showing around a dark reference, give the page its colors:
+
+```css
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--spectile-color-bg);
+}
+```
+
+If you force a mode with `data-theme` on `<html>`, set `color-scheme` to match.
+
 ## Props
 
 | Prop             | Default    |                                                                                                                       |

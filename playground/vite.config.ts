@@ -11,6 +11,7 @@ const sourceAliases = [
 ]
 
 export default defineConfig(({ command }) => ({
+  base: "./",
   plugins: [react()],
   resolve: command === "serve" ? { alias: sourceAliases, dedupe: ["react", "react-dom"] } : {},
   server: { port: 3000, open: true },

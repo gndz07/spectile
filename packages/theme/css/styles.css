@@ -565,7 +565,8 @@
 .spectile-nav-item .spectile-method,
 .spectile-stacked-toggle .spectile-method {
   flex: none;
-  width: 46px;
+  min-width: calc(6ch + 2 * var(--spectile-space-2));
+  padding-inline: var(--spectile-space-2);
   text-align: center;
 }
 
@@ -1363,6 +1364,11 @@
 .spectile-field[data-wide],
 .spectile-credential[data-wide] {
   flex-basis: 100%;
+}
+
+/* The credential stacks its field and description, so the row's flex-basis would become a height. */
+.spectile-credential > .spectile-field {
+  flex: none;
 }
 
 /* A label with a control at the other end, e.g. Body and its Reset. */
