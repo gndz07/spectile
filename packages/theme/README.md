@@ -6,7 +6,7 @@ A complete, styled API reference for React: navigation, search, schema trees, ex
 npm install @spectile/theme react react-dom
 ```
 
-Requires React 19.
+Requires React 19, and a browser from 2024 or later: colors use CSS `light-dark()`, so older browsers show none.
 
 ## Quick start
 
@@ -41,7 +41,7 @@ The reference scrolls with the page, and its sidebar and panel stick to the top 
 | `searchShortcut` | on in `sidebar` | `/` focuses search                                                                                               |
 | `renderMarkdown` | react-markdown | `(markdown) => ReactNode` for descriptions. The default leaves raw HTML out.                                       |
 
-Pass `spec` or `model`, not both. With `spec`, the reference shows a loading state, a failure with a "Try again" button, and any warnings the spec produced. A `spec` object is reloaded when its identity changes, so keep it stable (a constant, or `useMemo`).
+Pass `spec` or `model`, not both. With `spec`, the reference shows a loading state, a failure with a "Try again" button, and any warnings the spec produced. A `spec` object is reloaded when its identity changes, so keep it stable (a constant, or `useMemo`). The same goes for `model`: a new one starts the reference over, losing the open operation, what people typed into try-it and their responses. `tryItOptions` is read when the spec or model is first ready, so later changes to it are ignored.
 
 If the spec's servers are relative (`/api/v3`), try-it resolves them against the spec's URL, as OpenAPI says. With `model`, or a document passed as an object or text, they resolve against the page; set `tryItOptions.baseUrl` to change that.
 
@@ -61,7 +61,9 @@ Every other prop goes to the root `<div>`, so `className`, `style`, `id` and `da
 
 ### Deep links
 
-Picking an operation writes `#operationId` to the URL, and a link to `#operationId` opens it. In the stacked layout, the operation also scrolls into view.
+Picking an operation writes `#operationId` to the URL, replacing the current history entry rather than adding one, and a link to `#operationId` opens it. In the stacked layout, the operation also scrolls into view. A hash in the URL when the page loads is applied right after the reference mounts, so a server render and the browser's first render match.
+
+The hash belongs to the reference, so don't combine it with a hash-based router on the same page.
 
 ## Layouts and widths
 
@@ -95,7 +97,7 @@ resolveLayout({ layout: "sidebar", tryIt: "panel", width: 1000 })
 | `@spectile/theme/tokens.css` | the tokens alone, for styling `@spectile/react` components yourself              |
 | `@spectile/theme/fonts.css`  | optional: self-hosts IBM Plex Sans and Mono and puts them first in the font stacks |
 
-Without `fonts.css`, the reference uses the system fonts.
+Without `fonts.css`, the reference uses the system fonts. `fonts.css` imports the `@fontsource` packages by name, so it needs a bundler that resolves CSS imports from `node_modules` (Vite, Next.js, webpack with css-loader). Served as a plain file, link those packages' CSS yourself.
 
 ### Tokens
 
@@ -124,7 +126,7 @@ Each name below is prefixed with `--spectile-`, e.g. `--spectile-color-accent`.
 | Shape  | `radius-sm`, `radius-md`, `radius-lg`, `border-width`, `focus-width`, `shadow-overlay`                                        |
 | Motion | `duration`, `duration-overlay`, `easing`                                                                                      |
 
-See [`css/tokens.css`](css/tokens.css) for the full list and the default values. Sizes are only ever set through these tokens, so changing `--spectile-control-height` resizes every button, input and tab.
+See [`css/tokens.css`](css/tokens.css) for the full list and the default values. Controls, rows, spacing and the main columns are sized through these tokens, so changing `--spectile-control-height` resizes every button, input and tab. A few small details, such as icon sizes and some minimum widths, are fixed in `styles.css`.
 
 ### Dark mode
 
@@ -134,12 +136,14 @@ Colors are `light-dark()` pairs, so the reference follows the system setting. To
 <ApiReference spec={url} data-theme="dark" />
 ```
 
-`data-theme="light"` forces light. To change a color in one mode only, give your override a `light-dark()` pair too.
+`data-theme="light"` forces light. Set on the reference itself, it wins over a different `data-theme` on an ancestor. To change a color in one mode only, give your override a `light-dark()` pair too.
 
 ### Touch and motion
 
-On touch screens, rows grow to `--spectile-touch-height` (44px). With reduced motion turned on, every transition is instant.
+On touch screens, rows grow to `--spectile-touch-height` (44px). With reduced motion turned on, every transition is instant. That works by setting the `duration` tokens to `0ms`, so if you set `--spectile-duration` yourself, put your value inside `@media (prefers-reduced-motion: no-preference)` to keep it.
 
 ## Server rendering
 
-The package ships with `"use client"`, so it works inside React Server Components apps: build the model on the server with `normalize` and pass it as `model`. The reference measures its width when it mounts, so the server render uses the widest layout until then.
+`<ApiReference>` is a client component (the package ships with `"use client"`), and you can render it straight from a Server Component: build the model on the server with `normalize` and pass it as `model`, which is plain JSON. Function props (`renderMarkdown`, `tryItOptions.fetch`, `tryItOptions.storage`) can't cross from server to client, so pass those from a `"use client"` file instead. For the same reason, `resolveLayout` and `BREAKPOINTS` can only be used in client code.
+
+The reference measures its width when it mounts, so the server render uses the widest layout until then.

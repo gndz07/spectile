@@ -42,6 +42,8 @@ Wrap your reference in it once. Everything below reads from it.
 | `tryItOptions`    | `{ fetch, baseUrl, storage, storageKey }`; see `createTryIt` in `@spectile/headless`   |
 | `renderMarkdown`  | `(markdown) => ReactNode`, turns descriptions into elements; see [Markdown](#markdown) |
 
+The provider keeps navigation, drafts, credentials and responses for as long as `model` is the same object. A new `model` starts all of that over, and `defaultActiveId` and `tryItOptions` are only read then. So build the model once, outside the component or in `useMemo`, not inline as `model={normalize(doc)}`, which would reset everything on every render.
+
 ## Hooks
 
 | Hook                                                 | Returns                                                                  |
@@ -122,11 +124,13 @@ Clicking an item makes it the active operation, and `<Operation.Root>` and `useO
 
 | Part                     | Renders                                                                                               |
 | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `Navigation.Tree`        | `<div role="tree">`; inside it, `Group` and `Item` become tree items with a single tab stop           |
-| `Navigation.GroupToggle` | a `<div>` that opens or closes its group when clicked                                                 |
-| `Navigation.GroupItems`  | `<div role="group">` holding the items; nothing while the group is closed, unless `forceMount` (to animate it closing) |
+| `Navigation.Tree`        | `<div role="tree">`; inside it, `Group` and `Item` become tree items with a single tab stop, and get `aria-level`, `aria-setsize` and `aria-posinset` |
+| `Navigation.GroupToggle` | a `<div>` that opens or closes its group when clicked; its text names the group for screen readers   |
+| `Navigation.GroupItems`  | `<div role="group">` holding the items; nothing while the group is closed, unless `forceMount` (to animate it closing), which keeps them `inert` |
 
 `Navigation.useGroupOpen()` tells you whether the enclosing group is open. Every group opens while a search is active. Without `Navigation.Tree`, items stay plain buttons.
+
+Enter and Space activate an item. If you render items as something other than a button or link (`asChild` with an `<li>`, say), Enter and Space click it for you, so your `onClick` still runs.
 
 ### `Operation`
 
@@ -478,4 +482,6 @@ On a text part, an empty child gets the default text. This renders `<a href="#li
 
 ## Server rendering
 
-The package ships with `"use client"`, so it works inside React Server Components apps. Build the model on the server and pass it down; it's plain JSON.
+Every export is a client component (the package ships with `"use client"`), so in a React Server Components app such as the Next.js App Router, use Spectile from a file that starts with `"use client"`. Parts like `<Operation.Root>` are reached through a namespace, and `Navigation.Groups`, `Schema.Rows` and `Json.Lines` take a function as children; neither works across the server/client boundary.
+
+What you can do on the server is build the model: call `normalize` (and `loadSpec`, if you load the spec there) in a Server Component and pass the result to your client component as a prop. The model is plain JSON. Function props such as `renderMarkdown` and `tryItOptions.fetch` have to be created on the client side.

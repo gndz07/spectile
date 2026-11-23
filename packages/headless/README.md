@@ -48,12 +48,15 @@ nav.getItemProps(operation) // { "aria-current", "data-state": "active" | "inact
 
 ```ts
 nav.getTreeProps() // { role: "tree" }
-nav.getGroupProps(group) // role: "treeitem", tabIndex, aria-expanded, data-state, onKeyDown, onFocus
+nav.getGroupProps(group) // role: "treeitem", aria-level, aria-setsize, aria-posinset, tabIndex,
+// aria-expanded, data-state, onKeyDown, onFocus
 nav.getGroupToggleProps(group) // onClick opens or closes the group
-nav.getItemProps(operation, group) // adds role, tabIndex, onKeyDown, onFocus
+nav.getItemProps(operation, group) // adds role, aria-level, aria-setsize, aria-posinset, tabIndex, onKeyDown, onFocus
 ```
 
-The snapshot's `rows` lists the visible groups and items in order, and `focusedId` / `tabStopId` work as in the schema tree. `toggle(id)` and `focus(id)` take a row id (`groupKey(group)` or `itemKey(group, operation)`). Every group opens while a search is active.
+Put a group's items in an element with `role: "group"`, and name the group by its heading (`aria-labelledby`), since otherwise its accessible name is the text of every item inside it. In the tree, Enter and Space on an item that isn't a button or link click it, so its `onClick` runs as if it were one.
+
+The snapshot's `rows` lists the visible groups and items in order, each with `level`, `setSize` and `position`, and `focusedId` / `tabStopId` work as in the schema tree. `toggle(id)` and `focus(id)` take a row id (`groupKey(group)` or `itemKey(group, operation)`). Every group opens while a search is active.
 
 Helpers:
 

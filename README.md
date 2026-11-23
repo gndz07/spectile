@@ -40,5 +40,8 @@ pnpm install
 pnpm build        # build every package
 pnpm test         # run every test
 pnpm typecheck
+pnpm lint
 pnpm --filter @spectile/playground dev   # try it in the browser; runs the packages' source
 ```
+
+The playground opens at http://localhost:3000. `/` is the styled `<ApiReference>`, and `/unstyled.html` uses the `@spectile/react` components without styles. To try the built `dist` instead of the source, run `pnpm build`, then `pnpm --filter @spectile/playground build` and `pnpm --filter @spectile/playground exec vite preview`.
