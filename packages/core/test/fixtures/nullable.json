@@ -4,7 +4,13 @@
   "paths": {},
   "components": {
     "schemas": {
-      "Nickname": { "type": "string", "nullable": true }
+      "Nickname": { "type": "string", "nullable": true },
+      "Pet": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "MaybePet": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Pet" }] },
+      "Owner": {
+        "type": "object",
+        "properties": { "pet": { "$ref": "#/components/schemas/Pet", "nullable": true } }
+      }
     }
   }
 }

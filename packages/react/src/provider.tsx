@@ -6,9 +6,10 @@ import {
   createNavigation,
   createTryIt,
 } from "@spectile/headless"
-import { type ReactNode, useMemo } from "react"
+import type { ReactNode } from "react"
 import { createRequiredContext } from "./context"
 import { MarkdownContext, type RenderMarkdown, plainText } from "./markdown"
+import { useRecreatedOn } from "./recreated"
 
 export type SpectileContextValue = { model: SpecModel; navigation: Navigation; tryIt: TryIt }
 
@@ -34,14 +35,11 @@ export const SpectileProvider = ({
   renderMarkdown = plainText,
   children,
 }: SpectileProviderProps) => {
-  const value = useMemo(
-    () => ({
-      model,
-      navigation: createNavigation(model, { activeId: defaultActiveId }),
-      tryIt: createTryIt(model, tryItOptions),
-    }),
-    [model],
-  )
+  const value = useRecreatedOn([model], () => ({
+    model,
+    navigation: createNavigation(model, { activeId: defaultActiveId }),
+    tryIt: createTryIt(model, tryItOptions),
+  }))
   return (
     <SpectileContext value={value}>
       <MarkdownContext value={renderMarkdown}>{children}</MarkdownContext>

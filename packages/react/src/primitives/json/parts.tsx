@@ -5,7 +5,14 @@ import {
   nestedFolds,
   visibleJsonLines,
 } from "@spectile/headless"
-import { type CSSProperties, Fragment, type ReactNode, useMemo } from "react"
+import {
+  type CSSProperties,
+  Fragment,
+  type ReactNode,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react"
 import { useStore } from "../../hooks"
 import { Primitive, type PrimitiveProps, mergeProps } from "../../primitive"
 import { JsonLineProvider, JsonProvider, useJson, useJsonLine } from "./context"
@@ -17,14 +24,15 @@ export type RootProps = PrimitiveProps<"div"> & {
   foldDepth?: number
 }
 
-/** Folds are kept by path, so they survive a new body of the same shape. */
+/** Every body starts folded from `foldDepth`. What the reader toggled is kept by path, so it survives a new body of the same shape. */
 export const Root = ({ text, foldDepth, ...props }: RootProps) => {
   const lines = useMemo(() => codeLines(text), [text])
-  const folds = useMemo(
-    () => createJsonFolds(foldDepth === undefined ? [] : nestedFolds(lines, foldDepth)),
-    // Only the first body's folds start closed; later ones keep what the reader chose.
-    [],
+  const defaults = useMemo(
+    () => (foldDepth === undefined ? [] : nestedFolds(lines, foldDepth)),
+    [lines, foldDepth],
   )
+  const [folds] = useState(() => createJsonFolds(defaults))
+  useLayoutEffect(() => folds.setDefaults(defaults), [folds, defaults])
   const { folded } = useStore(folds)
   const visible = useMemo(() => visibleJsonLines(lines, folded), [lines, folded])
   return (

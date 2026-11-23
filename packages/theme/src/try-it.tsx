@@ -93,8 +93,9 @@ const CUSTOM_SERVER = "custom"
 /** One server: its URL, editable. Several: a select of them plus "Custom…", which shows the URL field. */
 const ServerFields = () => {
   const { servers } = useOperationContext()
-  const { serverVariables, serverIndex } = useTryItContext()
-  const [custom, setCustom] = useState(false)
+  const { serverVariables, serverIndex, serverUrl, typedServerUrl, setServerUrl } =
+    useTryItContext()
+  const custom = typedServerUrl !== undefined
   const several = servers.length > 1
   return (
     <>
@@ -104,9 +105,9 @@ const ServerFields = () => {
             className="spectile-select"
             value={custom ? CUSTOM_SERVER : String(serverIndex)}
             onChange={(event) => {
-              const picked = event.currentTarget.value === CUSTOM_SERVER
-              setCustom(picked)
-              if (picked) event.preventDefault()
+              if (event.currentTarget.value !== CUSTOM_SERVER) return
+              event.preventDefault()
+              setServerUrl(serverUrl)
             }}
           >
             {servers.map((server, index) => (

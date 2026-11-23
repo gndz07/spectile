@@ -317,7 +317,7 @@ A JSON viewer with foldable objects and arrays and tokens to color.
 | `Json.Toggle` | a `<button>` that folds the object or array opening on this line; nothing on other lines                   |
 | `Json.Tokens` | the line's tokens as `<span data-kind>`: `key`, `string`, `number`, `boolean`, `null`, `punctuation`, `ellipsis` or `text` |
 
-Folds are kept by path, so they survive a new body of the same shape. For custom tokens, `useJsonLine()` gives you the line, including `fold.size` (the folded entries) for labels like "3 items".
+Every new body starts folded from `foldDepth`. What the reader opened or closed is kept by path, so it survives a new body of the same shape. For custom tokens, `useJsonLine()` gives you the line, including `fold.size` (the folded entries) for labels like "3 items".
 
 ### `Copy`
 

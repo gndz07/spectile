@@ -7,6 +7,9 @@ export type CopyProps = PrimitiveProps<"button"> & {
   resetAfter?: number
 }
 
+/** Async, so a page without the Clipboard API (plain http) rejects instead of throwing. */
+const writeToClipboard = async (text: string) => navigator.clipboard.writeText(text)
+
 /** Copies `text` to the clipboard. `data-state` is `copied` for a moment after, or `failed`. */
 export const Copy = ({ text, resetAfter = 2000, ...props }: CopyProps) => {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle")
@@ -16,7 +19,7 @@ export const Copy = ({ text, resetAfter = 2000, ...props }: CopyProps) => {
     return () => clearTimeout(timer)
   }, [state, resetAfter])
   const copy = () =>
-    navigator.clipboard.writeText(text).then(
+    writeToClipboard(text).then(
       () => setState("copied"),
       () => setState("failed"),
     )

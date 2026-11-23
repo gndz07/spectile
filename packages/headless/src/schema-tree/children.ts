@@ -77,6 +77,10 @@ export const hiddenIn =
 
 export type ChildEntry = { child: SchemaChild; id: string; node: SchemaNode }
 
+/**
+ * A node's own children, then the selected variant's. A variant that has variants itself comes as a
+ * row of its own, to hold its select (and to stop where it leads back to an ancestor).
+ */
 export const childEntries = (
   getNode: GetNode,
   parent: SchemaNode,
@@ -96,7 +100,16 @@ export const childEntries = (
   const option = variants?.options[index]
   if (!variants || !option) return own
   const variantId = appendPointer(parentId, variants.kind, index)
-  return [...own, ...childEntries(getNode, getNode(option), variantId, selected, hidden)]
+  const node = getNode(option)
+  if (!variantsOf(node)) return [...own, ...childEntries(getNode, node, variantId, selected, hidden)]
+  const child: SchemaChild = {
+    segments: [variants.kind, index],
+    kind: variants.kind,
+    index,
+    required: false,
+    schema: option,
+  }
+  return [...own, { child, id: variantId, node }]
 }
 
 /** The names of the properties left out anywhere in the schema, every variant included. */

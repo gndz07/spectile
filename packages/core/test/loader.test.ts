@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { getSchema, normalize } from "../src"
 import { loadSpec } from "../src/loader"
 import { loadFixture } from "./load-fixture"
@@ -45,6 +45,36 @@ describe("loadSpec", () => {
     expect(document.openapi).toBe("3.1.0")
     expect(warnings.length).toBeGreaterThan(0)
     expect(warnings.every(({ code }) => code === "invalid-document")).toBe(true)
+  })
+
+  describe("references to URLs", () => {
+    const remote = "https://specs.example.com/pet.json"
+    const spec = {
+      openapi: "3.1.0",
+      info: { title: "Remote", version: "1.0.0" },
+      paths: {},
+      components: { schemas: { Pet: { $ref: remote } } },
+    }
+    const petFetch = () =>
+      vi.fn<typeof fetch>(
+        async () => new Response(JSON.stringify({ type: "object", title: "Fetched pet" })),
+      )
+
+    it("are fetched with the given fetch", async () => {
+      const fetch = petFetch()
+      const { document } = await loadSpec(spec, { fetch, validate: false })
+      expect(fetch.mock.calls.map(([url]) => String(url))).toEqual([remote])
+      expect(getSchema(normalize(document), "#/components/schemas/Pet").title).toBe("Fetched pet")
+    })
+
+    it("are left alone with resolveExternal: false", async () => {
+      const fetch = petFetch()
+      const { document } = await loadSpec(spec, { fetch, resolveExternal: false, validate: false })
+      expect(fetch).not.toHaveBeenCalled()
+      expect(getSchema(normalize(document), "#/components/schemas/Pet").title).toBeUndefined()
+      await expect(loadSpec(remote, { fetch, resolveExternal: false })).rejects.toThrow()
+      expect(fetch).not.toHaveBeenCalled()
+    })
   })
 
   it("rejects input that is not an API description", async () => {

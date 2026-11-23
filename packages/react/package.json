@@ -2,7 +2,11 @@
   "name": "@spectile/react",
   "version": "0.0.0",
   "description": "React hooks and unstyled primitives for rendering OpenAPI documents",
+  "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,8 +28,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@spectile/core": "workspace:*",
-    "@spectile/headless": "workspace:*"
+    "@spectile/core": "workspace:^",
+    "@spectile/headless": "workspace:^"
   },
   "peerDependencies": {
     "react": "^19.0.0"

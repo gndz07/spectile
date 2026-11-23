@@ -1,13 +1,11 @@
 import { type SpecModel, findOperation } from "@spectile/core"
 import { isSearchShortcut, operationHash, parseOperationHash } from "@spectile/headless"
 import { useNavigation, useSpectile } from "@spectile/react"
-import { useEffect } from "react"
+import { useCallback, useEffect, useLayoutEffect } from "react"
 
-/** The operation `#operationId` in the page URL names, if any. */
-export const hashOperationId = (model: SpecModel) =>
-  typeof window === "undefined"
-    ? undefined
-    : findOperation(model, parseOperationHash(window.location.hash))?.id
+/** The operation `#operationId` in the page URL names, if any. Browser only. */
+const hashOperationId = (model: SpecModel) =>
+  findOperation(model, parseOperationHash(window.location.hash))?.id
 
 /** Writes `#operationId` without adding a history entry. Only called on user choice, never on load. */
 export const writeOperationHash = (id: string) =>
@@ -22,19 +20,21 @@ const isSameHashClick = (event: MouseEvent) => {
 }
 
 /**
- * Opens the operation the hash names when someone follows a deep link on the page, including a
+ * Opens the operation the hash names: once after mounting, so the first render is the same on the
+ * server and in the browser, then whenever someone follows a deep link on the page, including a
  * second time.
  */
 export const useHashNavigation = (onNavigate?: (id: string) => void) => {
   const { model } = useSpectile()
   const { setActive } = useNavigation()
+  const onHashChange = useCallback(() => {
+    const id = hashOperationId(model)
+    if (!id) return
+    setActive(id)
+    onNavigate?.(id)
+  }, [model, setActive, onNavigate])
+  useLayoutEffect(onHashChange, [onHashChange])
   useEffect(() => {
-    const onHashChange = () => {
-      const id = hashOperationId(model)
-      if (!id) return
-      setActive(id)
-      onNavigate?.(id)
-    }
     const onClick = (event: MouseEvent) => {
       if (isSameHashClick(event)) onHashChange()
     }
@@ -44,7 +44,7 @@ export const useHashNavigation = (onNavigate?: (id: string) => void) => {
       window.removeEventListener("hashchange", onHashChange)
       document.removeEventListener("click", onClick)
     }
-  }, [model, setActive, onNavigate])
+  }, [onHashChange])
 }
 
 /** `/`, unless typed into a field, runs `onShortcut`; pass a stable function. */

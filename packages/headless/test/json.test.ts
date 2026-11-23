@@ -80,4 +80,17 @@ describe("createJsonFolds", () => {
     expect(folds.getSnapshot().folded.size).toBe(0)
     expect(listener).toHaveBeenCalledTimes(2)
   })
+
+  it("takes new defaults and keeps what was toggled", () => {
+    const folds = createJsonFolds(["/owner"])
+    const listener = vi.fn()
+    folds.subscribe(listener)
+    folds.toggle("/owner")
+    folds.toggle("/tags")
+    expect([...folds.getSnapshot().folded]).toEqual(["/tags"])
+    folds.setDefaults(["/owner", "/pets"])
+    expect([...folds.getSnapshot().folded].sort()).toEqual(["/pets", "/tags"])
+    folds.setDefaults(["/pets", "/owner"])
+    expect(listener).toHaveBeenCalledTimes(3)
+  })
 })

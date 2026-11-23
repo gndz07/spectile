@@ -100,6 +100,7 @@ export const createSession = (
         serverIndex: selection.index,
         serverVariables: serverVariableValues(servers[selection.index], selection.variables),
         serverUrl,
+        typedServerUrl: selection.url,
       }
     },
   )

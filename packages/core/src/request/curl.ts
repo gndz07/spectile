@@ -33,14 +33,28 @@ export const toCurlTokens = (request: HttpRequest): CurlToken[] => {
     .map((part) => (placeholders.includes(part) ? { text: part, missing: true } : { text: part }))
 }
 
-/** curl sends GET without a body and POST with one, so `-X` is only needed for anything else. */
-const methodFlag = (method: string, hasBody: boolean) =>
-  method.toUpperCase() === (hasBody ? "POST" : "GET") ? "" : `-X ${method} `
+/**
+ * curl sends GET without a body and POST with one, so `-X` is only needed for anything else.
+ * `-X HEAD` would wait for a body that never comes, so HEAD gets `--head`.
+ */
+const methodFlag = (method: string, hasBody: boolean) => {
+  const name = method.toUpperCase()
+  if (name === "HEAD") return "--head "
+  return name === (hasBody ? "POST" : "GET") ? "" : `-X ${method} `
+}
+
+const GLOB_CHARACTERS = /[[\]{}]/
+
+/** curl reads `[]` and `{}` in a URL as ranges and sets; placeholders are not real URL text yet. */
+const globFlag = (url: string, placeholders: string[] = []) =>
+  GLOB_CHARACTERS.test(placeholders.reduce((rest, placeholder) => rest.replaceAll(placeholder, ""), url))
+    ? "--globoff "
+    : ""
 
 /** Multipart bodies are passed as form parts, so curl writes its own boundary. */
-export const toCurl = ({ method, url, headers, body, form }: HttpRequest) =>
+export const toCurl = ({ method, url, headers, body, form, placeholders }: HttpRequest) =>
   [
-    `curl ${methodFlag(method, form !== undefined || typeof body === "string")}${quote(url)}`,
+    `curl ${globFlag(url, placeholders)}${methodFlag(method, form !== undefined || typeof body === "string")}${quote(url)}`,
     ...Object.entries(headers)
       .filter(([name]) => !form || !isContentType(name))
       .map(([name, value]) => `-H ${quote(`${name}: ${value}`)}`),

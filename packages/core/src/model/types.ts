@@ -60,6 +60,8 @@ export type Discriminator = { propertyName: string; mapping: Record<string, Sche
 
 export type SchemaNode = SchemaRef & {
   types: SchemaType[]
+  /** OpenAPI 3.0's `nullable: true`. Wherever the schema has types, they include `null` too. */
+  nullable?: true
   title?: string
   description?: string
   externalDocs?: ExternalDocs

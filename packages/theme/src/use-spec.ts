@@ -42,7 +42,7 @@ export const useSpec = (spec: SpecInput): SpecState => {
 
   useEffect(() => {
     let current = true
-    void load(spec).then((result) => {
+    void load(key).then((result) => {
       if (current) setLoaded({ key, attempt, result })
     })
     return () => {

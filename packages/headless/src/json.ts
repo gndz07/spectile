@@ -1,4 +1,4 @@
-import { createStore } from "./store"
+import { createStore, select } from "./store"
 
 /** `text` is a line of a body that isn't JSON. */
 export type JsonTokenKind =
@@ -148,18 +148,43 @@ export const nestedFolds = (lines: readonly JsonLine[], depth: number) =>
     return isObject || holdsContainers(lines, index, fold) ? [fold.path] : []
   })
 
-export const createJsonFolds =(initial: Iterable<string> = []) => {
-  const store = createStore<{ folded: ReadonlySet<string> }>({ folded: new Set(initial) })
+const flipped = (paths: ReadonlySet<string>, path: string): ReadonlySet<string> => {
+  const next = new Set(paths)
+  if (!next.delete(path)) next.add(path)
+  return next
+}
+
+const sameMembers = (a: ReadonlySet<string>, b: ReadonlySet<string>) =>
+  a.size === b.size && [...a].every((member) => b.has(member))
+
+/** The paths folded by default, flipped wherever the reader toggled one. */
+export const foldedPaths = (defaults: ReadonlySet<string>, toggled: ReadonlySet<string>) =>
+  [...toggled].reduce(flipped, defaults)
+
+/**
+ * `initial` is what starts folded. `setDefaults` replaces it, for a new body, and keeps what the
+ * reader toggled, by path.
+ */
+export const createJsonFolds = (initial: Iterable<string> = []) => {
+  const store = createStore<{ defaults: ReadonlySet<string>; toggled: ReadonlySet<string> }>({
+    defaults: new Set(initial),
+    toggled: new Set(),
+  })
+  const folds = select(store, ({ defaults, toggled }) => ({
+    folded: foldedPaths(defaults, toggled),
+  }))
 
   const toggle = (path: string) =>
-    store.setState(({ folded }) => {
-      const next = new Set(folded)
-      if (!next.delete(path)) next.add(path)
-      return { folded: next }
+    store.setState((state) => ({ ...state, toggled: flipped(state.toggled, path) }))
+
+  const setDefaults = (paths: Iterable<string>) =>
+    store.setState((state) => {
+      const defaults = new Set(paths)
+      return sameMembers(defaults, state.defaults) ? state : { ...state, defaults }
     })
 
   const getToggleProps = (path: string) => {
-    const folded = store.getSnapshot().folded.has(path)
+    const folded = folds.getSnapshot().folded.has(path)
     return {
       type: "button" as const,
       "aria-expanded": !folded,
@@ -169,9 +194,10 @@ export const createJsonFolds =(initial: Iterable<string> = []) => {
   }
 
   return {
-    getSnapshot: store.getSnapshot,
-    subscribe: store.subscribe,
+    getSnapshot: folds.getSnapshot,
+    subscribe: folds.subscribe,
     toggle,
+    setDefaults,
     getToggleProps,
   }
 }

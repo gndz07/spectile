@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { getSchema, normalize, type SchemaNode } from "../src"
+import { getMergedSchema, getSchema, normalize, type SchemaNode } from "../src"
 import { loadFixture } from "./load-fixture"
 
 const property = (node: SchemaNode, name: string) => {
@@ -42,6 +42,20 @@ describe("schema nodes", () => {
   it("adds null to the types of nullable schemas", () => {
     const nullable = normalize(loadFixture("nullable.json"))
     expect(getSchema(nullable, "#/components/schemas/Nickname").types).toEqual(["string", "null"])
+  })
+
+  it("adds null to a nullable schema whose types come from allOf or a $ref", () => {
+    const nullable = normalize(loadFixture("nullable.json"))
+    expect(getMergedSchema(nullable, "#/components/schemas/MaybePet").types).toEqual([
+      "object",
+      "null",
+    ])
+    const owner = getSchema(nullable, "#/components/schemas/Owner")
+    expect(getMergedSchema(nullable, property(owner, "pet").schema).types).toEqual([
+      "object",
+      "null",
+    ])
+    expect(getMergedSchema(nullable, "#/components/schemas/Pet").types).toEqual(["object"])
   })
 
   it("follows chains of references", () => {

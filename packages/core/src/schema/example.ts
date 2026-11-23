@@ -64,6 +64,14 @@ const declaredValue = (node: SchemaNode) =>
         ? node.default
         : node.enum?.[0]
 
+type Path = { ancestors: ReadonlySet<string>; circular: number }
+
+/**
+ * How many schemas that take part in a cycle one branch may pass through. Without a limit, schemas
+ * that all refer to each other are expanded once per order they can be visited in.
+ */
+const MAX_CIRCULAR_DEPTH = 3
+
 /**
  * A plausible value for a schema: its example, default or first allowed value, else one from its
  * format, else one from the property name (`name` → "Ada Lovelace"), else "text", 0 or true.
@@ -75,13 +83,16 @@ export const exampleFromSchema = (
 ): unknown => {
   const hidden = (node: SchemaNode) => (usage === "request" ? node.readOnly : node.writeOnly)
 
-  const build = (ref: SchemaRef, ancestors: ReadonlySet<string>, name?: string): unknown => {
-    if (ancestors.has(ref.pointer)) return undefined
-    const node = mergeAllOf(model, getSchema(model, ref), ancestors)
+  const build = (ref: SchemaRef, path: Path, name?: string): unknown => {
+    if (path.ancestors.has(ref.pointer) || path.circular >= MAX_CIRCULAR_DEPTH) return undefined
+    const node = mergeAllOf(model, getSchema(model, ref), path.ancestors)
     const declared = declaredValue(node)
     if (declared !== undefined) return declared
 
-    const inner = new Set([...ancestors, ref.pointer])
+    const inner: Path = {
+      ancestors: new Set([...path.ancestors, ref.pointer]),
+      circular: path.circular + (ref.circular ? 1 : 0),
+    }
     const child = (schema: SchemaRef) => build(schema, inner)
     const sameName = (schema: SchemaRef) => build(schema, inner, name)
     const type = node.types.find((candidate) => candidate !== "null")
@@ -118,14 +129,14 @@ export const exampleFromSchema = (
     }
   }
 
-  const objectOf = (node: SchemaNode, ancestors: ReadonlySet<string>) =>
+  const objectOf = (node: SchemaNode, path: Path) =>
     Object.fromEntries(
       node.properties.flatMap(({ name, schema }) => {
         if (hidden(getMergedSchema(model, schema))) return []
-        const value = build(schema, ancestors, name)
+        const value = build(schema, path, name)
         return value === undefined ? [] : [[name, value]]
       }),
     )
 
-  return build(ref, new Set())
+  return build(ref, { ancestors: new Set(), circular: 0 })
 }

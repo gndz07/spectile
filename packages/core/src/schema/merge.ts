@@ -29,6 +29,7 @@ const combine = (earlier: SchemaNode, later: SchemaNode): SchemaNode => {
     ...earlier,
     ...withoutUndefined(later),
     types: sharedTypes(earlier.types, later.types) ?? later.types,
+    nullable: later.nullable,
     deprecated: earlier.deprecated || later.deprecated,
     readOnly: earlier.readOnly || later.readOnly,
     writeOnly: earlier.writeOnly || later.writeOnly,
@@ -47,6 +48,10 @@ const combine = (earlier: SchemaNode, later: SchemaNode): SchemaNode => {
     issue: later.issue,
   }
 }
+
+/** A 3.0 `nullable: true` beside `allOf` or `$ref` has no types of its own to add `null` to until the parts are in. */
+const withOwnNull = (types: SchemaType[], own: SchemaNode): SchemaType[] =>
+  own.nullable && types.length > 0 && !types.includes("null") ? [...types, "null"] : types
 
 /**
  * Folds `allOf` parts into the schema: properties and required names combine, and later parts win
@@ -77,7 +82,7 @@ export const mergeAllOf = (
     { parts: [], kept: [], shape: own },
   )
   const merged = [...parts, own].reduce(combine)
-  return { ...merged, allOf: [...merged.allOf, ...kept] }
+  return { ...merged, types: withOwnNull(merged.types, own), allOf: [...merged.allOf, ...kept] }
 }
 
 export const getMergedSchema = (model: SpecModel, ref: string | SchemaRef) =>

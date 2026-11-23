@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { DocsLink, SectionLevelProvider, Tag } from "./bits"
 import { useTheme } from "./context"
-import { hashOperationId, useHashNavigation, writeOperationHash } from "./hash"
+import { useHashNavigation, writeOperationHash } from "./hash"
 import { ChevronIcon } from "./icons"
 import { OperationPath, RequestDetails } from "./operation"
 import { OperationUiProvider } from "./operation-state"
@@ -186,12 +186,8 @@ export const StackedReference = () => {
   const { model } = useSpectile()
   const hasPanel = useTheme().tryIt === "panel"
   const [panelSlot, setPanelSlot] = useState<HTMLElement | null>(null)
-  const [target, setTarget] = useState<Target | undefined>(() => {
-    const id = hashOperationId(model)
-    const key = id && firstRowKey(model, id)
-    return key ? { key } : undefined
-  })
-  const [open, setOpen] = useState<OpenRows>(() => new Set(target ? [target.key] : []))
+  const [target, setTarget] = useState<Target>()
+  const [open, setOpen] = useState<OpenRows>(() => new Set())
   const navigate = useCallback(
     (id: string) => {
       const key = firstRowKey(model, id)

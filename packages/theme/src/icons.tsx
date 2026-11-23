@@ -1,6 +1,6 @@
 import type { ReactNode, SVGProps } from "react"
 
-/** Feather icons (MIT, see LICENSE-feather), drawn in currentColor. */
+/** Feather icons (MIT, see LICENSE-feather) and one from Lucide (ISC, see LICENSE-lucide), drawn in currentColor. */
 const Icon = ({ children, ...props }: SVGProps<SVGSVGElement> & { children: ReactNode }) => (
   <svg
     viewBox="0 0 24 24"

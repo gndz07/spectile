@@ -4,6 +4,7 @@ export {
   type Store,
   createStore,
   memoizeLast,
+  sameArguments,
   select,
 } from "./store"
 export {

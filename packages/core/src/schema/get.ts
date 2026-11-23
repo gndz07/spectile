@@ -133,6 +133,7 @@ export const getSchema = (model: SpecModel, ref: string | SchemaRef): SchemaNode
   return {
     ...refTo(document, resolution.pointer),
     types: schemaTypes(schema),
+    nullable: schema.nullable === true || undefined,
     format: asString(schema.format),
     contentMediaType: asString(schema.contentMediaType),
     contentEncoding: asString(schema.contentEncoding),

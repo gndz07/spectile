@@ -6,7 +6,8 @@ import {
   type SchemaTreeSnapshot,
   createSchemaTree,
 } from "@spectile/headless"
-import { useMemo, useSyncExternalStore } from "react"
+import { useSyncExternalStore } from "react"
+import { useRecreatedOn } from "./recreated"
 import { useSpectile } from "./provider"
 
 export type SchemaTreeState = SchemaTree & SchemaTreeSnapshot
@@ -44,9 +45,8 @@ export const useSchemaTree = (
   { defaultExpandedDepth, usage, recursion }: SchemaTreeOptions = {},
 ): SchemaTreeState => {
   const { model } = useSpectile()
-  const tree = useMemo(
-    () => createSchemaTree(model, schema, { defaultExpandedDepth, usage, recursion }),
-    [model, schema.pointer, defaultExpandedDepth, usage, recursion],
+  const tree = useRecreatedOn([model, schema.pointer, defaultExpandedDepth, usage, recursion], () =>
+    createSchemaTree(model, schema, { defaultExpandedDepth, usage, recursion }),
   )
   return { ...tree, ...useStore(tree) }
 }

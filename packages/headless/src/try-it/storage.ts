@@ -1,4 +1,5 @@
-import type { Credential } from "@spectile/core"
+import type { Credential, SpecModel } from "@spectile/core"
+import { serverListKey } from "./servers"
 import type { CredentialStorage } from "./types"
 
 const isCredential = (value: unknown): value is Credential =>
@@ -27,12 +28,23 @@ export const readCredentials = (storage: CredentialStorage, key: string) => {
   }
 }
 
+/** With nothing left to keep, the entry is removed where the storage can. */
 export const writeCredentials = (
   storage: CredentialStorage,
   key: string,
   credentials: Record<string, Credential>,
 ) => {
   try {
-    storage.setItem(key, JSON.stringify(credentials))
+    if (Object.keys(credentials).length === 0 && storage.removeItem) storage.removeItem(key)
+    else storage.setItem(key, JSON.stringify(credentials))
   } catch {}
 }
+
+const hashOf = (text: string) =>
+  [...text]
+    .reduce((hash, character) => (Math.imul(hash, 31) + character.charCodeAt(0)) >>> 0, 0)
+    .toString(36)
+
+/** The title alone would be shared by two versions or environments of one API; their servers tell them apart. */
+export const defaultStorageKey = ({ info, servers }: SpecModel) =>
+  `spectile:credentials:${info.title}:${hashOf(serverListKey(servers))}`

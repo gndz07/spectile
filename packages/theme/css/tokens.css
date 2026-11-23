@@ -142,12 +142,19 @@
   color-scheme: light dark;
 }
 
-[data-theme="light"] .spectile,
+[data-theme="light"] .spectile {
+  color-scheme: light;
+}
+
+[data-theme="dark"] .spectile {
+  color-scheme: dark;
+}
+
+/* After the ancestor rules, so the reference's own data-theme wins over a host's. */
 .spectile[data-theme="light"] {
   color-scheme: light;
 }
 
-[data-theme="dark"] .spectile,
 .spectile[data-theme="dark"] {
   color-scheme: dark;
 }

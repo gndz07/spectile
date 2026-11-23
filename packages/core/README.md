@@ -40,6 +40,9 @@ Reads a spec and returns one bundled OpenAPI 3.1 document.
 
 - `input`: YAML or JSON text, a URL (string or `URL`), or an object. File paths aren't supported; in Node, read the file and pass the text.
 - `options.validate`: check the document against the OpenAPI schema. Default `true`. Turn it off for large specs to save time.
+- `options.fetch`: used for the spec's URL and for every URL it refers to. Pass your own to add headers or to allow only some hosts.
+- `options.resolveExternal`: `false` fetches nothing. The input then has to be text or an object, and `$ref`s to URLs stay unresolved.
+- A spec can make the loader fetch any URL it names. When you load specs you don't trust on a server, pass `resolveExternal: false` or a `fetch` that checks the host, so a spec can't reach your internal network.
 - Swagger 2.0 and OpenAPI 3.0 are upgraded to 3.1 automatically.
 - Returns `{ document, warnings }`. Validation problems become warnings; it only throws when the input isn't an API description at all.
 - Never changes the object you pass in.
@@ -92,7 +95,7 @@ Children are `SchemaRef`s too, so you only resolve what you show. This is what m
 Along the way it also:
 
 - Keeps the schema's name in `refName`, so you can show `Pet` instead of `object`.
-- Turns 3.0 `nullable: true` into `types: [..., "null"]`.
+- Turns 3.0 `nullable: true` into `types: [..., "null"]`. Beside an `allOf` or `$ref`, where the types come from elsewhere, `getMergedSchema` adds it.
 - Collects limits like `minLength` and `pattern` under `constraints`.
 - Applies what's written next to a `$ref`, as OpenAPI 3.1 says: a property `{ "$ref": "#/…/Pet", "description": "The owner's pet" }` gets that description instead of `Pet`'s. The `SchemaRef` carries these in `annotations`, so pass the ref itself rather than `ref.pointer`. Parameters, responses and other referenced objects get the same for `summary` and `description`.
 - Treats a `$ref` with keywords of its own, like `{ "$ref": "#/…/Pet", "properties": { "age": … } }`, as that schema plus `allOf: [Pet]`, which is what it means in OpenAPI 3.1.
@@ -113,7 +116,7 @@ const request = buildRequest(model, operation, {
 })
 // { method: "POST", url: "https://…/pets/7?tags=a&tags=b", headers: {…}, body: "…" }
 
-toCurl(request) // curl 'https://…' -H '…' --data-raw '…' (-X only when curl wouldn't pick the method itself)
+toCurl(request) // curl 'https://…' -H '…' --data-raw '…' (-X only when curl wouldn't pick the method itself, --globoff when the URL has [] or {})
 ```
 
 - **Parameters** are keyed by `parameterKey(parameter)`, which is `"<in>.<name>"`. Arrays and objects follow the parameter's `style` and `explode`, as the OpenAPI spec says. Empty values are left out.

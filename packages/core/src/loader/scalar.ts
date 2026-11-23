@@ -13,10 +13,20 @@ const pointerOf = (path: string | string[] | undefined) => {
   return path.startsWith("/") ? `#${path}` : `#/${path}`
 }
 
-export const bundleDocument = async (input: string | Record<string, unknown>) => {
+export type FetchOptions = {
+  /** Fetches the spec's URL and the URLs it refers to. Pass your own to allow only some hosts. */
+  fetch?: typeof globalThis.fetch
+  /** `false` fetches nothing: the input has to be text or an object, and refs to URLs stay unresolved. */
+  resolveExternal?: boolean
+}
+
+export const bundleDocument = async (
+  input: string | Record<string, unknown>,
+  { fetch, resolveExternal = true }: FetchOptions = {},
+) => {
   const issues: Issue[] = []
   const value = await bundle(typeof input === "string" ? input : structuredClone(input), {
-    plugins: [fetchUrls(), parseJson(), parseYaml()],
+    plugins: [...(resolveExternal ? [fetchUrls({ fetch })] : []), parseJson(), parseYaml()],
     treeShake: false,
     hooks: {
       onResolveError: (node) =>

@@ -3,6 +3,7 @@ import {
   buildRequest,
   exampleFromSchema,
   formatResponseBody,
+  getSchema,
   missingParameters,
   normalize,
   resolveServerUrl,
@@ -246,6 +247,22 @@ describe("request helpers", () => {
       "--data-raw '@here hi'",
     )
   })
+
+  it("stops curl from globbing brackets and braces in the URL", () => {
+    expect(toCurl({ method: "GET", url: "/a?filter[color]=red", headers: {} })).toBe(
+      "curl --globoff '/a?filter[color]=red'",
+    )
+    expect(toCurl({ method: "PUT", url: "/a?q={x}", headers: {}, body: "{}" })).toMatch(
+      /^curl --globoff -X PUT /,
+    )
+    expect(
+      toCurl({ method: "GET", url: "/items/{id}", headers: {}, placeholders: ["{id}"] }),
+    ).toBe("curl '/items/{id}'")
+  })
+
+  it("asks curl for the headers only on HEAD", () => {
+    expect(toCurl({ method: "HEAD", url: "/a", headers: {} })).toBe("curl --head '/a'")
+  })
 })
 
 describe("exampleFromSchema", () => {
@@ -311,6 +328,33 @@ describe("exampleFromSchema", () => {
       exampleFromSchema(model, { pointer: `#/components/schemas/${name}`, circular: false })
     expect(of("Described")).toBe("active")
     expect(of("Choice")).toEqual({ meow: true })
+  })
+
+  it("stays small for schemas that all refer to each other", () => {
+    const names = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
+    const tangled = normalize({
+      openapi: "3.1.0",
+      info: { title: "Tangled", version: "1" },
+      paths: {},
+      components: {
+        schemas: Object.fromEntries(
+          names.map((name) => [
+            name,
+            {
+              type: "object",
+              properties: Object.fromEntries(
+                names
+                  .filter((other) => other !== name)
+                  .map((other) => [other, { $ref: `#/components/schemas/${other}` }]),
+              ),
+            },
+          ]),
+        ),
+      },
+    })
+    const example = exampleFromSchema(tangled, getSchema(tangled, "#/components/schemas/A"))
+    expect(example).toMatchObject({ B: { C: {} } })
+    expect(JSON.stringify(example).length).toBeLessThan(1000)
   })
 })
 

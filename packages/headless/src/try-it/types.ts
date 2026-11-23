@@ -47,10 +47,11 @@ export type FetchLike = (
   init: { method: string; headers: Record<string, string>; body?: string | Blob; signal?: unknown },
 ) => Promise<ResponseLike>
 
-/** `sessionStorage`, `localStorage` or anything with the same two methods. */
+/** `sessionStorage`, `localStorage` or anything with the same methods. */
 export type CredentialStorage = {
   getItem: (key: string) => string | null
   setItem: (key: string, value: string) => void
+  removeItem?: (key: string) => void
 }
 
 export type TryItOptions = {
@@ -60,7 +61,7 @@ export type TryItOptions = {
   baseUrl?: string
   /** Keeps credentials here, so they survive a reload. Not kept when left out. */
   storage?: CredentialStorage
-  /** Defaults to `spectile:credentials:` plus the spec's title. */
+  /** Defaults to `spectile:credentials:` plus the spec's title and a hash of its server URLs. */
   storageKey?: string
 }
 
@@ -88,7 +89,10 @@ export type OperationTryItSnapshot = {
   serverIndex: number
   /** The chosen server's variables with their current values. */
   serverVariables: Record<string, string>
+  /** The base URL requests go to. */
   serverUrl: string
+  /** What was typed in place of the chosen server, even when blank; undefined while the chosen server is used. */
+  typedServerUrl?: string
 }
 
 export type TryItState = TryItSettings & {

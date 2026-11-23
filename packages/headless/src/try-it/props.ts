@@ -95,12 +95,15 @@ export const operationProps = ({
   })
 
   /** Not `type: "url"`, so relative URLs like `/` don't block the form. */
-  const getServerProps = () => ({
-    name: "server",
-    inputMode: "url" as const,
-    value: getSnapshot().serverUrl,
-    onChange: (event: InputEventLike) => setServerUrl(valueOf(event)),
-  })
+  const getServerProps = () => {
+    const { typedServerUrl, serverUrl } = getSnapshot()
+    return {
+      name: "server",
+      inputMode: "url" as const,
+      value: typedServerUrl ?? serverUrl,
+      onChange: (event: InputEventLike) => setServerUrl(valueOf(event)),
+    }
+  }
 
   /** Option values are indexes into the operation's `servers`. */
   const getServerSelectProps = () => ({

@@ -1,4 +1,5 @@
-The icons in src/icons.tsx come from Feather (https://feathericons.com).
+The icons in src/icons.tsx come from Feather (https://feathericons.com), except
+ChevronsUpDownIcon (see LICENSE-lucide).
 
 The MIT License (MIT)
 

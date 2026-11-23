@@ -2,7 +2,11 @@
   "name": "@spectile/core",
   "version": "0.0.0",
   "description": "Parse and normalize OpenAPI documents into a render-ready model",
+  "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

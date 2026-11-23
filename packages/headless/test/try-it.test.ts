@@ -8,6 +8,7 @@ import {
   formatBytes,
   formatDuration,
 } from "../src"
+import { defaultStorageKey } from "../src/try-it/storage"
 import { formModel, model, serversModel } from "./fixture"
 
 const response = (
@@ -376,6 +377,20 @@ describe("servers", () => {
     pets.setServerVariable("region", "us")
     expect(urlOf(pets)).toBe("https://us.example.com/v1/pets")
   })
+
+  it("sends to the chosen server while the typed URL is blank", () => {
+    const { pets } = setup()
+    expect(pets.getSnapshot().typedServerUrl).toBeUndefined()
+    pets.getServerProps().onChange({ currentTarget: { value: " " } })
+    expect(pets.getSnapshot()).toMatchObject({
+      typedServerUrl: " ",
+      serverUrl: "https://api.example.com",
+    })
+    expect(pets.getServerProps().value).toBe(" ")
+    expect(urlOf(pets)).toBe("https://api.example.com/pets")
+    pets.selectServer(0)
+    expect(pets.getSnapshot().typedServerUrl).toBeUndefined()
+  })
 })
 
 describe("credential storage", () => {
@@ -385,6 +400,7 @@ describe("credential storage", () => {
       items,
       getItem: (key: string) => items.get(key) ?? null,
       setItem: vi.fn((key: string, value: string) => void items.set(key, value)),
+      removeItem: (key: string) => void items.delete(key),
     }
   }
 
@@ -404,12 +420,25 @@ describe("credential storage", () => {
     })
   })
 
-  it("keys storage by the spec's title unless given a key", () => {
+  it("keys storage by the spec's title and servers unless given a key", () => {
     const storage = memoryStorage()
     createTryIt(model, { storage }).setCredential("apiKey", "a")
     createTryIt(model, { storage, storageKey: "mine" }).setCredential("apiKey", "b")
-    expect(storage.items.get(`spectile:credentials:${model.info.title}`)).toBe('{"apiKey":"a"}')
+    expect(defaultStorageKey(model)).toMatch(new RegExp(`^spectile:credentials:${model.info.title}:`))
+    expect(storage.items.get(defaultStorageKey(model))).toBe('{"apiKey":"a"}')
     expect(storage.items.get("mine")).toBe('{"apiKey":"b"}')
+    const staging = { ...model, servers: [{ url: "https://staging.example.com", variables: {} }] }
+    expect(defaultStorageKey(staging)).not.toBe(defaultStorageKey(model))
+  })
+
+  it("writes nothing until a credential is entered, and removes the entry with the last one", () => {
+    const storage = memoryStorage()
+    const tryIt = createTryIt(model, { storage })
+    expect(storage.setItem).not.toHaveBeenCalled()
+    tryIt.setCredential("apiKey", "secret")
+    expect(storage.items.size).toBe(1)
+    tryIt.setCredential("apiKey", undefined)
+    expect(storage.items.size).toBe(0)
   })
 
   it("ignores broken or blocked storage", () => {
@@ -432,7 +461,6 @@ describe("credential storage", () => {
     const storage = memoryStorage()
     const tryIt = createTryIt(model, { storage })
     const getPet = tryIt.forOperation("getPet")
-    storage.setItem.mockClear()
     getPet.setParameter("path.id", "7")
     expect(storage.setItem).not.toHaveBeenCalled()
     tryIt.setCredential("apiKey", "secret")

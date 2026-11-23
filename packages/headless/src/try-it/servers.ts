@@ -8,12 +8,13 @@ export const FIRST_SERVER: ServerSelection = { index: 0, variables: {} }
 export const serverListKey = (servers: readonly Server[]) =>
   JSON.stringify(servers.map(({ url }) => url))
 
+/** A typed URL left blank falls back to the chosen server, so requests never go out without a base. */
 export const selectedServerUrl = (
   servers: readonly Server[],
   { index, variables, url }: ServerSelection,
   baseUrl?: string,
 ) => {
-  if (url !== undefined) return url
+  if (url?.trim()) return url
   const server = servers[index]
   return server ? absoluteUrl(resolveServerUrl(server, variables), baseUrl) : ""
 }

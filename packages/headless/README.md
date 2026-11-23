@@ -86,7 +86,7 @@ const { root, rows } = tree.getSnapshot()
 - `expandable`, `expanded`
 - `recursive`: this schema already appears above this row. "Expand all" stops here, so circular schemas don't expand forever; you can still open them by hand.
 - `recursiveTarget`: on a recursive row, the id of that ancestor row, for a link back to it
-- `variants`: on a oneOf/anyOf row, `{ kind, labels, selected }`. Labels use the schema's title, then the discriminator value, then its name, then "Option n". Only the selected variant's fields are listed, and each variant keeps its own expanded rows.
+- `variants`: on a oneOf/anyOf row, `{ kind, labels, selected }`. Labels use the schema's title, then the discriminator value, then its name, then "Option n". Only the selected variant's fields are listed, and each variant keeps its own expanded rows. A selected variant that is itself a oneOf/anyOf gets a row of its own, with its own `variants`.
 
 When the schema itself is a oneOf/anyOf, the first row is a synthetic root row that holds the variant choice. `allOf` parts are merged into one list of properties.
 
@@ -169,8 +169,10 @@ getPet.selectServer(1) // index into operation.servers
 getPet.setServerVariable("region", "us") // fills in {region}
 getPet.setServerUrl("http://localhost:3000") // typed by hand; wins until another server or variable is chosen
 
-const { serverIndex, serverVariables, serverUrl } = getPet.getSnapshot()
+const { serverIndex, serverVariables, serverUrl, typedServerUrl } = getPet.getSnapshot()
 ```
+
+`serverUrl` is where requests go. `typedServerUrl` is what was typed by hand, and `undefined` while the chosen server is used. A typed URL left blank sends to the chosen server.
 
 The choice is shared by operations with the same server list. Picking a server for one endpoint picks it for every endpoint that uses the spec's servers, while an endpoint with its own servers keeps its own choice.
 
@@ -179,9 +181,9 @@ The choice is shared by operations with the same server list. Picking a server f
 - `fetch`: pass your own to route requests through a proxy, add logging, or test without a network.
 - `baseUrl`: where the spec was loaded from. Relative server URLs such as `/api/v3` are resolved against it, as the OpenAPI spec says.
 - `storage`: keeps credentials so they survive a reload. Without it, they're only kept in memory and a reload clears them. `sessionStorage` keeps them until the tab closes, while `localStorage` keeps them until the user clears them.
-- `storageKey`: defaults to `spectile:credentials:` plus the spec's title, so specs on the same site don't share credentials. To share them, give the specs the same key; credentials are stored by security scheme name, so only schemes with the same name carry over.
+- `storageKey`: defaults to `spectile:credentials:` plus the spec's title and a hash of its server URLs, so specs on the same site don't share credentials, nor do two versions or environments of one API. To share them, give the specs the same key; credentials are stored by security scheme name, so only schemes with the same name carry over.
 
-Only credentials are stored, never drafts or responses. If the browser blocks storage, credentials just stay in memory.
+Only credentials are stored, never drafts or responses, and nothing is written until one is entered. Once the last one is cleared, the entry is removed. If the browser blocks storage, credentials just stay in memory.
 
 **Prop getters:**
 
@@ -230,7 +232,7 @@ const visible = visibleJsonLines(lines, folds.getSnapshot().folded)
 - Each line has `depth` and `tokens` (`{ kind, text }`, with `kind` one of `key`, `string`, `number`, `boolean`, `null`, `punctuation`, `ellipsis` or `text`). Numbers keep their original text, so large ids stay exact.
 - A line that opens an object or array has `fold`: its `path` (a JSON pointer), the `end` line and `size`, its number of entries, for labels like "3 items". A folded line closes on the same line: `{ … }`.
 - `nestedFolds(lines, depth)` lists the folds from `depth` down: objects, and arrays holding objects or arrays. Arrays of plain values stay open.
-- `folds.toggle(path)` and `folds.getToggleProps(path)` (`type: "button"`, `aria-expanded`, `data-state`, `onClick`). Folds are kept by path, so they survive a new body of the same shape.
+- `folds.toggle(path)` and `folds.getToggleProps(path)` (`type: "button"`, `aria-expanded`, `data-state`, `onClick`). For a new body, `folds.setDefaults(nestedFolds(newLines, 1))` replaces what starts folded and keeps what the reader toggled, by path, so their choices survive a new body of the same shape.
 
 ## Building your own store
 

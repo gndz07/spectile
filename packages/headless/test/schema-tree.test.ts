@@ -183,6 +183,62 @@ describe("createSchemaTree", () => {
     expect(tree.getSnapshot().focusedId).toBe("#")
   })
 
+  it("stops at a variant that leads back to its own schema", () => {
+    const loops = normalize({
+      openapi: "3.1.0",
+      info: { title: "Loops", version: "1.0.0" },
+      components: {
+        schemas: {
+          Loop: {
+            oneOf: [{ $ref: "#/components/schemas/Loop" }],
+            properties: { id: { type: "string" } },
+          },
+        },
+      },
+    })
+    const tree = createSchemaTree(loops, getSchema(loops, "#/components/schemas/Loop"))
+    expect(ids(tree)).toEqual(["#", "#/properties/id", "#/oneOf/0"])
+    expect(rowOf(tree, "#/oneOf/0")).toMatchObject({ recursive: true, recursiveTarget: "#" })
+  })
+
+  it("gives a variant that has variants a row of its own, with its own select", () => {
+    const nested = normalize({
+      openapi: "3.1.0",
+      info: { title: "Nested", version: "1.0.0" },
+      components: {
+        schemas: {
+          Owner: {
+            type: "object",
+            properties: {
+              pet: { anyOf: [{ $ref: "#/components/schemas/Animal" }, { type: "null" }] },
+            },
+          },
+          Animal: {
+            oneOf: [
+              { title: "Cat", type: "object", properties: { meows: { type: "boolean" } } },
+              { title: "Dog", type: "object", properties: { barks: { type: "boolean" } } },
+            ],
+          },
+        },
+      },
+    })
+    const PET = "#/properties/pet"
+    const ANIMAL = `${PET}/anyOf/0`
+    const tree = createSchemaTree(nested, getSchema(nested, "#/components/schemas/Owner"), {
+      defaultExpandedDepth: Infinity,
+    })
+    expect(ids(tree)).toEqual([PET, ANIMAL, `${ANIMAL}/oneOf/0/properties/meows`])
+    expect(rowOf(tree, ANIMAL)).toMatchObject({
+      kind: "anyOf",
+      parentId: PET,
+      variants: { kind: "oneOf", labels: ["Cat", "Dog"], selected: 0 },
+    })
+    tree.selectVariant(ANIMAL, 1)
+    expect(ids(tree)).toEqual([PET, ANIMAL, `${ANIMAL}/oneOf/1/properties/barks`])
+    tree.selectVariant(PET, 1)
+    expect(ids(tree)).toEqual([PET])
+  })
+
   it("labels variants by title, discriminator value, schema name, then position", () => {
     const variants = normalize({
       openapi: "3.1.0",
