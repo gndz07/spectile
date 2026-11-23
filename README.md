@@ -9,6 +9,8 @@
 
 Headless OpenAPI building blocks. Build your own API reference with your own markup and styles, or start from the ready-made theme.
 
+**[Try the playground](https://gndz07.github.io/spectile/)**
+
 | Package                                   | What it's for                                                                                                                |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | [`@spectile/core`](packages/core)         | Load an OpenAPI spec and turn it into a simple model. No UI.                                                                 |
@@ -21,8 +23,10 @@ Each layer builds on the one before it. Use only the ones you need: just `core` 
 ## Quick start
 
 ```sh
-npm install @spectile/theme react react-dom
+npm install @spectile/theme@beta react react-dom
 ```
+
+Spectile is in beta, so the API may still change between releases.
 
 ```tsx
 import { ApiReference } from "@spectile/theme"

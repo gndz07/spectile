@@ -1,8 +1,15 @@
 {
   "name": "@spectile/headless",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.0",
   "description": "Framework-agnostic state and behavior for rendering OpenAPI documents",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gndz07/spectile.git",
+    "directory": "packages/headless"
+  },
+  "homepage": "https://github.com/gndz07/spectile/tree/main/packages/headless#readme",
+  "bugs": "https://github.com/gndz07/spectile/issues",
   "type": "module",
   "engines": {
     "node": ">=20"
