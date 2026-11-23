@@ -31,6 +31,25 @@ export const fromNestedControl = ({ target, currentTarget }: TargetEventLike = {
   return control !== null && control !== currentTarget
 }
 
+const tagOf = (element: unknown) => (element as { tagName?: string } | undefined)?.tagName
+
+/** The browser already clicks a button on Enter and Space, and a link on Enter. */
+const clicksNatively = (element: unknown, key: string) => {
+  const tag = tagOf(element)
+  return tag === "BUTTON" || (tag === "A" && key === "Enter")
+}
+
+/** Enter or Space on an element that the browser won't click for it, such as `<li role="treeitem">`. */
+export const clicksOnKey = ({ key, currentTarget }: KeyboardEventLike) =>
+  (key === "Enter" || key === " ") && !clicksNatively(currentTarget, key)
+
+/** Clicks the element, so every click handler on it runs; without one, e.g. outside a DOM, runs `fallback`. */
+export const clickOr = (element: unknown, fallback: () => void) => {
+  const target = element as { click?: () => void } | undefined
+  if (typeof target?.click === "function") target.click()
+  else fallback()
+}
+
 /** `/` pressed outside a text field, with no modifier. */
 export const isSearchShortcut = ({ key, ctrlKey, metaKey, altKey, target }: ShortcutEventLike) =>
   key === "/" && !ctrlKey && !metaKey && !altKey && closest(target, EDITABLE) === null

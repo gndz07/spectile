@@ -9,6 +9,8 @@ import {
   type InputEventLike,
   type KeyboardEventLike,
   type TargetEventLike,
+  clickOr,
+  clicksOnKey,
   fromNestedControl,
 } from "./events"
 import { type TreeAction, type TreeRow, treeKeyAction } from "./schema-tree"
@@ -22,8 +24,17 @@ export type NavigationSource = Pick<SpecModel, "operations" | "webhooks" | "tags
 
 export type NavigationOptions = { query?: string; activeId?: string }
 
-/** A group, or an operation within a group (one operation can be in several). */
-export type NavigationRow = TreeRow & { group: OperationGroup; operation?: NormalizedOperation }
+/**
+ * A group, or an operation within a group (one operation can be in several). `level` is 1 for
+ * groups and 2 for items; `setSize` and `position` count among the row's siblings.
+ */
+export type NavigationRow = TreeRow & {
+  group: OperationGroup
+  operation?: NormalizedOperation
+  level: number
+  setSize: number
+  position: number
+}
 
 export type NavigationSnapshot = {
   query: string
@@ -102,20 +113,32 @@ export const navigationRows = (
   collapsed: ReadonlySet<string>,
   searching: boolean,
 ): NavigationRow[] =>
-  groups.flatMap((group) => {
+  groups.flatMap((group, groupIndex) => {
     const id = groupKey(group)
     const expanded = searching || !collapsed.has(id)
     const items = group.operations.map(
-      (operation): NavigationRow => ({
+      (operation, index): NavigationRow => ({
         id: itemKey(group, operation),
         parentId: id,
         expandable: false,
         expanded: false,
         group,
         operation,
+        level: 2,
+        setSize: group.operations.length,
+        position: index + 1,
       }),
     )
-    return [{ id, expandable: true, expanded, group }, ...(expanded ? items : [])]
+    const groupRow: NavigationRow = {
+      id,
+      expandable: true,
+      expanded,
+      group,
+      level: 1,
+      setSize: groups.length,
+      position: groupIndex + 1,
+    }
+    return [groupRow, ...(expanded ? items : [])]
   })
 
 /** `#` plus the operation's id. */
@@ -185,20 +208,28 @@ export const createNavigation = (
 
   const getTreeProps = () => ({ role: "tree" as const })
 
-  const getRowProps = (id: string) => ({
-    role: "treeitem" as const,
-    tabIndex: id === view.getSnapshot().tabStopId ? 0 : -1,
-    onKeyDown: (event: KeyboardEventLike) => {
-      if (fromNestedControl(event)) return
-      const action = treeKeyAction(view.getSnapshot().rows, id, event.key)
-      if (!action) return
-      event.preventDefault()
-      actions[action.type](action.id)
-    },
-    onFocus: (event?: TargetEventLike) => {
-      if (!fromNestedControl(event)) focus(id)
-    },
-  })
+  /** A row hidden in a closed group has no level or position until it shows again. */
+  const getRowProps = (id: string) => {
+    const { rows, tabStopId } = view.getSnapshot()
+    const row = rows.find((candidate) => candidate.id === id)
+    return {
+      role: "treeitem" as const,
+      "aria-level": row?.level,
+      "aria-setsize": row?.setSize,
+      "aria-posinset": row?.position,
+      tabIndex: id === tabStopId ? 0 : -1,
+      onKeyDown: (event: KeyboardEventLike) => {
+        if (fromNestedControl(event)) return
+        const action = treeKeyAction(view.getSnapshot().rows, id, event.key)
+        if (!action) return
+        event.preventDefault()
+        actions[action.type](action.id)
+      },
+      onFocus: (event?: TargetEventLike) => {
+        if (!fromNestedControl(event)) focus(id)
+      },
+    }
+  }
 
   const getSearchProps = () => ({
     type: "search" as const,
@@ -223,16 +254,28 @@ export const createNavigation = (
     onClick: () => toggle(groupKey(group)),
   })
 
-  /** Pass the group the item is listed in to make it part of the keyboard tree. */
+  /**
+   * Pass the group the item is listed in to make it part of the keyboard tree. There, Enter and
+   * Space click an item that isn't a button or link, so it activates like one.
+   */
   const getItemProps = (operation: NormalizedOperation, group?: OperationGroup) => {
     const active = operation.id === store.getSnapshot().activeId
+    const activate = () => setActive(operation.id)
+    const row = group && getRowProps(itemKey(group, operation))
     return {
-      ...(group && getRowProps(itemKey(group, operation))),
+      ...row,
+      ...(row && {
+        onKeyDown: (event: KeyboardEventLike) => {
+          if (fromNestedControl(event) || !clicksOnKey(event)) return row.onKeyDown(event)
+          event.preventDefault()
+          clickOr(event.currentTarget, activate)
+        },
+      }),
       "aria-current": active ? ("page" as const) : undefined,
       "data-state": active ? "active" : "inactive",
       "data-method": operation.method,
       "data-deprecated": operation.deprecated ? "" : undefined,
-      onClick: () => setActive(operation.id),
+      onClick: activate,
     }
   }
 

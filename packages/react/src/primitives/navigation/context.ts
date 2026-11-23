@@ -2,8 +2,15 @@ import type { OperationGroup } from "@spectile/headless"
 import { createContext, useContext } from "react"
 import { createRequiredContext } from "../../context"
 
-export const [NavigationGroupProvider, useNavigationGroup, useOptionalNavigationGroup] =
-  createRequiredContext<OperationGroup>("Navigation.Group")
+/** The group, and the id its `GroupToggle` takes so the group is named by it. */
+export type NavigationGroupState = { group: OperationGroup; labelId: string }
+
+export const [NavigationGroupProvider, useNavigationGroupState, useOptionalNavigationGroupState] =
+  createRequiredContext<NavigationGroupState>("Navigation.Group")
+
+export const useNavigationGroup = () => useNavigationGroupState().group
+
+export const useOptionalNavigationGroup = () => useOptionalNavigationGroupState()?.group
 
 const NavigationTreeContext = createContext(false)
 

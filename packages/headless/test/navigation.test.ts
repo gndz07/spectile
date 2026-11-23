@@ -114,6 +114,53 @@ describe("createNavigation", () => {
     expect(snapshot().focusedId).toBe(snapshot().rows.at(-1)?.id)
   })
 
+  it("gives groups and items their level and position in the tree", () => {
+    const navigation = createNavigation(model)
+    const [users, pets] = navigation.getSnapshot().groups
+    expect(navigation.getGroupProps(pets!)).toMatchObject({
+      "aria-level": 1,
+      "aria-setsize": 5,
+      "aria-posinset": 2,
+    })
+    expect(navigation.getItemProps(operation("createUser"), users)).toMatchObject({
+      "aria-level": 2,
+      "aria-setsize": 2,
+      "aria-posinset": 2,
+    })
+    expect(navigation.getItemProps(operation("createUser"))).not.toHaveProperty("aria-level")
+  })
+
+  it("activates an item on Enter or Space unless the browser clicks it already", () => {
+    const navigation = createNavigation(model)
+    const pets = navigation.getSnapshot().groups[1]!
+    const press = (key: string, currentTarget?: object) => {
+      const preventDefault = vi.fn()
+      navigation.getItemProps(operation("getPet"), pets).onKeyDown?.({
+        key,
+        preventDefault,
+        currentTarget,
+      })
+      return preventDefault.mock.calls.length > 0
+    }
+
+    expect(press("Enter")).toBe(true)
+    expect(navigation.getSnapshot().activeId).toBe("getPet")
+
+    const listItem = { tagName: "LI", click: vi.fn() }
+    expect(press(" ", listItem)).toBe(true)
+    expect(listItem.click).toHaveBeenCalledOnce()
+
+    const button = { tagName: "BUTTON", click: vi.fn() }
+    expect(press("Enter", button)).toBe(false)
+    expect(press(" ", button)).toBe(false)
+    expect(button.click).not.toHaveBeenCalled()
+
+    const link = { tagName: "A", click: vi.fn() }
+    expect(press("Enter", link)).toBe(false)
+    expect(press(" ", link)).toBe(true)
+    expect(link.click).toHaveBeenCalledOnce()
+  })
+
   it("moves focus to a group that hides it, and opens every group while searching", () => {
     const navigation = createNavigation(model)
     const users = navigation.getSnapshot().groups[0]!

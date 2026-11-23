@@ -198,9 +198,9 @@ describe("Navigation", () => {
       <Navigation.Tree aria-label="Operations">
         <Navigation.Groups>
           {(group) => (
-            <Navigation.Group group={group} aria-label={group.tag?.name ?? group.kind}>
+            <Navigation.Group group={group}>
               <Navigation.GroupToggle>
-                <Navigation.GroupName />
+                {group.tag?.name ?? group.kind}
               </Navigation.GroupToggle>
               <Navigation.GroupItems>
                 {group.operations.map((each) => (
@@ -222,6 +222,8 @@ describe("Navigation", () => {
     const pets = item("pets")
     const pet = item("Fetch a pet")
     expect(pet.tabIndex).toBe(0)
+    expect(pets).toMatchObject({ ariaLevel: "1", ariaPosInSet: "2" })
+    expect(pet).toMatchObject({ ariaLevel: "2", ariaSetSize: "1", ariaPosInSet: "1" })
     act(() => pet.focus())
     fireEvent.keyDown(pet, { key: "ArrowLeft" })
     expect(document.activeElement).toBe(pets)
@@ -256,8 +258,10 @@ describe("Navigation", () => {
       </SpectileProvider>,
     )
     expect(screen.getByTestId("items").dataset.state).toBe("open")
+    expect(screen.getByTestId("items").hasAttribute("inert")).toBe(false)
     fireEvent.click(screen.getByText("pets"))
     expect(screen.getByTestId("items").dataset.state).toBe("closed")
+    expect(screen.getByTestId("items").hasAttribute("inert")).toBe(true)
     expect(screen.getByTestId("open").textContent).toBe("false")
   })
 

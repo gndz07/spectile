@@ -1,6 +1,6 @@
 import type { NormalizedOperation } from "@spectile/core"
 import { type OperationGroup, groupKey, matchRanges } from "@spectile/headless"
-import { Fragment, type ReactNode } from "react"
+import { Fragment, type ReactNode, useId } from "react"
 import { useFollowFocus } from "../../focus"
 import { useNavigation } from "../../hooks"
 import { type DescriptionProps, Markdown } from "../../markdown"
@@ -18,6 +18,7 @@ import {
   NavigationTreeProvider,
   useInNavigationTree,
   useNavigationGroup,
+  useNavigationGroupState,
   useOptionalNavigationGroup,
 } from "./context"
 
@@ -63,14 +64,18 @@ export const Groups = ({ children }: GroupsProps) =>
 
 export type GroupProps = PrimitiveProps<"div"> & { group: OperationGroup }
 
+/** In a tree, the group is named by its `GroupToggle`, not by all the items inside it. */
 export const Group = ({ group, ref, ...props }: GroupProps) => {
   const navigation = useNavigation()
   const inTree = useInNavigationTree()
+  const labelId = useId()
   const focusRef = useFollowFocus<HTMLDivElement>(inTree && navigation.focusedId === groupKey(group))
   const composedRef = useComposedRefs(ref, focusRef)
-  const ours = inTree ? navigation.getGroupProps(group) : { "data-kind": group.kind }
+  const ours = inTree
+    ? { ...navigation.getGroupProps(group), "aria-labelledby": labelId }
+    : { "data-kind": group.kind }
   return (
-    <NavigationGroupProvider value={group}>
+    <NavigationGroupProvider value={{ group, labelId }}>
       <Primitive as="div" {...mergeProps(ours, props)} ref={composedRef} />
     </NavigationGroupProvider>
   )
@@ -87,9 +92,10 @@ export const GroupDescription = (props: DescriptionProps) => (
 
 export type GroupToggleProps = PrimitiveProps<"div">
 
-/** The group's heading; clicking it opens or closes the group. */
+/** The group's heading, which names the group in a tree; clicking it opens or closes the group. */
 export const GroupToggle = (props: GroupToggleProps) => {
-  const ours = useNavigation().getGroupToggleProps(useNavigationGroup())
+  const { group, labelId } = useNavigationGroupState()
+  const ours = { id: labelId, ...useNavigation().getGroupToggleProps(group) }
   return <Primitive as="div" {...mergeProps(ours, props)} />
 }
 
@@ -104,11 +110,14 @@ export type GroupItemsProps = PrimitiveProps<"div"> & {
   forceMount?: boolean
 }
 
-/** Holds the group's items; renders nothing while the group is closed, unless `forceMount`. */
+/**
+ * Holds the group's items; renders nothing while the group is closed, unless `forceMount`. Items
+ * kept that way are `inert`, so neither the keyboard nor a screen reader reaches them.
+ */
 export const GroupItems = ({ forceMount, ...props }: GroupItemsProps) => {
   const open = useGroupOpen()
   if (!open && !forceMount) return null
-  const ours = { role: "group", "data-state": open ? "open" : "closed" }
+  const ours = { role: "group", "data-state": open ? "open" : "closed", inert: !open }
   return <Primitive as="div" {...mergeProps(ours, props)} />
 }
 

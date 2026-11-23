@@ -16,7 +16,7 @@ const OperationTree = ({ onSelect }: { onSelect?: () => void }) => (
   <Navigation.Tree className="spectile-nav" aria-label="Operations">
     <Navigation.Groups>
       {(group) => (
-        <Navigation.Group group={group} className="spectile-nav-group" aria-label={groupLabel(group)}>
+        <Navigation.Group group={group} className="spectile-nav-group">
           <Navigation.GroupToggle className="spectile-nav-heading">
             {groupLabel(group)}
           </Navigation.GroupToggle>
