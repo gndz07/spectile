@@ -1,7 +1,7 @@
 import type { Issue, SpecModel } from "@spectile/core"
 import type { TryItOptions } from "@spectile/headless"
 import { type RenderMarkdown, SpectileProvider, useComposedRefs } from "@spectile/react"
-import { type ComponentPropsWithRef, useRef } from "react"
+import { type ComponentPropsWithRef, type ReactNode, useRef } from "react"
 import { type ThemeSettings, ThemeProvider } from "./context"
 import { type Layout, type TryItPreference, resolveLayout } from "./layout"
 import { defaultRenderMarkdown } from "./markdown"
@@ -20,6 +20,8 @@ type Options = {
   searchShortcut?: boolean
   /** Defaults to react-markdown, which skips raw HTML. */
   renderMarkdown?: RenderMarkdown
+  /** Shown before the API title. */
+  logo?: ReactNode
 }
 
 type Source =
@@ -76,6 +78,7 @@ export const ApiReference = ({
   tryItOptions,
   searchShortcut = layout === "sidebar",
   renderMarkdown = defaultRenderMarkdown,
+  logo,
   className,
   ref,
   ...props
@@ -83,7 +86,7 @@ export const ApiReference = ({
   const rootRef = useRef<HTMLDivElement>(null)
   const composedRef = useComposedRefs(ref, rootRef)
   const resolved = resolveLayout({ layout, tryIt, width: useWidth(rootRef) })
-  const settings: ThemeSettings = { ...resolved, preference: { tryIt }, searchShortcut }
+  const settings: ThemeSettings = { ...resolved, preference: { tryIt }, searchShortcut, logo }
   const content: ContentOptions = { tryItOptions, renderMarkdown }
   return (
     <div

@@ -75,6 +75,14 @@ describe("ApiReference", () => {
     expect(container.querySelector("a")?.getAttribute("href")).toBe("")
   })
 
+  it("shows the logo before the API title in both layouts", () => {
+    const logo = <img src="logo.svg" alt="Acme" />
+    const { rerender } = render(<ApiReference model={normalize(document)} logo={logo} />)
+    expect(screen.getByRole("img", { name: "Acme" }).closest(".spectile-api-heading")).not.toBeNull()
+    rerender(<ApiReference model={normalize(document)} layout="stacked" logo={logo} />)
+    expect(screen.getByRole("img", { name: "Acme" }).closest(".spectile-stacked-brand")).not.toBeNull()
+  })
+
   it("says so when there are no operations", () => {
     render(<ApiReference model={normalize(empty)} />)
     expect(screen.getByText("This API has no operations")).toBeDefined()

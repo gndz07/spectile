@@ -13,6 +13,7 @@ import { EmptyPanel, Panel, TryItButton, TryItPlacement } from "./placements"
 import { Collapse } from "./presence"
 import { Responses } from "./responses"
 import { Search, SearchResultCount, SearchResults, groupLabel } from "./search"
+import { Logo } from "./sidebar"
 
 /**
  * Open rows by `itemKey`, so an operation listed under two tags is two rows. Most recently used
@@ -165,9 +166,12 @@ const Heading = () => {
   return (
     <header className="spectile-stacked-header">
       <div>
-        <h1 className="spectile-stacked-title">
-          <Info.Title />
-        </h1>
+        <div className="spectile-stacked-brand">
+          <Logo />
+          <h1 className="spectile-stacked-title">
+            <Info.Title />
+          </h1>
+        </div>
         <p className="spectile-version">
           <Info.Version />
           {server && ` · ${server}`}

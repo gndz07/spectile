@@ -9,6 +9,20 @@ import "./styles.css"
 
 const model = normalize(example as OpenAPIDocument)
 
+const logo = (
+  <svg viewBox="0 0 32 32" aria-hidden="true">
+    <path
+      d="M11 4C7.5 4 7 6 7 9v4c0 2-1.5 3-4 3 2.5 0 4 1 4 3v4c0 3 .5 5 4 5M21 4c3.5 0 4 2 4 5v4c0 2 1.5 3 4 3-2.5 0-4 1-4 3v4c0 3-.5 5-4 5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <rect x="12.5" y="12.5" width="7" height="7" rx="1.6" fill="var(--spectile-color-accent)" />
+  </svg>
+)
+
 const OPTIONS = {
   layout: ["sidebar", "stacked"],
   tryIt: ["panel", "drawer", "inline", "off"],
@@ -123,6 +137,7 @@ const Playground = () => {
           layout={settings.layout}
           tryIt={tryItPreference(settings.tryIt)}
           tryItOptions={tryItOptions}
+          logo={logo}
         />
       </div>
     </>

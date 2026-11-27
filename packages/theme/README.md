@@ -55,6 +55,7 @@ If you force a mode with `data-theme` on `<html>`, set `color-scheme` to match.
 | `tryItOptions`   |            | `{ fetch, baseUrl, storage, storageKey }`; see `createTryIt` in [`@spectile/headless`](../headless#try-it)              |
 | `searchShortcut` | on in `sidebar` | `/` focuses search                                                                                               |
 | `renderMarkdown` | react-markdown | `(markdown) => ReactNode` for descriptions. The default leaves raw HTML out.                                       |
+| `logo`           |            | Shown before the API title, e.g. `<img src="/logo.svg" alt="" />`. An `<img>` or `<svg>` is `--spectile-logo-height` (24px) tall. Use `alt=""` when the title already names the API. |
 
 Pass `spec` or `model`, not both. With `spec`, the reference shows a loading state, a failure with a "Try again" button, and any warnings the spec produced. A `spec` object is reloaded when its identity changes, so keep it stable (a constant, or `useMemo`). The same goes for `model`: a new one starts the reference over, losing the open operation, what people typed into try-it and their responses. `tryItOptions` is read when the spec or model is first ready, so later changes to it are ignored.
 
@@ -137,7 +138,7 @@ Each name below is prefixed with `--spectile-`, e.g. `--spectile-color-accent`.
 | Code   | `color-code-bg`, `color-code-text`, `color-code-key`, `color-code-string`, `color-code-number`, `color-code-muted`, `color-code-missing` |
 | Type   | `font-sans`, `font-mono`, `font-size-xs` to `font-size-2xl`, `font-weight-regular` / `-strong`, `line-height-*`                 |
 | Space  | `space-1` (2px) to `space-8` (48px)                                                                                           |
-| Size   | `control-height`, `control-height-small`, `row-height`, `touch-height`, `sidebar-width`, `panel-width`, `drawer-width`, `content-max-width` |
+| Size   | `control-height`, `control-height-small`, `row-height`, `touch-height`, `sidebar-width`, `panel-width`, `drawer-width`, `content-max-width`, `logo-height` |
 | Shape  | `radius-sm`, `radius-md`, `radius-lg`, `border-width`, `focus-width`, `shadow-overlay`                                        |
 | Motion | `duration`, `duration-overlay`, `easing`                                                                                      |
 

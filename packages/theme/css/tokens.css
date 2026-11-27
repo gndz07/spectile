@@ -105,6 +105,7 @@
   --spectile-nav-drawer-width: 328px;
   /* The gap the sheet leaves above it. */
   --spectile-sheet-top: 72px;
+  --spectile-logo-height: 24px;
   /* For reference only: container queries can't read variables, so styles.css repeats these. */
   --spectile-bp-panel: 1280px;
   --spectile-bp-sidebar: 960px;

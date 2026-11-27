@@ -1,10 +1,11 @@
-import { createContext, useContext } from "react"
+import { type ReactNode, createContext, useContext } from "react"
 import type { ResolvedLayout, TryItPreference } from "./layout"
 
 export type ThemeSettings = ResolvedLayout & {
   /** What was asked for, before width fallbacks. */
   preference: { tryIt: TryItPreference }
   searchShortcut: boolean
+  logo?: ReactNode
 }
 
 const ThemeContext = createContext<ThemeSettings | undefined>(undefined)

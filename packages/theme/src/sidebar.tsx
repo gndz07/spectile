@@ -1,5 +1,6 @@
 import { Info, Navigation, Operation } from "@spectile/react"
 import type { ReactNode } from "react"
+import { useTheme } from "./context"
 import { writeOperationHash } from "./hash"
 import { Collapse } from "./presence"
 import { Search, SearchResultCount, SearchResults, groupLabel } from "./search"
@@ -63,8 +64,14 @@ export const OperationNavigation = ({
   </>
 )
 
+export const Logo = () => {
+  const { logo } = useTheme()
+  return logo ? <span className="spectile-logo">{logo}</span> : null
+}
+
 export const ApiHeading = () => (
   <div className="spectile-api-heading">
+    <Logo />
     <Info.Title className="spectile-api-title" />
     <Info.Version className="spectile-version" />
   </div>

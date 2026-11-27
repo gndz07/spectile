@@ -426,9 +426,19 @@
 
 .spectile-api-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--spectile-space-3);
   padding: 0 var(--spectile-space-3);
+}
+
+.spectile-logo {
+  display: flex;
+  flex: none;
+}
+
+.spectile-logo > :is(img, svg) {
+  width: auto;
+  height: var(--spectile-logo-height);
 }
 
 .spectile-api-title {
@@ -608,8 +618,15 @@
   gap: var(--spectile-space-5);
 }
 
+.spectile-stacked-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spectile-space-4);
+  margin-bottom: var(--spectile-space-2);
+}
+
 .spectile-stacked-title {
-  margin: 0 0 var(--spectile-space-2);
+  margin: 0;
   font-size: var(--spectile-font-size-2xl);
   font-weight: var(--spectile-font-weight-strong);
   line-height: var(--spectile-line-height-tight);
