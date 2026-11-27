@@ -27,7 +27,7 @@ const OPTIONS = {
   layout: ["sidebar", "stacked"],
   tryIt: ["panel", "drawer", "inline", "off"],
   theme: ["system", "light", "dark"],
-  fonts: ["plex", "system"],
+  fonts: ["inter", "system"],
   brand: ["default", "rebrand"],
   width: ["full", "1280", "1000", "800", "375"],
 } as const
@@ -38,7 +38,7 @@ const DEFAULTS: Settings = {
   layout: "sidebar",
   tryIt: "panel",
   theme: "system",
-  fonts: "plex",
+  fonts: "inter",
   brand: "default",
   width: "full",
 }

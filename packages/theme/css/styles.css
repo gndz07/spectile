@@ -148,7 +148,7 @@
   gap: var(--spectile-space-3);
   min-height: var(--spectile-control-height);
   padding: 0 var(--spectile-space-4);
-  border: var(--spectile-border-width) solid var(--spectile-color-border-control);
+  border: var(--spectile-border-width) solid var(--spectile-color-border);
   border-radius: var(--spectile-radius-md);
   background: var(--spectile-color-surface-raised);
   color: var(--spectile-color-text);
@@ -174,7 +174,7 @@
 
 .spectile-button[data-variant="accent"] {
   border-color: var(--spectile-color-accent);
-  color: var(--spectile-color-accent);
+  color: var(--spectile-color-link);
   font-weight: var(--spectile-font-weight-strong);
 }
 
@@ -295,6 +295,12 @@
   border: var(--spectile-border-width) solid var(--spectile-color-border-control);
   border-radius: var(--spectile-radius-md);
   background: var(--spectile-color-surface-raised);
+}
+
+.spectile-input:hover:not(:disabled, :focus),
+.spectile-select:hover:not(:disabled),
+.spectile-search:hover:not(:focus-within) {
+  border-color: var(--spectile-color-border-control-hover);
 }
 
 .spectile-input {
@@ -431,6 +437,10 @@
   padding: 0 var(--spectile-space-3);
 }
 
+.spectile-sidebar-inner > .spectile-api-heading {
+  margin-bottom: var(--spectile-space-3);
+}
+
 .spectile-logo {
   display: flex;
   flex: none;
@@ -509,6 +519,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spectile-space-5);
+  margin-top: var(--spectile-space-3);
 }
 
 .spectile-nav-group:focus-visible {
@@ -533,9 +544,15 @@
   content: " ▸";
 }
 
+/* Rows reach both edges of the sidebar or drawer, whose padding is space-4; the collapse clips. */
+.spectile-nav-group > .spectile-collapse {
+  margin-inline: calc(var(--spectile-space-4) * -1);
+}
+
 .spectile-nav-items {
   display: flex;
   flex-direction: column;
+  gap: var(--spectile-space-1);
 }
 
 .spectile-nav-item {
@@ -543,12 +560,12 @@
   align-items: center;
   gap: var(--spectile-space-3);
   width: 100%;
-  min-height: var(--spectile-control-height);
-  padding: var(--spectile-space-2) var(--spectile-space-3);
+  min-height: var(--spectile-row-height);
+  padding: var(--spectile-space-2) calc(var(--spectile-space-4) + var(--spectile-space-3));
   border: 0;
-  border-radius: var(--spectile-radius-md);
+  border-radius: 0;
   background: transparent;
-  font-size: var(--spectile-font-size-sm);
+  font-size: var(--spectile-font-size-md);
   text-align: left;
   cursor: pointer;
 }
@@ -572,7 +589,19 @@
   text-decoration: line-through;
 }
 
-.spectile-nav-item .spectile-method,
+/* [data-method] outranks the badge colors' backgrounds further down. */
+.spectile-nav-item .spectile-method[data-method] {
+  flex: none;
+  order: 1;
+  margin-left: auto;
+  padding: 0;
+  background: none;
+}
+
+.spectile-nav-item[data-state="active"] .spectile-method {
+  color: inherit;
+}
+
 .spectile-stacked-toggle .spectile-method {
   flex: none;
   min-width: calc(6ch + 2 * var(--spectile-space-2));
@@ -815,7 +844,7 @@
 }
 
 .spectile-tag[data-tone="webhook"] {
-  color: var(--spectile-color-accent);
+  color: var(--spectile-color-link);
   font-weight: var(--spectile-font-weight-strong);
 }
 
@@ -898,7 +927,7 @@
 }
 
 .spectile-placeholder {
-  color: var(--spectile-color-accent);
+  color: var(--spectile-color-link);
 }
 
 .spectile-operation-description {
@@ -1425,7 +1454,7 @@
   resize: none;
   line-height: var(--spectile-line-height-ui);
   scrollbar-width: thin;
-  scrollbar-color: var(--spectile-color-border-control) transparent;
+  scrollbar-color: var(--spectile-color-border-control-hover) transparent;
 }
 
 .spectile-hint {
@@ -1542,7 +1571,7 @@
 .spectile-panel {
   align-self: stretch;
   border-left: var(--spectile-border-width) solid var(--spectile-color-divider);
-  background: var(--spectile-color-surface-raised);
+  background: var(--spectile-color-surface-sunken);
 }
 
 .spectile-panel > .spectile-try-it,
@@ -1790,7 +1819,7 @@
   padding: 0 var(--spectile-space-5);
   border: 0;
   background: none;
-  color: var(--spectile-color-accent);
+  color: var(--spectile-color-link);
   font-weight: var(--spectile-font-weight-strong);
   text-align: left;
   cursor: pointer;

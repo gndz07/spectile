@@ -111,7 +111,7 @@ resolveLayout({ layout: "sidebar", tryIt: "panel", width: 1000 })
 | ---------------------------- | -------------------------------------------------------------------------------- |
 | `@spectile/theme/styles.css` | the tokens and every component style                                             |
 | `@spectile/theme/tokens.css` | the tokens alone, for styling `@spectile/react` components yourself              |
-| `@spectile/theme/fonts.css`  | optional: self-hosts IBM Plex Sans and Mono and puts them first in the font stacks |
+| `@spectile/theme/fonts.css`  | optional: self-hosts Inter and JetBrains Mono and puts them first in the font stacks |
 
 Without `fonts.css`, the reference uses the system fonts. `fonts.css` imports the `@fontsource` packages by name, so it needs a bundler that resolves CSS imports from `node_modules` (Vite, Next.js, webpack with css-loader). Served as a plain file, link those packages' CSS yourself.
 

@@ -41,22 +41,23 @@ const CODE = ["text", "key", "string", "number", "muted", "missing"].map((name) 
 
 /** [foreground, background, minimum ratio] */
 const PAIRS: [string, string, number][] = [
-  ...["text", "text-secondary", "link", "accent", "status-warning", "status-server-error"].flatMap(
-    (text) => SURFACES.map((surface): [string, string, number] => [text, surface, 4.5]),
+  ...["text", "text-secondary", "link", "status-warning", "status-server-error"].flatMap((text) =>
+    SURFACES.map((surface): [string, string, number] => [text, surface, 4.5]),
   ),
   ["text-on-accent", "accent", 4.5],
   ["text-on-accent", "accent-hover", 4.5],
   ...PAIRED.map((name): [string, string, number] => [name, `${name}-bg`, 4.5]),
   ...CODE.map((name): [string, string, number] => [name, "code-bg", 4.5]),
-  ...["border-control", "focus-ring"].flatMap((edge) =>
+  ...["border-control-hover", "focus-ring", "accent"].flatMap((edge) =>
     SURFACES.map((surface): [string, string, number] => [edge, surface, 3]),
   ),
+  ...SURFACES.map((surface): [string, string, number] => ["border-control", surface, 2]),
 ]
 
 describe("tokens.css", () => {
-  it("defines the 35 color tokens of the handoff, each pair with a background", () => {
+  it("defines the 37 color tokens, each pair with a background", () => {
     const names = Object.keys(colors)
-    expect(names.filter((name) => !name.endsWith("-bg") || name === "code-bg")).toHaveLength(35)
+    expect(names.filter((name) => !name.endsWith("-bg") || name === "code-bg")).toHaveLength(37)
     for (const name of PAIRED) expect(colors).toHaveProperty(`${name}-bg`)
   })
 

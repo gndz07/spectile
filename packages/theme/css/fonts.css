@@ -1,11 +1,11 @@
-/* Optional: self-hosts IBM Plex Sans and Mono and puts them first in both font stacks. */
+/* Optional: self-hosts Inter and JetBrains Mono and puts them first in both font stacks. */
 
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/600.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/600.css";
 
 :root {
-  --spectile-font-sans: "IBM Plex Sans", var(--spectile-font-system-sans);
-  --spectile-font-mono: "IBM Plex Mono", var(--spectile-font-system-mono);
+  --spectile-font-sans: "Inter", var(--spectile-font-system-sans);
+  --spectile-font-mono: "JetBrains Mono", var(--spectile-font-system-mono);
 }

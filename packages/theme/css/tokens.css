@@ -6,60 +6,63 @@
  */
 
 :where(:root) {
-  --spectile-color-bg: light-dark(#fbfbf9, #131615);
-  --spectile-color-surface-raised: light-dark(#ffffff, #1b1f1e);
-  --spectile-color-surface-sunken: light-dark(#f1f1ee, #0f1211);
-  --spectile-color-divider: light-dark(#e6e6e2, #2a2f2e);
-  --spectile-color-border: light-dark(#cfcfca, #3a4140);
-  --spectile-color-border-control: light-dark(#8a8a84, #6b7471);
-  --spectile-color-text: light-dark(#1c1c1a, #e7ebe9);
-  --spectile-color-text-secondary: light-dark(#5c5c57, #a3aca9);
-  --spectile-color-text-disabled: light-dark(#8f8f89, #6b7471);
-  --spectile-color-link: light-dark(#0b6e7f, #6cc8d6);
-  --spectile-color-text-on-accent: light-dark(#ffffff, #0b2328);
-  --spectile-color-accent: light-dark(#0b6e7f, #6cc8d6);
-  --spectile-color-accent-hover: light-dark(#08515d, #9adbe5);
-  --spectile-color-accent-subtle: light-dark(#08515d, #e7ebe9);
-  --spectile-color-accent-subtle-bg: light-dark(#dcebed, #1d3a3e);
-  --spectile-color-focus-ring: light-dark(#0b6e7f, #6cc8d6);
+  --spectile-color-bg: light-dark(#fafaf8, #0e0f12);
+  --spectile-color-surface-raised: light-dark(#ffffff, #17181d);
+  --spectile-color-surface-sunken: light-dark(#f3f3f0, #131418);
+  --spectile-color-divider: light-dark(#e8e8e3, #222328);
+  --spectile-color-border: light-dark(#d6d6d1, #2e3037);
+  /* Resting edge of inputs, selects and search, kept light (2:1); hover darkens it to 3:1. */
+  --spectile-color-border-control: light-dark(#acaca6, #494b53);
+  --spectile-color-border-control-hover: light-dark(#8c8c87, #62656d);
+  --spectile-color-text: light-dark(#16171a, #ededef);
+  --spectile-color-text-secondary: light-dark(#5c5f66, #9a9ca5);
+  --spectile-color-text-disabled: light-dark(#8f9198, #63666e);
+  --spectile-color-link: light-dark(#2b50d6, #94a8f6);
+  --spectile-color-text-on-accent: light-dark(#ffffff, #ffffff);
+  /* Fills and edges only (3:1); accent-colored text uses link. */
+  --spectile-color-accent: light-dark(#2b50d6, #3d5fe6);
+  --spectile-color-accent-hover: light-dark(#2241b8, #3354d8);
+  --spectile-color-accent-subtle: light-dark(#2b50d6, #a3b4f8);
+  --spectile-color-accent-subtle-bg: light-dark(#e8e8e3, #1f2026);
+  --spectile-color-focus-ring: light-dark(#2b50d6, #94a8f6);
 
-  --spectile-color-method-get: light-dark(#1f7a3d, #7fd99a);
-  --spectile-color-method-get-bg: light-dark(#e6f2e9, #1d3324);
-  --spectile-color-method-post: light-dark(#2456b8, #93b4f5);
-  --spectile-color-method-post-bg: light-dark(#e6edf9, #1e2a44);
-  --spectile-color-method-put: light-dark(#a3520c, #f0a565);
-  --spectile-color-method-put-bg: light-dark(#f8ece1, #3a2716);
-  --spectile-color-method-patch: light-dark(#7a3a9e, #cf9cf0);
-  --spectile-color-method-patch-bg: light-dark(#f1e8f6, #2f2140);
-  --spectile-color-method-delete: light-dark(#b3302d, #f39490);
-  --spectile-color-method-delete-bg: light-dark(#f8e6e5, #3d1d1c);
-  --spectile-color-method-other: light-dark(#5c5c57, #a3aca9);
-  --spectile-color-method-other-bg: light-dark(#ededea, #262b2a);
+  --spectile-color-method-get: light-dark(#15703d, #6ee7a0);
+  --spectile-color-method-get-bg: light-dark(#e3f4ea, #172a21);
+  --spectile-color-method-post: light-dark(#2b50d6, #93b4ff);
+  --spectile-color-method-post-bg: light-dark(#e6ebfb, #1b2340);
+  --spectile-color-method-put: light-dark(#9a5200, #f5b971);
+  --spectile-color-method-put-bg: light-dark(#fbefdf, #33261a);
+  --spectile-color-method-patch: light-dark(#7a3fc0, #c9a7f7);
+  --spectile-color-method-patch-bg: light-dark(#f1e9fb, #2a2140);
+  --spectile-color-method-delete: light-dark(#c02c2c, #f79a9a);
+  --spectile-color-method-delete-bg: light-dark(#fbe7e7, #3a1c1e);
+  --spectile-color-method-other: light-dark(#5c5f66, #a3a6af);
+  --spectile-color-method-other-bg: light-dark(#ececea, #23252b);
 
-  --spectile-color-status-success: light-dark(#1d6a35, #7fd99a);
-  --spectile-color-status-success-bg: light-dark(#e3f1e6, #1d3324);
-  --spectile-color-status-redirect: light-dark(#2456b8, #93b4f5);
-  --spectile-color-status-redirect-bg: light-dark(#e6edf9, #1e2a44);
-  --spectile-color-status-client-error: light-dark(#a3460f, #f0a565);
-  --spectile-color-status-client-error-bg: light-dark(#f8ece1, #3a2716);
-  --spectile-color-status-server-error: light-dark(#a3262a, #f39490);
-  --spectile-color-status-server-error-bg: light-dark(#f8e6e5, #3d1d1c);
-  --spectile-color-status-warning: light-dark(#7d5700, #e8c35a);
-  --spectile-color-status-warning-bg: light-dark(#fbf1d6, #3a3014);
-  --spectile-color-deprecated: light-dark(#62625c, #a3aca9);
-  --spectile-color-deprecated-bg: light-dark(#ededea, #262b2a);
-  --spectile-color-required: light-dark(#8f3c12, #f0a58a);
-  --spectile-color-required-bg: light-dark(#fbe9e0, #3a2218);
+  --spectile-color-status-success: light-dark(#15703d, #6ee7a0);
+  --spectile-color-status-success-bg: light-dark(#e3f4ea, #172a21);
+  --spectile-color-status-redirect: light-dark(#2b50d6, #93b4ff);
+  --spectile-color-status-redirect-bg: light-dark(#e6ebfb, #1b2340);
+  --spectile-color-status-client-error: light-dark(#9a4a00, #f5b971);
+  --spectile-color-status-client-error-bg: light-dark(#fbefdf, #33261a);
+  --spectile-color-status-server-error: light-dark(#b42828, #f79a9a);
+  --spectile-color-status-server-error-bg: light-dark(#fbe7e7, #3a1c1e);
+  --spectile-color-status-warning: light-dark(#805300, #f0c060);
+  --spectile-color-status-warning-bg: light-dark(#fbf1d6, #33290f);
+  --spectile-color-deprecated: light-dark(#62656b, #a3a6af);
+  --spectile-color-deprecated-bg: light-dark(#ececea, #23252b);
+  --spectile-color-required: light-dark(#a33d10, #f5a98a);
+  --spectile-color-required-bg: light-dark(#fbe9e0, #36211a);
 
-  --spectile-color-code-bg: light-dark(#f1f1ee, #0f1211);
-  --spectile-color-code-border: light-dark(#e6e6e2, transparent);
+  --spectile-color-code-bg: light-dark(#ffffff, #0d0e10);
+  --spectile-color-code-border: light-dark(#e6e6e1, #222328);
   --spectile-color-code-hover-bg: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.08));
-  --spectile-color-code-text: light-dark(#1c1c1a, #cdd3d0);
-  --spectile-color-code-key: light-dark(#0b6e7f, #8fd1dc);
-  --spectile-color-code-string: light-dark(#446a14, #c9e29a);
-  --spectile-color-code-number: light-dark(#a3460f, #f0b98a);
-  --spectile-color-code-muted: light-dark(#696964, #8f9895);
-  --spectile-color-code-missing: light-dark(#7d5700, #e8c35a);
+  --spectile-color-code-text: light-dark(#16171a, #d4d5d9);
+  --spectile-color-code-key: light-dark(#2b50d6, #8fb0ff);
+  --spectile-color-code-string: light-dark(#965800, #f5d28a);
+  --spectile-color-code-number: light-dark(#7a3fc0, #c9a7f7);
+  --spectile-color-code-muted: light-dark(#6a6d75, #80838b);
+  --spectile-color-code-missing: light-dark(#805300, #f0c060);
 
   --spectile-font-system-sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial,
     sans-serif;
@@ -88,11 +91,11 @@
   --spectile-space-6: 24px;
   --spectile-space-7: 32px;
   --spectile-space-8: 48px;
-  /* Buttons, inputs, selects, the search field, tabs and sidebar items. */
+  /* Buttons, inputs, selects, the search field and tabs. */
   --spectile-control-height: 32px;
   /* Small buttons and selects, icon buttons. */
   --spectile-control-height-small: 28px;
-  /* Schema, parameter and response rows. */
+  /* Schema, parameter and response rows; sidebar items. */
   --spectile-row-height: 36px;
   /* Stacked row headers; rows on touch screens; controls and rows on phones. */
   --spectile-touch-height: 44px;
@@ -111,9 +114,9 @@
   --spectile-bp-sidebar: 960px;
   --spectile-bp-phone: 600px;
 
-  --spectile-radius-sm: 4px;
-  --spectile-radius-md: 6px;
-  --spectile-radius-lg: 12px;
+  --spectile-radius-sm: 2px;
+  --spectile-radius-md: 4px;
+  --spectile-radius-lg: 8px;
   --spectile-border-width: 1px;
   --spectile-focus-width: 2px;
   --spectile-focus-offset: 2px;
